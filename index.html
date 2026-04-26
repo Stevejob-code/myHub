@@ -156,36 +156,31 @@
         <section id="watchPage" class="page">
           <div class="panel-card">
             <h3>เพิ่มหนัง / ซีรีส์</h3>
-            <form id="watchForm" class="compact-form">
+            <form id="watchForm" class="compact-form movie-form-v2">
               <input id="watchTitle" placeholder="ชื่อเรื่อง เช่น Avatar" required />
-              <input id="watchPoster" type="url" placeholder="ลิงก์โปสเตอร์ / รูปภาพ (ไม่ใส่ก็ได้)" />
-              <div class="form-grid-2">
-                <select id="watchType">
-                  <option>หนัง</option>
-                  <option>ซีรีส์</option>
-                  <option>อนิเมะ</option>
-                  <option>สารคดี</option>
-                </select>
-                <select id="watchStatus">
-                  <option>อยากดู</option>
-                  <option>กำลังดู</option>
-                  <option>ดูจบแล้ว</option>
-                  <option>พักไว้ก่อน</option>
-                </select>
+              <div class="status-tabs" id="watchStatusTabs">
+                <button type="button" class="status-tab active" data-status="อยากดู">อยากดู</button>
+                <button type="button" class="status-tab" data-status="กำลังดู">กำลังดู</button>
+                <button type="button" class="status-tab" data-status="ดูจบแล้ว">ดูจบแล้ว</button>
               </div>
+              <input id="watchStatus" type="hidden" value="อยากดู" />
               <div class="form-grid-2">
-                <input id="watchGenre" placeholder="แนว เช่น Action, Sci‑fi" />
-                <input id="watchPlatform" placeholder="แพลตฟอร์ม เช่น Netflix" />
-              </div>
-              <div class="form-grid-2">
+                <input id="watchGenre" placeholder="แนว เช่น Action, Sci-fi" />
                 <input id="watchYear" type="number" inputmode="numeric" placeholder="ปี เช่น 2024" />
-                <input id="watchRating" type="number" inputmode="decimal" min="0" max="10" step="0.5" placeholder="คะแนน 0-10" />
               </div>
-              <input id="watchNote" placeholder="โน้ตสั้น ๆ" />
+              <div class="form-grid-2">
+                <input id="watchRating" type="number" inputmode="decimal" min="0" max="10" step="0.5" placeholder="คะแนน 0-10" />
+                <input id="watchPoster" type="url" placeholder="ลิงก์โปสเตอร์ (ไม่ใส่ก็ได้)" />
+              </div>
+              <input id="watchPlatform" type="hidden" value="Netflix" />
+              <div class="platform-picker" id="watchPlatformPicker" aria-label="เลือกแพลตฟอร์ม"></div>
               <button class="primary-btn" type="submit">บันทึกเข้าคลังดูหนัง</button>
+              <p class="tiny-hint">ถ้าไม่ใส่โปสเตอร์ ระบบจะลองดึงอัตโนมัติเมื่อใส่ TMDB API Key ในไฟล์ app.js</p>
             </form>
           </div>
-          <div class="section-head"><h3>คลังหนัง / ซีรีส์</h3><select id="watchViewFilter" class="pill-select"><option value="all">ทั้งหมด</option><option value="อยากดู">อยากดู</option><option value="กำลังดู">กำลังดู</option><option value="ดูจบแล้ว">ดูจบแล้ว</option></select></div><div class="field search-field"><input id="watchSearch" placeholder="ค้นหาชื่อเรื่อง / แนว / แพลตฟอร์ม" /></div><div id="watchList" class="movie-grid empty-box">ยังไม่มีรายการ</div>
+          <div class="section-head"><h3>คลังหนัง / ซีรีส์</h3></div>
+          <div class="watch-status-filter" id="watchStatusFilter"><button class="filter-chip active" data-watch-status="all" type="button">ทั้งหมด</button><button class="filter-chip" data-watch-status="อยากดู" type="button">อยากดู</button><button class="filter-chip" data-watch-status="กำลังดู" type="button">กำลังดู</button><button class="filter-chip" data-watch-status="ดูจบแล้ว" type="button">ดูจบแล้ว</button></div>
+          <div class="field search-field"><input id="watchSearch" placeholder="ค้นหาชื่อเรื่อง / แนว / แพลตฟอร์ม" /></div><div id="watchList" class="movie-grid empty-box">ยังไม่มีรายการ</div>
         </section>
 
         <section id="notesPage" class="page">
