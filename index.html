@@ -58,58 +58,93 @@
           </button>
         </header>
 
-        <section id="dashboardPage" class="page active-page">
-          <div class="hero-card">
-            <div>
-              <p class="eyebrow">ยินดีต้อนรับ</p>
-              <h1 id="welcomeName">พี่จ๊อบ</h1>
-              <p class="muted">นี่คือภาพรวมชีวิตวันนี้ของพี่</p>
+        <section id="dashboardPage" class="page active-page dashboard-v6-page">
+          <div class="dash-hero-v6">
+            <div class="dash-hero-top">
+              <div>
+                <p class="eyebrow">MyHub Control Center</p>
+                <h1>สวัสดี <span id="welcomeName">พี่จ๊อบ</span></h1>
+                <p id="dashHeroDate" class="dash-hero-sub">พร้อมเริ่มวันนี้หรือยัง?</p>
+              </div>
+              <button id="quickAddBtn" class="dash-add-btn" type="button" aria-label="Quick add">＋</button>
             </div>
-            <button id="quickAddBtn" class="round-btn" type="button">+</button>
+            <div class="dash-focus-card">
+              <div>
+                <span class="focus-label">Focus Score</span>
+                <strong id="dashFocusScore">0%</strong>
+              </div>
+              <div class="focus-ring"><span id="dashPendingTasks">0</span><small>งานค้าง</small></div>
+            </div>
           </div>
 
-          <div class="dashboard-actions"><button id="installAppBtn" class="mini-btn install hidden" type="button">ติดตั้งเป็นแอป</button><button id="themeToggleBtn" class="mini-btn" type="button">สลับธีม</button></div>
+          <div class="dashboard-actions v6-actions">
+            <button id="installAppBtn" class="mini-btn install hidden" type="button">ติดตั้งเป็นแอป</button>
+            <button id="themeToggleBtn" class="mini-btn" type="button">สลับธีม</button>
+          </div>
 
-          <div class="stats-grid">
-            <article class="stat-card income">
-              <span>รายรับเดือนนี้</span>
-              <strong id="incomeTotal">฿0</strong>
+          <div class="dash-quick-row">
+            <button class="dash-quick-action" data-quick="money" type="button"><span>฿</span><b>เงิน</b></button>
+            <button class="dash-quick-action" data-quick="tasks" type="button"><span>✓</span><b>งาน</b></button>
+            <button class="dash-quick-action" data-quick="watch" type="button"><span>▶</span><b>ดู</b></button>
+            <button class="dash-quick-action" data-quick="notes" type="button"><span>✎</span><b>โน้ต</b></button>
+          </div>
+
+          <div class="dash-stat-v6-grid">
+            <article class="dash-stat-v6 spend">
+              <span>ใช้วันนี้</span>
+              <strong id="dashTodaySpend">฿0</strong>
+              <small id="dashTopCategory">ยังไม่มีหมวดสูงสุด</small>
             </article>
-            <article class="stat-card expense">
-              <span>รายจ่ายเดือนนี้</span>
-              <strong id="expenseTotal">฿0</strong>
-            </article>
-            <article class="stat-card balance">
-              <span>คงเหลือ</span>
-              <strong id="balanceTotal">฿0</strong>
-            </article>
-            <article class="stat-card tasks">
-              <span>งานค้าง</span>
-              <strong id="pendingTasks">0</strong>
+            <article class="dash-stat-v6 balance">
+              <span>คงเหลือเดือนนี้</span>
+              <strong id="dashMonthBalance">฿0</strong>
+              <small id="dashMonthSpend">รายจ่าย ฿0</small>
             </article>
           </div>
 
-          <div class="panel-card dashboard-chart-card">
-            <div class="section-head"><h3>กราฟรายจ่าย 7 วันล่าสุด</h3><span id="topCategoryText" class="mini-badge">ยังไม่มีข้อมูล</span></div>
-            <canvas id="expenseChart" height="170" aria-label="Expense chart"></canvas>
-          </div>
-          <div class="insight-grid">
-            <article class="mini-stat"><span>งานเลยกำหนด</span><strong id="overdueTasks">0</strong></article>
-            <article class="mini-stat"><span>รอดู</span><strong id="watchPending">0</strong></article>
-            <article class="mini-stat"><span>โน้ตทั้งหมด</span><strong id="noteCount">0</strong></article>
+          <div class="dash-section-card money-pulse-card">
+            <div class="dash-section-head">
+              <div>
+                <p class="eyebrow">Money Pulse</p>
+                <h3>รายจ่าย 7 วันล่าสุด</h3>
+              </div>
+              <span id="dashWeekSpend" class="dash-pill">฿0</span>
+            </div>
+            <canvas id="expenseChart" height="150" aria-label="Expense chart"></canvas>
           </div>
 
-          <div class="section-head">
-            <h3>งานวันนี้</h3>
-            <button class="mini-btn" data-nav="tasks" type="button">ดูทั้งหมด</button>
+          <div class="dash-section-card">
+            <div class="dash-section-head">
+              <div>
+                <p class="eyebrow">Today Focus</p>
+                <h3>งานวันนี้</h3>
+              </div>
+              <button class="mini-btn" data-nav="tasks" type="button">เปิดงาน</button>
+            </div>
+            <div id="todayTasks" class="dash-list empty-box">ยังไม่มีงานวันนี้</div>
           </div>
-          <div id="todayTasks" class="list-stack empty-box">ยังไม่มีงานวันนี้</div>
 
-          <div class="section-head">
-            <h3>โน้ต/ลิงก์ล่าสุด</h3>
-            <button class="mini-btn" data-nav="notes" type="button">ดูทั้งหมด</button>
+          <div class="dash-section-card">
+            <div class="dash-section-head">
+              <div>
+                <p class="eyebrow">Watch Next</p>
+                <h3>ดูต่อ / รอดู</h3>
+              </div>
+              <button class="mini-btn" data-nav="watch" type="button">เปิดคลัง</button>
+            </div>
+            <div id="dashboardWatchPreview" class="dash-list empty-box">ยังไม่มีรายการรอดู</div>
           </div>
-          <div id="recentNotes" class="list-stack empty-box">ยังไม่มีโน้ต</div>
+
+          <div class="dash-section-card">
+            <div class="dash-section-head">
+              <div>
+                <p class="eyebrow">Quick Notes</p>
+                <h3>โน้ตล่าสุด</h3>
+              </div>
+              <button class="mini-btn" data-nav="notes" type="button">เปิดโน้ต</button>
+            </div>
+            <div id="recentNotes" class="dash-list empty-box">ยังไม่มีโน้ต</div>
+          </div>
         </section>
 
         <section id="moneyPage" class="page">

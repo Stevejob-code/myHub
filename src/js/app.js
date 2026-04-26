@@ -159,23 +159,66 @@ function renderProfile() {
 
 function renderDashboard() {
   const now = new Date();
-  $('todayText').textContent = now.toLocaleDateString('th-TH', { weekday: 'long', day: 'numeric', month: 'short' });
+  const today = todayISO();
+  safeSetText('todayText', now.toLocaleDateString('th-TH', { weekday: 'long', day: 'numeric', month: 'short' }));
+  safeSetText('dashHeroDate', now.toLocaleDateString('th-TH', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' }));
+
   const month = now.getMonth();
   const year = now.getFullYear();
+  const txDate = (tx) => toDateValue(tx.date) || toDateValue(tx.createdAt) || now;
   const thisMonth = state.transactions.filter((tx) => {
-    const d = tx.date?.toDate ? tx.date.toDate() : new Date(tx.date || tx.createdAt?.toDate?.() || Date.now());
+    const d = txDate(tx);
     return d.getMonth() === month && d.getFullYear() === year;
   });
   const income = thisMonth.filter((x) => x.type === 'income').reduce((sum, x) => sum + Number(x.amount || 0), 0);
   const expense = thisMonth.filter((x) => x.type === 'expense').reduce((sum, x) => sum + Number(x.amount || 0), 0);
-  $('incomeTotal').textContent = baht.format(income);
-  $('expenseTotal').textContent = baht.format(expense);
-  $('balanceTotal').textContent = baht.format(income - expense);
-  $('pendingTasks').textContent = state.tasks.filter((t) => !t.done).length;
+  const todaySpend = state.transactions.filter((tx) => tx.type === 'expense' && txDate(tx).toISOString().slice(0, 10) === today).reduce((sum, tx) => sum + Number(tx.amount || 0), 0);
 
-  const todays = state.tasks.filter((t) => !t.done && t.dueDate === todayISO()).slice(0, 3);
-  renderList($('todayTasks'), todays, renderTaskItem, 'ยังไม่มีงานวันนี้');
-  renderList($('recentNotes'), state.notes.slice(0, 3), renderNoteItem, 'ยังไม่มีโน้ต');
+  const pending = state.tasks.filter((t) => !t.done).length;
+  const done = state.tasks.filter((t) => t.done).length;
+  const focusScore = state.tasks.length ? Math.round((done / state.tasks.length) * 100) : 0;
+  safeSetText('dashTodaySpend', baht.format(todaySpend));
+  safeSetText('dashMonthBalance', baht.format(income - expense));
+  safeSetText('dashMonthSpend', `รายจ่าย ${baht.format(expense)}`);
+  safeSetText('dashPendingTasks', pending);
+  safeSetText('dashFocusScore', `${focusScore}%`);
+
+  const monthCats = {};
+  thisMonth.filter((x) => x.type === 'expense').forEach((tx) => {
+    const cat = tx.category || 'อื่น ๆ';
+    monthCats[cat] = (monthCats[cat] || 0) + Number(tx.amount || 0);
+  });
+  const topCat = Object.entries(monthCats).sort((a,b)=>b[1]-a[1])[0];
+  safeSetText('dashTopCategory', topCat ? `หมวดสูงสุด: ${topCat[0]}` : 'ยังไม่มีหมวดสูงสุด');
+
+  const todays = state.tasks.filter((t) => !t.done && t.dueDate === today).slice(0, 4);
+  const watchPreview = state.watchlist.filter((w) => w.status === 'กำลังดู' || w.status === 'อยากดู').slice(0, 4);
+  renderList($('todayTasks'), todays, renderDashboardTaskItem, '<div class="dash-empty">วันนี้ยังโล่งอยู่ กด + เพื่อเพิ่มงาน</div>');
+  renderList($('dashboardWatchPreview'), watchPreview, renderDashboardWatchItem, '<div class="dash-empty">ยังไม่มีรายการดูต่อ</div>');
+  renderList($('recentNotes'), state.notes.slice(0, 3), renderDashboardNoteItem, '<div class="dash-empty">ยังไม่มีโน้ตล่าสุด</div>');
+}
+
+function renderDashboardTaskItem(task) {
+  const due = task.dueDate === todayISO() ? 'วันนี้' : (task.dueDate || 'ไม่กำหนดวัน');
+  return `<article class="dash-mini-item task ${task.priority === 'important' ? 'important' : ''}">
+    <span class="dash-mini-icon">${task.priority === 'important' ? '🔥' : '✓'}</span>
+    <div><strong>${escapeHtml(task.title || 'ไม่มีชื่อ')}</strong><small>${escapeHtml(due)}</small></div>
+  </article>`;
+}
+
+function renderDashboardWatchItem(item) {
+  const poster = item.poster ? `<img src="${escapeAttr(item.poster)}" alt="" loading="lazy" />` : `<span>${escapeHtml((item.title || '?').charAt(0))}</span>`;
+  return `<article class="dash-mini-item watch">
+    <div class="dash-watch-poster">${poster}</div>
+    <div><strong>${escapeHtml(item.title || 'ไม่มีชื่อ')}</strong><small>${escapeHtml(item.status || 'อยากดู')} · ${escapeHtml(item.platform || item.type || '')}</small></div>
+  </article>`;
+}
+
+function renderDashboardNoteItem(note) {
+  return `<article class="dash-mini-item note">
+    <span class="dash-mini-icon">✎</span>
+    <div><strong>${escapeHtml(note.title || 'ไม่มีหัวข้อ')}</strong><small>${escapeHtml(note.body || note.url || 'แตะเปิดในหน้าโน้ต')}</small></div>
+  </article>`;
 }
 
 function renderList(el, items, itemRenderer, emptyText) {
@@ -746,7 +789,7 @@ function safeSetText(id,value){const el=$(id);if(el)el.textContent=value;}
 function toDateValue(raw){if(!raw)return null;if(raw.toDate)return raw.toDate();const d=new Date(raw);return Number.isNaN(d.getTime())?null:d;}
 function renderV3Dashboard(){const today=todayISO();safeSetText('overdueTasks',state.tasks.filter(t=>!t.done&&t.dueDate&&t.dueDate<today).length);safeSetText('watchPending',state.watchlist.filter(w=>w.status!=='ดูจบแล้ว').length);safeSetText('noteCount',state.notes.length);safeSetText('profileTxCount',state.transactions.length);safeSetText('profileTaskCount',state.tasks.length);safeSetText('profileWatchCount',state.watchlist.length);safeSetText('profileNoteCount',state.notes.length);renderExpenseChart();}
 const previousRenderDashboardV3=renderDashboard;renderDashboard=function(){previousRenderDashboardV3();renderV3Dashboard();};
-function renderExpenseChart(){const canvas=$('expenseChart');if(!canvas)return;const ctx=canvas.getContext('2d');const rect=canvas.getBoundingClientRect();const dpr=window.devicePixelRatio||1;const width=rect.width||340;const height=170;canvas.width=Math.floor(width*dpr);canvas.height=Math.floor(height*dpr);ctx.setTransform(dpr,0,0,dpr,0,0);ctx.clearRect(0,0,width,height);const days=Array.from({length:7},(_,i)=>{const d=new Date();d.setDate(d.getDate()-(6-i));return{iso:d.toISOString().slice(0,10),label:d.toLocaleDateString('th-TH',{day:'numeric'}),total:0};});const catTotals={};state.transactions.filter(x=>x.type==='expense').forEach(tx=>{const d=toDateValue(tx.date)||toDateValue(tx.createdAt)||new Date();const iso=d.toISOString().slice(0,10);const day=days.find(v=>v.iso===iso);if(day)day.total+=Number(tx.amount||0);const cat=tx.category||'อื่น ๆ';catTotals[cat]=(catTotals[cat]||0)+Number(tx.amount||0);});const topCat=Object.entries(catTotals).sort((a,b)=>b[1]-a[1])[0];safeSetText('topCategoryText',topCat?`ใช้เยอะสุด: ${topCat[0]}`:'ยังไม่มีข้อมูล');const max=Math.max(...days.map(d=>d.total),1);const gap=10;const barW=(width-gap*8)/7;const baseY=136;ctx.font='12px Noto Sans Thai, sans-serif';days.forEach((d,i)=>{const x=gap+i*(barW+gap);const h=Math.max(6,(d.total/max)*92);ctx.fillStyle='rgba(79,70,229,.18)';roundRect(ctx,x,baseY-92,barW,92,8);ctx.fill();ctx.fillStyle=d.total?'rgba(79,70,229,.92)':'rgba(148,163,184,.30)';roundRect(ctx,x,baseY-h,barW,h,8);ctx.fill();ctx.fillStyle='rgba(107,114,128,.95)';ctx.textAlign='center';ctx.fillText(d.label,x+barW/2,158);});}
+function renderExpenseChart(){const canvas=$('expenseChart');if(!canvas)return;const ctx=canvas.getContext('2d');const rect=canvas.getBoundingClientRect();const dpr=window.devicePixelRatio||1;const width=rect.width||340;const height=170;canvas.width=Math.floor(width*dpr);canvas.height=Math.floor(height*dpr);ctx.setTransform(dpr,0,0,dpr,0,0);ctx.clearRect(0,0,width,height);const days=Array.from({length:7},(_,i)=>{const d=new Date();d.setDate(d.getDate()-(6-i));return{iso:d.toISOString().slice(0,10),label:d.toLocaleDateString('th-TH',{day:'numeric'}),total:0};});const catTotals={};state.transactions.filter(x=>x.type==='expense').forEach(tx=>{const d=toDateValue(tx.date)||toDateValue(tx.createdAt)||new Date();const iso=d.toISOString().slice(0,10);const day=days.find(v=>v.iso===iso);if(day)day.total+=Number(tx.amount||0);const cat=tx.category||'อื่น ๆ';catTotals[cat]=(catTotals[cat]||0)+Number(tx.amount||0);});const topCat=Object.entries(catTotals).sort((a,b)=>b[1]-a[1])[0];safeSetText('dashTopCategory',topCat?`หมวดสูงสุด: ${topCat[0]}`:'ยังไม่มีหมวดสูงสุด');safeSetText('dashWeekSpend',baht.format(days.reduce((s,d)=>s+d.total,0)));const max=Math.max(...days.map(d=>d.total),1);const gap=10;const barW=(width-gap*8)/7;const baseY=136;ctx.font='12px Noto Sans Thai, sans-serif';days.forEach((d,i)=>{const x=gap+i*(barW+gap);const h=Math.max(6,(d.total/max)*92);ctx.fillStyle='rgba(79,70,229,.18)';roundRect(ctx,x,baseY-92,barW,92,8);ctx.fill();ctx.fillStyle=d.total?'rgba(79,70,229,.92)':'rgba(148,163,184,.30)';roundRect(ctx,x,baseY-h,barW,h,8);ctx.fill();ctx.fillStyle='rgba(107,114,128,.95)';ctx.textAlign='center';ctx.fillText(d.label,x+barW/2,158);});}
 function roundRect(ctx,x,y,w,h,r){ctx.beginPath();ctx.moveTo(x+r,y);ctx.arcTo(x+w,y,x+w,y+h,r);ctx.arcTo(x+w,y+h,x,y+h,r);ctx.arcTo(x,y+h,x,y,r);ctx.arcTo(x,y,x+w,y,r);ctx.closePath();}
 function setTheme(theme){document.body.classList.toggle('light-mode',theme==='light');localStorage.setItem('myhub-theme',theme);const btn=$('themeToggleBtn');if(btn)btn.textContent=theme==='light'?'โหมดมืด':'โหมดสว่าง';}
 setTheme(localStorage.getItem('myhub-theme')||'dark');$('themeToggleBtn')?.addEventListener('click',()=>setTheme(document.body.classList.contains('light-mode')?'dark':'light'));window.addEventListener('resize',()=>renderExpenseChart());if('serviceWorker'in navigator){window.addEventListener('load',()=>navigator.serviceWorker.register('./sw.js').catch(()=>{}));}window.addEventListener('beforeinstallprompt',(event)=>{event.preventDefault();deferredInstallPrompt=event;$('installAppBtn')?.classList.remove('hidden');});$('installAppBtn')?.addEventListener('click',async()=>{if(!deferredInstallPrompt)return toast('ติดตั้งได้จากเมนูของเบราว์เซอร์');deferredInstallPrompt.prompt();await deferredInstallPrompt.userChoice;deferredInstallPrompt=null;$('installAppBtn')?.classList.add('hidden');});
