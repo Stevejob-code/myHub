@@ -257,8 +257,23 @@
                 <button type="button" class="task-option-chip" data-task-due="tomorrow">พรุ่งนี้</button>
                 <button type="button" class="task-option-chip priority" data-task-priority="important">🔥 สำคัญ</button>
               </div>
+              <div class="task-date-reminder-panel">
+                <label class="task-mini-field"><span>กำหนดวัน</span><input id="taskDueDatePicker" type="date" /></label>
+                <label class="task-mini-field"><span>เวลา</span><input id="taskDueTime" type="time" /></label>
+                <label class="task-mini-field"><span>แจ้งเตือน</span><select id="taskReminder"><option value="none">ไม่เตือน</option><option value="0">ตรงเวลา</option><option value="10">ก่อน 10 นาที</option><option value="30">ก่อน 30 นาที</option><option value="60">ก่อน 1 ชั่วโมง</option></select></label>
+              </div>
+              <button id="enableReminderBtn" class="task-reminder-permission" type="button">🔔 เปิดแจ้งเตือนงาน</button>
               <button class="primary-btn task-add-main" type="submit">＋ เพิ่มงาน</button>
             </form>
+          </div>
+
+          <div class="task-calendar-card">
+            <div class="task-section-title">
+              <h3>📅 ปฏิทินงาน</h3>
+              <span id="taskSelectedDateLabel" class="count-pill">วันนี้</span>
+            </div>
+            <div id="taskWeekCalendar" class="task-week-calendar"></div>
+            <div id="taskSelectedDateList" class="task-selected-date-list empty-box">เลือกวันเพื่อดูงาน</div>
           </div>
 
           <div class="task-section-block">

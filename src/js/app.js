@@ -1373,6 +1373,10 @@ $('editForm')?.addEventListener('submit', async (event)=>{
   await updateDoc(userDoc('tasks', editing.id), {
     title: $('editTaskTitle').value.trim(),
     dueDate: $('editTaskDue').value,
+    dueTime: $('editTaskDueTime')?.value || '',
+    reminderMinutes: $('editTaskReminder')?.value || 'none',
+    reminderAt: getReminderAt($('editTaskDue').value, $('editTaskDueTime')?.value || '', $('editTaskReminder')?.value || 'none'),
+    reminderNotified: false,
     priority: $('editTaskPriority').value,
     subtasks: normalizeSubtasks(editTaskSubtasks),
     updatedAt: serverTimestamp()
@@ -1548,3 +1552,237 @@ $('toggleMoneyQuickAdd')?.addEventListener('click', () => {
 $('moneyMonthPrev')?.addEventListener('click', () => setMoneyMonthOffset((state.filters.moneyMonthOffset || 0) - 1));
 $('moneyMonthNext')?.addEventListener('click', () => setMoneyMonthOffset((state.filters.moneyMonthOffset || 0) + 1));
 window.addEventListener('appinstalled', () => $('installAppBtn')?.classList.add('hidden'));
+
+// ===== MyHub Tasks v6: Calendar + Reminder =====
+state.filters.taskCalendarDate = state.filters.taskCalendarDate || todayISO();
+
+function taskDateObj(iso) {
+  if (!iso) return null;
+  const d = new Date(`${iso}T00:00:00`);
+  return Number.isNaN(d.getTime()) ? null : d;
+}
+function taskDateTextLong(iso) {
+  const d = taskDateObj(iso);
+  if (!d) return 'ไม่กำหนดวัน';
+  if (iso === todayISO()) return 'วันนี้';
+  if (iso === addDaysISO(1)) return 'พรุ่งนี้';
+  return d.toLocaleDateString('th-TH', { weekday:'short', day:'numeric', month:'short' });
+}
+function taskFullDueText(task) {
+  const date = taskDueLabel(task);
+  return `${date}${task.dueTime ? ` · ${task.dueTime}` : ''}`;
+}
+function taskReminderText(task) {
+  const r = task.reminderMinutes;
+  if (r === undefined || r === null || r === '' || r === 'none') return '';
+  const n = Number(r);
+  if (Number.isNaN(n)) return '';
+  if (n === 0) return '🔔 เตือนตรงเวลา';
+  if (n === 60) return '🔔 ก่อน 1 ชม.';
+  return `🔔 ก่อน ${n} นาที`;
+}
+function syncTaskDateUI(iso) {
+  const value = iso || '';
+  const hidden = $('taskDue');
+  const picker = $('taskDueDatePicker');
+  if (hidden) hidden.value = value;
+  if (picker) picker.value = value;
+  document.querySelectorAll('[data-task-due]').forEach((btn)=>{
+    const mode = btn.dataset.taskDue;
+    const expected = mode === 'today' ? todayISO() : mode === 'tomorrow' ? addDaysISO(1) : '';
+    btn.classList.toggle('active', expected === value);
+  });
+}
+function setTaskCalendarDate(iso) {
+  state.filters.taskCalendarDate = iso || todayISO();
+  renderAll();
+}
+function renderTaskWeekCalendar() {
+  const box = $('taskWeekCalendar');
+  if (!box) return;
+  const days = Array.from({ length: 14 }, (_, i) => {
+    const d = new Date();
+    d.setDate(d.getDate() + i);
+    const iso = d.toISOString().slice(0,10);
+    const count = state.tasks.filter(t => !t.done && t.dueDate === iso).length;
+    return { iso, count, day: d.toLocaleDateString('th-TH', { weekday:'short' }), date: d.toLocaleDateString('th-TH', { day:'numeric' }) };
+  });
+  box.innerHTML = days.map(d => `<button type="button" class="task-day-pill ${d.iso === state.filters.taskCalendarDate ? 'active' : ''}" data-task-calendar-date="${d.iso}">
+    <span>${d.day}</span><strong>${d.date}</strong>${d.count ? `<em>${d.count}</em>` : ''}
+  </button>`).join('');
+  safeSetText('taskSelectedDateLabel', taskDateTextLong(state.filters.taskCalendarDate));
+}
+
+// date picker + reminder controls
+$('taskDueDatePicker')?.addEventListener('change', (event)=> syncTaskDateUI(event.target.value));
+document.body.addEventListener('click', (event)=>{
+  const day = event.target.closest('[data-task-calendar-date]');
+  if (day) { event.preventDefault(); setTaskCalendarDate(day.dataset.taskCalendarDate); return; }
+});
+// keep old Today/Tomorrow chips and custom date picker in sync
+setTimeout(()=>{
+  document.querySelectorAll('[data-task-due]').forEach(btn=>btn.addEventListener('click',()=>{
+    const mode = btn.dataset.taskDue;
+    const value = mode === 'today' ? todayISO() : mode === 'tomorrow' ? addDaysISO(1) : '';
+    setTimeout(()=>syncTaskDateUI(value), 0);
+  }));
+},0);
+$('enableReminderBtn')?.addEventListener('click', async ()=>{
+  if (!('Notification' in window)) return toast('เบราว์เซอร์นี้ยังไม่รองรับแจ้งเตือน');
+  const res = await Notification.requestPermission();
+  toast(res === 'granted' ? 'เปิดแจ้งเตือนแล้ว' : 'ยังไม่ได้อนุญาตแจ้งเตือน');
+});
+
+function getReminderAt(dueDate, dueTime, reminderMinutes) {
+  if (!dueDate || !dueTime || reminderMinutes === 'none' || reminderMinutes === '' || reminderMinutes === undefined || reminderMinutes === null) return '';
+  const date = new Date(`${dueDate}T${dueTime}:00`);
+  if (Number.isNaN(date.getTime())) return '';
+  date.setMinutes(date.getMinutes() - Number(reminderMinutes || 0));
+  return date.toISOString();
+}
+
+// Override add task submit so time/reminder is saved and duplicate legacy submit is blocked.
+$('taskForm')?.addEventListener('submit', async (event)=>{
+  event.preventDefault();
+  event.stopImmediatePropagation();
+  const title = ($('taskTitle')?.value || '').trim();
+  if (!title) return;
+  if (!currentUser) return toast('กรุณาเข้าสู่ระบบก่อน');
+  const dueDate = $('taskDueDatePicker')?.value || $('taskDue')?.value || '';
+  const dueTime = $('taskDueTime')?.value || '';
+  const reminderMinutes = $('taskReminder')?.value || 'none';
+  if (reminderMinutes !== 'none' && (!dueDate || !dueTime)) {
+    return toast('ตั้งแจ้งเตือนต้องเลือกวันและเวลา');
+  }
+  if (reminderMinutes !== 'none' && 'Notification' in window && Notification.permission === 'default') {
+    await Notification.requestPermission();
+  }
+  await addDoc(userCol('tasks'), {
+    title,
+    dueDate,
+    dueTime,
+    reminderMinutes,
+    reminderAt: getReminderAt(dueDate, dueTime, reminderMinutes),
+    reminderNotified: false,
+    priority: $('taskPriority')?.value || 'normal',
+    subtasks: normalizeSubtasks(taskDraftSubtasks),
+    done: false,
+    order: Date.now(),
+    createdAt: serverTimestamp(),
+    updatedAt: serverTimestamp()
+  });
+  $('taskForm')?.reset();
+  taskDraftSubtasks = [];
+  renderTaskDraftSubtasks();
+  syncTaskDateUI('');
+  if ($('taskPriority')) $('taskPriority').value = 'normal';
+  if ($('taskReminder')) $('taskReminder').value = 'none';
+  document.querySelectorAll('[data-task-priority]').forEach(b=>b.classList.remove('active'));
+  toast('เพิ่มงานแล้ว');
+}, true);
+
+// Override task cards with time + reminder chips.
+renderTaskItem = function(task){
+  const done = Boolean(task.done);
+  const overdue = taskIsOverdue(task);
+  const important = task.priority === 'important';
+  const open = state.openSwipeTaskId === task.id;
+  const subs = normalizeSubtasks(task.subtasks);
+  const doneSubs = subs.filter((s)=>s.done).length;
+  const pct = subs.length ? Math.round((doneSubs / subs.length) * 100) : 0;
+  const reminder = taskReminderText(task);
+  return `<article class="task-card-premium task-swipe-card ${open ? 'swipe-open' : ''} ${done ? 'done' : ''} ${important ? 'priority-important' : ''} ${overdue ? 'overdue' : ''}" data-task-card="${task.id}" draggable="true">
+    <div class="task-swipe-actions" aria-hidden="${open ? 'false' : 'true'}">
+      <button type="button" class="swipe-action edit" data-edit="tasks" data-id="${task.id}">✎<span>แก้ไข</span></button>
+      <button type="button" class="swipe-action delete" data-delete="tasks" data-id="${task.id}">🗑<span>ลบ</span></button>
+    </div>
+    <div class="task-card-surface" data-task-swipe-surface data-task-id="${task.id}">
+      <div class="task-card-main">
+        <button class="drag-handle" type="button" aria-label="ลากเพื่อจัดลำดับ">☰</button>
+        <div class="task-content-block">
+          <div class="task-card-title">${escapeHtml(task.title)}</div>
+          <div class="task-meta-row">
+            <span class="task-chip ${overdue ? 'overdue' : done ? 'done' : ''}">📅 ${escapeHtml(taskFullDueText(task))}</span>
+            ${important ? '<span class="task-chip priority">🔥 สำคัญ</span>' : ''}
+            ${reminder ? `<span class="task-chip reminder">${escapeHtml(reminder)}</span>` : ''}
+            ${subs.length ? `<span class="task-chip subtask-progress">▦ ${doneSubs}/${subs.length}</span>` : ''}
+          </div>
+          ${subs.length ? `<div class="task-subtask-panel">
+            <div class="subtask-progress-head"><span class="subtask-progress-title">งานย่อย</span><span class="subtask-progress-count">${pct}%</span></div>
+            <div class="subtask-progress-track"><div class="subtask-progress-fill" style="width:${pct}%"></div></div>
+            <div class="subtask-check-list">
+              ${subs.map((sub,i)=>`<button type="button" class="subtask-check-item ${sub.done ? 'done' : ''}" data-subtask-toggle="${task.id}" data-subtask-index="${i}"><span class="subtask-checkbox">✓</span><span class="subtask-check-text">${escapeHtml(sub.title)}</span></button>`).join('')}
+            </div>
+          </div>` : ''}
+        </div>
+        <button class="task-check-btn ${done ? 'done' : ''}" data-done="tasks" data-id="${task.id}" data-value="${!done}" aria-label="ทำงานให้เสร็จ">${done ? '↺' : '✓ เสร็จ'}</button>
+      </div>
+    </div>
+  </article>`;
+};
+
+// Override renderAll to include calendar selected day list.
+const renderAllBeforeTasksV6Calendar = renderAll;
+renderAll = function(){
+  renderAllBeforeTasksV6Calendar();
+  renderTaskWeekCalendar();
+  const selected = state.filters.taskCalendarDate || todayISO();
+  const selectedTasks = [...state.tasks]
+    .filter(t => !t.done && t.dueDate === selected)
+    .sort((a,b)=> String(a.dueTime || '99:99').localeCompare(String(b.dueTime || '99:99')) || String(a.title || '').localeCompare(String(b.title || '')));
+  if ($('taskSelectedDateList')) renderList($('taskSelectedDateList'), selectedTasks, renderTaskItem, `<div class="task-empty-hint">ไม่มีงานในวันที่ ${escapeHtml(taskDateTextLong(selected))}</div>`);
+};
+
+// Reminder checker: works while the web app/PWA is open.
+async function checkTaskReminders(){
+  if (!currentUser || !('Notification' in window) || Notification.permission !== 'granted') return;
+  const now = Date.now();
+  const due = state.tasks.filter(t => !t.done && t.reminderAt && !t.reminderNotified && new Date(t.reminderAt).getTime() <= now);
+  for (const task of due) {
+    try {
+      new Notification('MyHub เตือนงาน', {
+        body: `${task.title}${task.dueTime ? ` · ${task.dueTime}` : ''}`,
+        icon: './icons/icon-192.svg',
+        badge: './icons/icon-192.svg'
+      });
+      await updateDoc(userDoc('tasks', task.id), { reminderNotified: true, updatedAt: serverTimestamp() });
+    } catch (e) { console.warn('Reminder failed', e); }
+  }
+}
+setInterval(checkTaskReminders, 30000);
+document.addEventListener('visibilitychange', ()=>{ if (!document.hidden) checkTaskReminders(); });
+setTimeout(()=>{ syncTaskDateUI(''); renderAll(); checkTaskReminders(); }, 300);
+
+// Task edit modal v6: add time/reminder fields.
+const openEditModalBeforeTasksV6 = openEditModal;
+openEditModal = function(col, id){
+  if (col !== 'tasks') return openEditModalBeforeTasksV6(col, id);
+  const item = findItem(col, id);
+  if (!item) return toast('ไม่พบข้อมูล');
+  editing = { col, id };
+  $('editTitle').textContent = 'แก้ไขงาน';
+  editTaskSubtasks = normalizeSubtasks(item.subtasks);
+  const f = $('editForm');
+  f.innerHTML = `<input id="editTaskTitle" value="${escapeAttr(item.title)}" required />
+    <input id="editTaskDue" type="date" value="${escapeAttr(item.dueDate || '')}" />
+    <div class="task-date-reminder-panel edit-task-reminder-panel">
+      <label class="task-mini-field"><span>เวลา</span><input id="editTaskDueTime" type="time" value="${escapeAttr(item.dueTime || '')}" /></label>
+      <label class="task-mini-field"><span>แจ้งเตือน</span><select id="editTaskReminder"><option value="none">ไม่เตือน</option><option value="0">ตรงเวลา</option><option value="10">ก่อน 10 นาที</option><option value="30">ก่อน 30 นาที</option><option value="60">ก่อน 1 ชั่วโมง</option></select></label>
+    </div>
+    <select id="editTaskPriority"><option value="normal">ปกติ</option><option value="important">สำคัญ</option></select>
+    <div class="edit-subtask-builder">
+      <label class="subtask-composer-label">งานย่อย</label>
+      <div class="subtask-input-row">
+        <input id="editSubtaskInput" class="edit-subtask-input" placeholder="เพิ่มงานย่อย" />
+        <button id="addEditSubtaskBtn" type="button" class="edit-subtask-add-btn">＋</button>
+      </div>
+      <div id="editSubtaskList" class="edit-subtask-list"></div>
+    </div>
+    <button class="primary-btn" type="submit">บันทึกการแก้ไข</button>`;
+  $('editTaskPriority').value = item.priority || 'normal';
+  if ($('editTaskReminder')) $('editTaskReminder').value = item.reminderMinutes ?? 'none';
+  $('addEditSubtaskBtn')?.addEventListener('click', addEditSubtask);
+  $('editSubtaskInput')?.addEventListener('keydown', (event)=>{ if (event.key === 'Enter') { event.preventDefault(); addEditSubtask(); } });
+  renderEditSubtasks();
+  $('editModal').classList.remove('hidden');
+};
