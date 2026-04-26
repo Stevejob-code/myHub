@@ -316,15 +316,23 @@ $('transactionForm').addEventListener('submit', async (event) => {
 
 $('taskForm').addEventListener('submit', async (event) => {
   event.preventDefault();
+  const subtasks = (($('taskSubtasks')?.value || '')
+    .split(',')
+    .map((x) => x.trim())
+    .filter(Boolean)
+    .map((title) => ({ title, done: false })));
   await addDoc(userCol('tasks'), {
     title: $('taskTitle').value.trim(),
     dueDate: $('taskDue').value,
     priority: $('taskPriority').value,
+    subtasks,
+    order: Date.now(),
     done: false,
     createdAt: serverTimestamp(),
     updatedAt: serverTimestamp()
   });
   event.target.reset();
+  $('taskPriority').value = 'normal';
   toast('เพิ่มงานแล้ว');
 });
 
@@ -1058,3 +1066,165 @@ document.addEventListener('click', (event) => {
   }
 });
 
+
+
+// ===== MyHub v5.6: Drag order + Swipe right done + Subtasks =====
+function taskSubtasks(task){ return Array.isArray(task.subtasks) ? task.subtasks : []; }
+function subtaskProgress(task){
+  const subs = taskSubtasks(task);
+  if (!subs.length) return '';
+  const done = subs.filter(s=>s.done).length;
+  return `${done}/${subs.length}`;
+}
+async function toggleSubtask(taskId, index){
+  const task = state.tasks.find(t=>t.id === taskId);
+  if (!task) return;
+  const subtasks = taskSubtasks(task).map((s,i)=> i === Number(index) ? { ...s, done: !s.done } : s);
+  await updateDoc(userDoc('tasks', taskId), { subtasks, updatedAt: serverTimestamp() });
+}
+
+renderTaskItem = function(task){
+  const done = Boolean(task.done);
+  const overdue = taskIsOverdue(task);
+  const important = task.priority === 'important';
+  const open = state.openSwipeTaskId === task.id;
+  const subs = taskSubtasks(task);
+  const progress = subtaskProgress(task);
+  return `<article class="task-card-premium task-swipe-card ${open ? 'swipe-open' : ''} ${done ? 'done' : ''} ${important ? 'priority-important' : ''} ${overdue ? 'overdue' : ''}" data-task-card="${task.id}" draggable="true">
+    <div class="task-swipe-actions" aria-hidden="${open ? 'false' : 'true'}">
+      <button type="button" class="swipe-action edit" data-edit="tasks" data-id="${task.id}">✎<span>แก้ไข</span></button>
+      <button type="button" class="swipe-action delete" data-delete="tasks" data-id="${task.id}">🗑<span>ลบ</span></button>
+    </div>
+    <div class="task-card-surface" data-task-swipe-surface data-task-id="${task.id}">
+      <div class="task-card-main">
+        <button class="drag-handle" type="button" aria-label="ลากเพื่อจัดลำดับ">☰</button>
+        <div class="task-content-block">
+          <div class="task-card-title">${escapeHtml(task.title)}</div>
+          <div class="task-meta-row">
+            <span class="task-chip ${overdue ? 'overdue' : done ? 'done' : ''}">📅 ${taskDueLabel(task)}</span>
+            ${important ? '<span class="task-chip priority">🔥 สำคัญ</span>' : ''}
+            ${progress ? `<span class="task-chip subtask-progress">▦ ${progress}</span>` : ''}
+          </div>
+          ${subs.length ? `<div class="subtask-list">${subs.map((sub,i)=>`<button type="button" class="subtask-pill ${sub.done ? 'done' : ''}" data-subtask-toggle="${task.id}" data-subtask-index="${i}">${sub.done ? '✓' : '○'} ${escapeHtml(sub.title)}</button>`).join('')}</div>` : ''}
+        </div>
+        <button class="task-check-btn ${done ? 'done' : ''}" data-done="tasks" data-id="${task.id}" data-value="${!done}" aria-label="ทำงานให้เสร็จ">${done ? '↺' : '✓ เสร็จ'}</button>
+      </div>
+    </div>
+  </article>`;
+};
+
+renderAll = function(){
+  renderDashboard();
+  const txs = state.transactions.filter((x) => state.filters.tx === 'all' || x.type === state.filters.tx);
+  const term = (state.filters.taskSearch || '').toLowerCase();
+  const view = state.filters.taskView || state.filters.task || 'all';
+  const sortedTasks = [...state.tasks].sort((a,b)=>{
+    if (a.done !== b.done) return a.done ? 1 : -1;
+    const ao = typeof a.order === 'number' ? a.order : (a.createdAt?.seconds || 0) * 1000;
+    const bo = typeof b.order === 'number' ? b.order : (b.createdAt?.seconds || 0) * 1000;
+    if (ao !== bo) return ao - bo;
+    if (taskIsToday(a) !== taskIsToday(b)) return taskIsToday(a) ? -1 : 1;
+    if ((a.priority === 'important') !== (b.priority === 'important')) return a.priority === 'important' ? -1 : 1;
+    return String(a.dueDate || '9999').localeCompare(String(b.dueDate || '9999'));
+  });
+  const todayTasks = sortedTasks.filter(t=>!t.done && taskIsToday(t));
+  let tasks = sortedTasks.filter(t => {
+    const st = taskSubtasks(t).map(s=>s.title).join(' ');
+    const matchesTerm = !term || `${t.title || ''} ${t.priority || ''} ${t.dueDate || ''} ${st}`.toLowerCase().includes(term);
+    if (!matchesTerm) return false;
+    if (view === 'today') return !t.done && taskIsToday(t);
+    if (view === 'upcoming') return !t.done && t.dueDate && t.dueDate >= todayISO();
+    if (view === 'done') return t.done;
+    if (view === 'pending') return !t.done;
+    return true;
+  });
+  const watchTerm = (state.filters.watch || '').toLowerCase();
+  const watches = state.watchlist.filter((w) => (!watchTerm || `${w.title} ${w.type || ''} ${w.status || ''} ${w.genre || ''} ${w.platform || ''} ${w.year || ''}`.toLowerCase().includes(watchTerm)) && (state.filters.watchStatus === 'all' || w.status === state.filters.watchStatus));
+  const noteTerm = (state.filters.note || '').toLowerCase();
+  const notes = state.notes.filter((n) => !noteTerm || `${n.title} ${n.body} ${n.url}`.toLowerCase().includes(noteTerm));
+  renderList($('transactionList'), txs, renderTransactionItem, 'ยังไม่มีรายการ');
+  if ($('taskTodayList')) renderList($('taskTodayList'), todayTasks, renderTaskItem, '<div class="task-empty-hint">วันนี้ยังไม่มีงาน กด “วันนี้” ตอนเพิ่มงานเพื่อให้มาอยู่ตรงนี้</div>');
+  renderList($('taskList'), tasks, renderTaskItem, '<div class="task-empty-hint">ยังไม่มีงานในมุมมองนี้</div>');
+  renderList($('watchList'), watches, renderWatchItem, 'ยังไม่มีรายการ');
+  hydrateMissingWatchPosters(watches);
+  renderList($('noteList'), notes, renderNoteItem, 'ยังไม่มีโน้ต');
+  updateTaskStats();
+};
+
+document.body.addEventListener('click', async (event)=>{
+  const sub = event.target.closest('[data-subtask-toggle]');
+  if (sub) {
+    event.preventDefault();
+    await toggleSubtask(sub.dataset.subtaskToggle, sub.dataset.subtaskIndex);
+  }
+});
+
+// Swipe right on task surface = mark done quickly
+const OLD_TASK_SWIPE_MAX = TASK_SWIPE_MAX;
+let rightSwipeTask = null;
+document.addEventListener('pointerdown', (event)=>{
+  const surface = event.target.closest('[data-task-swipe-surface]');
+  if (!surface || event.target.closest('button, input, select, textarea, a, .subtask-pill')) return;
+  rightSwipeTask = { id: surface.dataset.taskId, startX: event.clientX, startY: event.clientY, surface, moved:false };
+}, true);
+document.addEventListener('pointermove', (event)=>{
+  if (!rightSwipeTask) return;
+  const dx = event.clientX - rightSwipeTask.startX;
+  const dy = event.clientY - rightSwipeTask.startY;
+  if (Math.abs(dy) > Math.abs(dx) && Math.abs(dy) > 12) { rightSwipeTask = null; return; }
+  if (dx > 10) {
+    rightSwipeTask.moved = true;
+    const next = Math.min(92, dx);
+    rightSwipeTask.surface.style.transition = 'none';
+    rightSwipeTask.surface.style.transform = `translateX(${next}px)`;
+  }
+}, { passive:false, capture:true });
+document.addEventListener('pointerup', async ()=>{
+  if (!rightSwipeTask) return;
+  const surface = rightSwipeTask.surface;
+  const task = state.tasks.find(t=>t.id === rightSwipeTask.id);
+  const transform = surface.style.transform || '';
+  const px = Number((transform.match(/translateX\(([-0-9.]+)px\)/)||[])[1] || 0);
+  surface.style.transition = '';
+  surface.style.transform = '';
+  if (px > 64 && task && !task.done) {
+    await updateDoc(userDoc('tasks', task.id), { done: true, updatedAt: serverTimestamp() });
+    toast('ทำงานเสร็จแล้ว');
+  }
+  rightSwipeTask = null;
+}, true);
+
+let draggedTaskId = null;
+document.addEventListener('dragstart', (event)=>{
+  const card = event.target.closest('.task-swipe-card');
+  if (!card) return;
+  draggedTaskId = card.dataset.taskCard;
+  card.classList.add('dragging');
+  event.dataTransfer.effectAllowed = 'move';
+});
+document.addEventListener('dragend', (event)=>{
+  event.target.closest('.task-swipe-card')?.classList.remove('dragging');
+  document.querySelectorAll('.task-swipe-card.drag-over').forEach(el=>el.classList.remove('drag-over'));
+});
+document.addEventListener('dragover', (event)=>{
+  const card = event.target.closest('.task-swipe-card');
+  if (!card || !draggedTaskId || card.dataset.taskCard === draggedTaskId) return;
+  event.preventDefault();
+  document.querySelectorAll('.task-swipe-card.drag-over').forEach(el=>el.classList.remove('drag-over'));
+  card.classList.add('drag-over');
+});
+document.addEventListener('drop', async (event)=>{
+  const target = event.target.closest('.task-swipe-card');
+  if (!target || !draggedTaskId || target.dataset.taskCard === draggedTaskId) return;
+  event.preventDefault();
+  const ids = [...document.querySelectorAll('#taskList .task-swipe-card')].map(el=>el.dataset.taskCard);
+  const from = ids.indexOf(draggedTaskId);
+  const to = ids.indexOf(target.dataset.taskCard);
+  if (from < 0 || to < 0) return;
+  ids.splice(to, 0, ids.splice(from,1)[0]);
+  await Promise.all(ids.map((id, index)=> updateDoc(userDoc('tasks', id), { order: index + 1, updatedAt: serverTimestamp() })));
+  draggedTaskId = null;
+  toast('จัดลำดับงานแล้ว');
+});
+
+renderAll();
