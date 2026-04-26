@@ -743,6 +743,31 @@ function roundRect(ctx,x,y,w,h,r){ctx.beginPath();ctx.moveTo(x+r,y);ctx.arcTo(x+
 function setTheme(theme){document.body.classList.toggle('light-mode',theme==='light');localStorage.setItem('myhub-theme',theme);const btn=$('themeToggleBtn');if(btn)btn.textContent=theme==='light'?'โหมดมืด':'โหมดสว่าง';}
 setTheme(localStorage.getItem('myhub-theme')||'dark');$('themeToggleBtn')?.addEventListener('click',()=>setTheme(document.body.classList.contains('light-mode')?'dark':'light'));window.addEventListener('resize',()=>renderExpenseChart());if('serviceWorker'in navigator){window.addEventListener('load',()=>navigator.serviceWorker.register('./sw.js').catch(()=>{}));}window.addEventListener('beforeinstallprompt',(event)=>{event.preventDefault();deferredInstallPrompt=event;$('installAppBtn')?.classList.remove('hidden');});$('installAppBtn')?.addEventListener('click',async()=>{if(!deferredInstallPrompt)return toast('ติดตั้งได้จากเมนูของเบราว์เซอร์');deferredInstallPrompt.prompt();await deferredInstallPrompt.userChoice;deferredInstallPrompt=null;$('installAppBtn')?.classList.add('hidden');});
 
+// Close movie action menus when tapping elsewhere or opening another menu
+function closeMovieMenus(except = null) {
+  document.querySelectorAll('.movie-more-menu[open]').forEach(menu => {
+    if (menu !== except) menu.removeAttribute('open');
+  });
+}
+
+document.addEventListener('click', (event) => {
+  const menu = event.target.closest('.movie-more-menu');
+  if (!menu) closeMovieMenus();
+});
+
+document.addEventListener('toggle', (event) => {
+  const menu = event.target;
+  if (menu?.classList?.contains('movie-more-menu') && menu.open) {
+    closeMovieMenus(menu);
+  }
+}, true);
+
+document.addEventListener('click', (event) => {
+  if (event.target.closest('[data-edit="watchlist"], [data-delete="watchlist"], [data-watch-set-status]')) {
+    closeMovieMenus();
+  }
+});
+
 // Init watchlist platform and status controls
 renderAppDropdown('watchPlatformDropdown', 'Netflix', 'platform');
 renderAppDropdown('watchTypeDropdown', 'หนัง', 'type');
