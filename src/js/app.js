@@ -8,7 +8,8 @@ import {
   sendPasswordResetEmail,
   updateProfile,
   GoogleAuthProvider,
-  signInWithPopup
+  signInWithPopup,
+  signInWithRedirect
 } from 'https://www.gstatic.com/firebasejs/10.12.4/firebase-auth.js';
 import {
   getFirestore,
@@ -353,13 +354,43 @@ $('authForm').addEventListener('submit', async (event) => {
 
 
 
+function getFirebaseAuthDomainHelp() {
+  const host = window.location.hostname || 'localhost';
+  return `Google Login ยังไม่ได้อนุญาตโดเมนนี้ (${host}) ใน Firebase Console`;
+}
+
+function handleGoogleLoginError(error) {
+  console.warn('Google login failed:', error);
+  const code = error?.code || '';
+  if (code === 'auth/unauthorized-domain') {
+    toast(getFirebaseAuthDomainHelp());
+    return;
+  }
+  if (code === 'auth/popup-blocked' || code === 'auth/cancelled-popup-request') {
+    toast('กำลังเปลี่ยนเป็นโหมด Redirect...');
+    signInWithRedirect(auth, googleProvider).catch((redirectError) => toast(redirectError.message));
+    return;
+  }
+  if (code === 'auth/popup-closed-by-user') {
+    toast('ยกเลิกการเข้าสู่ระบบ Google');
+    return;
+  }
+  toast(error?.message || 'เข้าสู่ระบบด้วย Google ไม่สำเร็จ');
+}
+
 $('googleLoginBtn')?.addEventListener('click', async () => {
+  const btn = $('googleLoginBtn');
   try {
+    btn.disabled = true;
+    btn.classList.add('loading');
     const cred = await signInWithPopup(auth, googleProvider);
     await ensureUserProfile(cred.user, cred.user.displayName || 'MyHub User');
     toast('เข้าสู่ระบบด้วย Google แล้ว');
   } catch (error) {
-    toast(error.message);
+    handleGoogleLoginError(error);
+  } finally {
+    btn.disabled = false;
+    btn.classList.remove('loading');
   }
 });
 

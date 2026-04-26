@@ -1420,3 +1420,8 @@ html, body { overflow-x: hidden !important; }
   .trust-box { align-items:flex-start; }
 }
 @media (min-width: 720px) { .app-shell { max-width: none; } .main-app { max-width: 560px; } }
+
+/* Google login production states */
+.google-btn:disabled{opacity:.65;cursor:not-allowed;filter:saturate(.75)}
+.google-btn.loading::after{content:"";width:18px;height:18px;margin-left:10px;border:2px solid rgba(255,255,255,.35);border-top-color:#fff;border-radius:999px;display:inline-block;vertical-align:middle;animation:spin .8s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
