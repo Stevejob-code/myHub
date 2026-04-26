@@ -510,6 +510,32 @@ async function resolvePosterUrl(title, year = '', manualUrl = '') {
     }
   } catch (err) { console.warn('IMDb poster fetch failed', err); }
 
+  // Fallback ฟรีแบบไม่ต้องใช้ API Key: Wikipedia page image
+  try {
+    const wikiQueries = [cleanTitle, `${cleanTitle} film`, `${cleanTitle} movie`, `${cleanTitle} television series`];
+    for (const q of wikiQueries) {
+      const params = new URLSearchParams({
+        action: 'query',
+        generator: 'search',
+        gsrsearch: q,
+        gsrlimit: '5',
+        prop: 'pageimages|pageterms',
+        piprop: 'thumbnail',
+        pithumbsize: '600',
+        redirects: '1',
+        format: 'json',
+        origin: '*'
+      });
+      const res = await fetch(`https://en.wikipedia.org/w/api.php?${params}`);
+      if (res.ok) {
+        const data = await res.json();
+        const pages = Object.values(data.query?.pages || {});
+        const hit = pages.find(x => x?.thumbnail?.source);
+        if (hit?.thumbnail?.source) return hit.thumbnail.source;
+      }
+    }
+  } catch (err) { console.warn('Wikipedia poster fetch failed', err); }
+
   return '';
 }
 
@@ -550,10 +576,9 @@ renderTaskItem = function(task) {
 
 renderWatchItem = function(item) {
   const platformData = getPlatform(item.platform);
-  const poster = item.poster ? `<img src="${escapeAttr(item.poster)}" alt="${escapeAttr(item.title)}" loading="lazy" />` : `<div class="poster-fallback">▶</div>`;
+  const hasPoster = Boolean(item.poster);
+  const poster = hasPoster ? `<img src="${escapeAttr(item.poster)}" alt="${escapeAttr(item.title)}" loading="lazy" onerror="this.closest('.movie-poster').classList.add('poster-error');this.remove();" />` : `<div class="poster-fallback" data-auto-poster="${escapeAttr(item.id)}" data-title="${escapeAttr(item.title)}"><span>▶</span><small>กำลังหาโปสเตอร์</small></div>`;
   const rating = item.rating ? `<span class="movie-rating">★ ${escapeHtml(item.rating)}/10</span>` : '';
-  const year = item.year ? `<span>${escapeHtml(item.year)}</span>` : '';
-  const genre = item.genre ? `<span>${escapeHtml(item.genre)}</span>` : '';
   const status = item.status || 'อยากดู';
   return `<article class="movie-card upgraded-movie-card">
     <div class="movie-poster">${poster}</div>
@@ -561,10 +586,14 @@ renderWatchItem = function(item) {
       <div class="movie-head-row"><h3>${escapeHtml(item.title)}</h3>${rating}</div>
       <div class="movie-badges"><span class="type-badge">${escapeHtml(item.type || 'หนัง')}</span><span class="status-badge status-${statusClass(status)}">${escapeHtml(status)}</span></div>
       <div class="platform-line">${platformIconHTML(platformData)}<span>${escapeHtml(platformData.label)}</span></div>
+      <div class="movie-status-actions">
+        <button class="pill-status-btn ${status === 'อยากดู' ? 'active' : ''}" data-watch-set-status="อยากดู" data-id="${item.id}">อยากดู</button>
+        <button class="pill-status-btn ${status === 'กำลังดู' ? 'active' : ''}" data-watch-set-status="กำลังดู" data-id="${item.id}">กำลังดู</button>
+        <button class="pill-status-btn done ${status === 'ดูจบแล้ว' ? 'active' : ''}" data-watch-set-status="ดูจบแล้ว" data-id="${item.id}">ดูจบแล้ว</button>
+      </div>
       <div class="item-actions movie-actions">
-        ${status !== 'กำลังดู' ? `<button class="icon-btn status-action" data-watch-set-status="กำลังดู" data-id="${item.id}">กำลังดู</button>` : ''}
-        ${status !== 'ดูจบแล้ว' ? `<button class="icon-btn status-action done-action" data-watch-set-status="ดูจบแล้ว" data-id="${item.id}">ดูจบแล้ว</button>` : `<button class="icon-btn status-action" data-watch-set-status="อยากดู" data-id="${item.id}">อยากดู</button>`}
-        <button class="icon-btn edit-btn" data-edit="watchlist" data-id="${item.id}">แก้</button><button class="icon-btn delete" data-delete="watchlist" data-id="${item.id}">ลบ</button>
+        <button class="icon-btn edit-btn" data-edit="watchlist" data-id="${item.id}">แก้ไข</button>
+        <button class="icon-btn delete" data-delete="watchlist" data-id="${item.id}">ลบ</button>
       </div>
     </div>
   </article>`;
@@ -590,7 +619,25 @@ renderAll = function() {
   renderList($('transactionList'), txs, renderTransactionItem, 'ยังไม่มีรายการ');
   renderList($('taskList'), tasks, renderTaskItem, 'ยังไม่มีงาน');
   renderList($('watchList'), watches, renderWatchItem, 'ยังไม่มีรายการ');
+  hydrateMissingWatchPosters(watches);
   renderList($('noteList'), notes, renderNoteItem, 'ยังไม่มีโน้ต');
+};
+
+const posterHydrationQueue = new Set();
+async function hydrateMissingWatchPosters(items = []) {
+  if (!state.user) return;
+  const missing = items.filter(x => x && x.id && x.title && !x.poster && !posterHydrationQueue.has(x.id)).slice(0, 3);
+  for (const item of missing) {
+    posterHydrationQueue.add(item.id);
+    try {
+      const poster = await resolvePosterUrl(item.title, '', '');
+      if (poster) await updateDoc(userDoc('watchlist', item.id), { poster, updatedAt: serverTimestamp() });
+    } catch (err) {
+      console.warn('Auto poster update failed', err);
+    } finally {
+      window.setTimeout(() => posterHydrationQueue.delete(item.id), 60000);
+    }
+  }
 };
 
 function openQuickSheet() { $('quickSheet').classList.remove('hidden'); }
