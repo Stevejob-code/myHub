@@ -354,6 +354,8 @@ $('transactionForm').addEventListener('submit', async (event) => {
     createdAt: serverTimestamp()
   });
   event.target.reset();
+  $('moneyAddCard')?.classList.add('collapsed');
+  $('moneyAddCard')?.scrollIntoView({ behavior: 'smooth', block: 'center' });
   toast('บันทึกรายการแล้ว');
 });
 
