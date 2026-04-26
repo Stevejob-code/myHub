@@ -30,7 +30,14 @@ const db = getFirestore(app);
 
 const $ = (id) => document.getElementById(id);
 const baht = new Intl.NumberFormat('th-TH', { style: 'currency', currency: 'THB', maximumFractionDigits: 0 });
-const todayISO = () => new Date().toISOString().slice(0, 10);
+function localISODate(date = new Date()) {
+  const d = new Date(date.getFullYear(), date.getMonth(), date.getDate());
+  const y = d.getFullYear();
+  const m = String(d.getMonth() + 1).padStart(2, '0');
+  const day = String(d.getDate()).padStart(2, '0');
+  return `${y}-${m}-${day}`;
+}
+const todayISO = () => localISODate(new Date());
 
 const state = {
   mode: 'login',
@@ -172,7 +179,7 @@ function renderDashboard() {
   });
   const income = thisMonth.filter((x) => x.type === 'income').reduce((sum, x) => sum + Number(x.amount || 0), 0);
   const expense = thisMonth.filter((x) => x.type === 'expense').reduce((sum, x) => sum + Number(x.amount || 0), 0);
-  const todaySpend = state.transactions.filter((tx) => tx.type === 'expense' && txDate(tx).toISOString().slice(0, 10) === today).reduce((sum, tx) => sum + Number(tx.amount || 0), 0);
+  const todaySpend = state.transactions.filter((tx) => tx.type === 'expense' && localISODate(txDate(tx)) === today).reduce((sum, tx) => sum + Number(tx.amount || 0), 0);
 
   const pending = state.tasks.filter((t) => !t.done).length;
   const done = state.tasks.filter((t) => t.done).length;
@@ -791,7 +798,7 @@ function safeSetText(id,value){const el=$(id);if(el)el.textContent=value;}
 function toDateValue(raw){if(!raw)return null;if(raw.toDate)return raw.toDate();const d=new Date(raw);return Number.isNaN(d.getTime())?null:d;}
 function renderV3Dashboard(){const today=todayISO();safeSetText('overdueTasks',state.tasks.filter(t=>!t.done&&t.dueDate&&t.dueDate<today).length);safeSetText('watchPending',state.watchlist.filter(w=>w.status!=='ดูจบแล้ว').length);safeSetText('noteCount',state.notes.length);safeSetText('profileTxCount',state.transactions.length);safeSetText('profileTaskCount',state.tasks.length);safeSetText('profileWatchCount',state.watchlist.length);safeSetText('profileNoteCount',state.notes.length);renderExpenseChart();}
 const previousRenderDashboardV3=renderDashboard;renderDashboard=function(){previousRenderDashboardV3();renderV3Dashboard();};
-function renderExpenseChart(){const canvas=$('expenseChart');if(!canvas)return;const ctx=canvas.getContext('2d');const rect=canvas.getBoundingClientRect();const dpr=window.devicePixelRatio||1;const width=rect.width||340;const height=170;canvas.width=Math.floor(width*dpr);canvas.height=Math.floor(height*dpr);ctx.setTransform(dpr,0,0,dpr,0,0);ctx.clearRect(0,0,width,height);const days=Array.from({length:7},(_,i)=>{const d=new Date();d.setDate(d.getDate()-(6-i));return{iso:d.toISOString().slice(0,10),label:d.toLocaleDateString('th-TH',{day:'numeric'}),total:0};});const catTotals={};state.transactions.filter(x=>x.type==='expense').forEach(tx=>{const d=toDateValue(tx.date)||toDateValue(tx.createdAt)||new Date();const iso=d.toISOString().slice(0,10);const day=days.find(v=>v.iso===iso);if(day)day.total+=Number(tx.amount||0);const cat=tx.category||'อื่น ๆ';catTotals[cat]=(catTotals[cat]||0)+Number(tx.amount||0);});const topCat=Object.entries(catTotals).sort((a,b)=>b[1]-a[1])[0];safeSetText('dashTopCategory',topCat?`หมวดสูงสุด: ${topCat[0]}`:'ยังไม่มีหมวดสูงสุด');safeSetText('dashWeekSpend',baht.format(days.reduce((s,d)=>s+d.total,0)));const max=Math.max(...days.map(d=>d.total),1);const gap=10;const barW=(width-gap*8)/7;const baseY=136;ctx.font='12px Noto Sans Thai, sans-serif';days.forEach((d,i)=>{const x=gap+i*(barW+gap);const h=Math.max(6,(d.total/max)*92);ctx.fillStyle='rgba(79,70,229,.18)';roundRect(ctx,x,baseY-92,barW,92,8);ctx.fill();ctx.fillStyle=d.total?'rgba(79,70,229,.92)':'rgba(148,163,184,.30)';roundRect(ctx,x,baseY-h,barW,h,8);ctx.fill();ctx.fillStyle='rgba(107,114,128,.95)';ctx.textAlign='center';ctx.fillText(d.label,x+barW/2,158);});}
+function renderExpenseChart(){const canvas=$('expenseChart');if(!canvas)return;const ctx=canvas.getContext('2d');const rect=canvas.getBoundingClientRect();const dpr=window.devicePixelRatio||1;const width=rect.width||340;const height=170;canvas.width=Math.floor(width*dpr);canvas.height=Math.floor(height*dpr);ctx.setTransform(dpr,0,0,dpr,0,0);ctx.clearRect(0,0,width,height);const days=Array.from({length:7},(_,i)=>{const d=new Date();d.setDate(d.getDate()-(6-i));return{iso:localISODate(d),label:d.toLocaleDateString('th-TH',{day:'numeric'}),total:0};});const catTotals={};state.transactions.filter(x=>x.type==='expense').forEach(tx=>{const d=toDateValue(tx.date)||toDateValue(tx.createdAt)||new Date();const iso=localISODate(d);const day=days.find(v=>v.iso===iso);if(day)day.total+=Number(tx.amount||0);const cat=tx.category||'อื่น ๆ';catTotals[cat]=(catTotals[cat]||0)+Number(tx.amount||0);});const topCat=Object.entries(catTotals).sort((a,b)=>b[1]-a[1])[0];safeSetText('dashTopCategory',topCat?`หมวดสูงสุด: ${topCat[0]}`:'ยังไม่มีหมวดสูงสุด');safeSetText('dashWeekSpend',baht.format(days.reduce((s,d)=>s+d.total,0)));const max=Math.max(...days.map(d=>d.total),1);const gap=10;const barW=(width-gap*8)/7;const baseY=136;ctx.font='12px Noto Sans Thai, sans-serif';days.forEach((d,i)=>{const x=gap+i*(barW+gap);const h=Math.max(6,(d.total/max)*92);ctx.fillStyle='rgba(79,70,229,.18)';roundRect(ctx,x,baseY-92,barW,92,8);ctx.fill();ctx.fillStyle=d.total?'rgba(79,70,229,.92)':'rgba(148,163,184,.30)';roundRect(ctx,x,baseY-h,barW,h,8);ctx.fill();ctx.fillStyle='rgba(107,114,128,.95)';ctx.textAlign='center';ctx.fillText(d.label,x+barW/2,158);});}
 function roundRect(ctx,x,y,w,h,r){ctx.beginPath();ctx.moveTo(x+r,y);ctx.arcTo(x+w,y,x+w,y+h,r);ctx.arcTo(x+w,y+h,x,y+h,r);ctx.arcTo(x,y+h,x,y,r);ctx.arcTo(x,y,x+w,y,r);ctx.closePath();}
 function setTheme(theme){
   const isLight = theme === 'light';
@@ -965,7 +972,7 @@ document.addEventListener('click', (event)=>{
 function addDaysISO(days){
   const d = new Date();
   d.setDate(d.getDate() + days);
-  return d.toISOString().slice(0,10);
+  return localISODate(d);
 }
 function initTaskQuickOptions(){
   document.querySelectorAll('[data-task-due]').forEach(btn=>btn.addEventListener('click',()=>{
@@ -1469,7 +1476,7 @@ function renderMoneyPremium(){
   const month = monthTxs();
   const income = month.filter(x=>x.type==='income').reduce((s,x)=>s+Number(x.amount||0),0);
   const expense = month.filter(x=>x.type==='expense').reduce((s,x)=>s+Number(x.amount||0),0);
-  const todayExpense = state.transactions.filter(x=>x.type==='expense' && txDateValue(x).toISOString().slice(0,10)===today).reduce((s,x)=>s+Number(x.amount||0),0);
+  const todayExpense = state.transactions.filter(x=>x.type==='expense' && localISODate(txDateValue(x))===today).reduce((s,x)=>s+Number(x.amount||0),0);
   const net = income - expense;
   safeSetText('moneyNetBalance', baht.format(net));
   safeSetText('moneyMonthIncome', baht.format(income));
@@ -1477,8 +1484,8 @@ function renderMoneyPremium(){
   safeSetText('moneyTodayExpense', baht.format(todayExpense));
   safeSetText('moneySaveRate', income ? `${Math.max(0, Math.round((net / income) * 100))}%` : '0%');
 
-  const days = Array.from({length:7}, (_,i)=>{ const d = new Date(); d.setDate(d.getDate()-(6-i)); return { iso:d.toISOString().slice(0,10), label:d.toLocaleDateString('th-TH', { day:'numeric' }), total:0 }; });
-  state.transactions.filter(x=>x.type==='expense').forEach(tx=>{ const iso = txDateValue(tx).toISOString().slice(0,10); const day = days.find(d=>d.iso===iso); if (day) day.total += Number(tx.amount||0); });
+  const days = Array.from({length:7}, (_,i)=>{ const d = new Date(); d.setDate(d.getDate()-(6-i)); return { iso:localISODate(d), label:d.toLocaleDateString('th-TH', { day:'numeric' }), total:0 }; });
+  state.transactions.filter(x=>x.type==='expense').forEach(tx=>{ const iso = localISODate(txDateValue(tx)); const day = days.find(d=>d.iso===iso); if (day) day.total += Number(tx.amount||0); });
   const weekTotal = days.reduce((s,d)=>s+d.total,0);
   safeSetText('moneyWeekTotal', baht.format(weekTotal));
   const maxDay = Math.max(1, ...days.map(d=>d.total));
@@ -1603,7 +1610,7 @@ function renderTaskWeekCalendar() {
   const days = Array.from({ length: 14 }, (_, i) => {
     const d = new Date();
     d.setDate(d.getDate() + i);
-    const iso = d.toISOString().slice(0,10);
+    const iso = localISODate(d);
     const count = state.tasks.filter(t => !t.done && t.dueDate === iso).length;
     return { iso, count, day: d.toLocaleDateString('th-TH', { weekday:'short' }), date: d.toLocaleDateString('th-TH', { day:'numeric' }) };
   });
