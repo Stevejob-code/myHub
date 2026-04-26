@@ -779,3 +779,101 @@ document.querySelectorAll('[data-watch-status]').forEach(btn => btn.addEventList
   state.filters.watchStatus = btn.dataset.watchStatus;
   renderAll();
 }));
+
+// ===== MyHub v5: Premium Tasks UI =====
+state.filters.taskView = state.filters.taskView || 'all';
+state.filters.taskSearch = state.filters.taskSearch || '';
+
+function taskIsToday(task){ return task?.dueDate === todayISO(); }
+function taskIsOverdue(task){ return Boolean(task?.dueDate && task.dueDate < todayISO() && !task.done); }
+function taskDueLabel(task){
+  if (!task.dueDate) return 'ไม่กำหนดวัน';
+  if (task.dueDate === todayISO()) return 'วันนี้';
+  if (taskIsOverdue(task)) return 'เลยกำหนด';
+  try { return new Date(task.dueDate + 'T00:00:00').toLocaleDateString('th-TH', { day:'numeric', month:'short' }); } catch { return task.dueDate; }
+}
+function taskPriorityText(task){ return task.priority === 'important' ? 'สำคัญ' : 'ปกติ'; }
+function updateTaskStats(){
+  const total = state.tasks.length;
+  const done = state.tasks.filter(t=>t.done).length;
+  safeSetText('taskDonePercent', total ? `${Math.round(done/total*100)}%` : '0%');
+  safeSetText('taskTodayCount', state.tasks.filter(t=>!t.done && taskIsToday(t)).length);
+  safeSetText('taskPendingCount', state.tasks.filter(t=>!t.done).length);
+  safeSetText('taskOverdueCount', state.tasks.filter(taskIsOverdue).length);
+  safeSetText('taskImportantCount', state.tasks.filter(t=>!t.done && t.priority === 'important').length);
+}
+
+renderTaskItem = function(task){
+  const done = Boolean(task.done);
+  const overdue = taskIsOverdue(task);
+  const important = task.priority === 'important';
+  return `<article class="task-card-premium ${done ? 'done' : ''} ${important ? 'priority-important' : ''} ${overdue ? 'overdue' : ''}">
+    <div class="task-card-main">
+      <button class="task-check-btn ${done ? 'done' : ''}" data-done="tasks" data-id="${task.id}" data-value="${!done}" aria-label="เปลี่ยนสถานะงาน">${done ? '✓' : ''}</button>
+      <div>
+        <div class="task-card-title">${escapeHtml(task.title)}</div>
+        <div class="task-meta-row">
+          <span class="task-chip ${overdue ? 'overdue' : done ? 'done' : ''}">📅 ${taskDueLabel(task)}</span>
+          <span class="task-chip ${important ? 'priority' : 'normal'}">${important ? '🔥' : '⚪'} ${taskPriorityText(task)}</span>
+          <span class="task-chip ${done ? 'done' : 'normal'}">${done ? 'เสร็จแล้ว' : 'ยังไม่เสร็จ'}</span>
+        </div>
+      </div>
+      <details class="task-menu">
+        <summary>⋯</summary>
+        <div class="task-menu-panel">
+          <button type="button" data-edit="tasks" data-id="${task.id}">✎ แก้ไข</button>
+          <button type="button" class="delete" data-delete="tasks" data-id="${task.id}">🗑 ลบ</button>
+        </div>
+      </details>
+    </div>
+  </article>`;
+};
+
+const renderAllBeforeTasksV5 = renderAll;
+renderAll = function(){
+  renderDashboard();
+  const txs = state.transactions.filter((x) => state.filters.tx === 'all' || x.type === state.filters.tx);
+  const term = (state.filters.taskSearch || '').toLowerCase();
+  const view = state.filters.taskView || state.filters.task || 'all';
+  let tasks = state.tasks.filter(t => {
+    const matchesTerm = !term || `${t.title || ''} ${t.priority || ''} ${t.dueDate || ''}`.toLowerCase().includes(term);
+    if (!matchesTerm) return false;
+    if (view === 'today') return !t.done && taskIsToday(t);
+    if (view === 'upcoming') return !t.done && t.dueDate && t.dueDate >= todayISO();
+    if (view === 'done') return t.done;
+    if (view === 'pending') return !t.done;
+    return true;
+  }).sort((a,b)=>{
+    if (a.done !== b.done) return a.done ? 1 : -1;
+    if ((a.priority === 'important') !== (b.priority === 'important')) return a.priority === 'important' ? -1 : 1;
+    return String(a.dueDate || '9999').localeCompare(String(b.dueDate || '9999'));
+  });
+  const watchTerm = (state.filters.watch || '').toLowerCase();
+  const watches = state.watchlist.filter((w) => (!watchTerm || `${w.title} ${w.type || ''} ${w.status || ''} ${w.genre || ''} ${w.platform || ''} ${w.year || ''}`.toLowerCase().includes(watchTerm)) && (state.filters.watchStatus === 'all' || w.status === state.filters.watchStatus));
+  const noteTerm = (state.filters.note || '').toLowerCase();
+  const notes = state.notes.filter((n) => !noteTerm || `${n.title} ${n.body} ${n.url}`.toLowerCase().includes(noteTerm));
+  renderList($('transactionList'), txs, renderTransactionItem, 'ยังไม่มีรายการ');
+  renderList($('taskList'), tasks, renderTaskItem, '<div class="task-empty-hint">ยังไม่มีงานในมุมมองนี้</div>');
+  renderList($('watchList'), watches, renderWatchItem, 'ยังไม่มีรายการ');
+  hydrateMissingWatchPosters(watches);
+  renderList($('noteList'), notes, renderNoteItem, 'ยังไม่มีโน้ต');
+  updateTaskStats();
+};
+
+$('taskSearch')?.addEventListener('input', (event)=>{ state.filters.taskSearch = event.target.value; renderAll(); });
+document.querySelectorAll('[data-task-view]').forEach(btn => btn.addEventListener('click', ()=>{
+  state.filters.taskView = btn.dataset.taskView;
+  document.querySelectorAll('[data-task-view]').forEach(b=>b.classList.toggle('active', b===btn));
+  renderAll();
+}));
+
+// keep old filter buttons compatible if any remain
+document.querySelectorAll('[data-task-filter]').forEach(btn => btn.addEventListener('click', ()=>{
+  state.filters.taskView = btn.dataset.taskFilter;
+  renderAll();
+}));
+
+function closeTaskMenus(except=null){ document.querySelectorAll('.task-menu[open]').forEach(menu=>{ if(menu!==except) menu.removeAttribute('open'); }); }
+document.addEventListener('click', (event)=>{ const menu=event.target.closest('.task-menu'); if(!menu) closeTaskMenus(); });
+document.addEventListener('toggle', (event)=>{ const menu=event.target; if(menu?.classList?.contains('task-menu') && menu.open) closeTaskMenus(menu); }, true);
+document.addEventListener('click', (event)=>{ if(event.target.closest('[data-edit="tasks"], [data-delete="tasks"], [data-done="tasks"]')) closeTaskMenus(); });
