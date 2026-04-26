@@ -242,3 +242,15 @@ body.light-mode{color:#111827;background:linear-gradient(145deg,#eef2ff 0%,#f8fa
 .poster-fallback small{font-size:9px;line-height:1.15;opacity:.85;padding:0 8px}
 .movie-poster.poster-error::after{content:'ไม่พบโปสเตอร์';font-size:10px;text-align:center;padding:0 8px;opacity:.85}
 @media(max-width:420px){.movie-status-actions{gap:6px}.pill-status-btn{padding:7px 10px;font-size:11px}.movie-actions .icon-btn{padding:8px 12px;font-size:12px}}
+
+/* v4.6 Watchlist polish */
+.two-status-actions{display:flex;gap:10px;margin-top:14px;align-items:center;flex-wrap:wrap}
+.two-status-actions .pill-status-btn{min-width:112px;padding:10px 14px;border-radius:999px;background:#f1f5f9;border:1px solid rgba(148,163,184,.28);color:#243041;box-shadow:0 8px 18px rgba(15,23,42,.06);font-weight:900;letter-spacing:-.01em}
+.two-status-actions .pill-status-btn.active{background:linear-gradient(135deg,#4f46e5,#7c3aed);color:#fff;border-color:transparent;box-shadow:0 14px 28px rgba(99,102,241,.26)}
+.two-status-actions .pill-status-btn.done.active{background:linear-gradient(135deg,#10b981,#22c55e);box-shadow:0 14px 28px rgba(16,185,129,.22)}
+.pretty-actions{display:flex;gap:12px!important;margin-top:16px!important;align-items:center;flex-wrap:wrap}
+.pretty-actions .icon-btn{height:38px;min-width:82px;border-radius:999px!important;display:inline-flex;align-items:center;justify-content:center;gap:6px;padding:0 15px!important;border:1px solid transparent!important;font-size:13px!important;font-weight:950!important;box-shadow:0 12px 22px rgba(15,23,42,.08)!important}
+.pretty-actions .edit-btn{background:linear-gradient(135deg,#e0f7ff,#dff6ff)!important;color:#0369a1!important;border-color:rgba(14,165,233,.16)!important}
+.pretty-actions .delete{background:linear-gradient(135deg,#ffe4e6,#ffecef)!important;color:#e11d48!important;border-color:rgba(244,63,94,.14)!important}
+.movie-card.upgraded-movie-card{gap:18px}
+@media(max-width:420px){.two-status-actions{gap:8px}.two-status-actions .pill-status-btn{min-width:auto;padding:9px 11px;font-size:12px}.pretty-actions{gap:10px!important}.pretty-actions .icon-btn{height:36px;min-width:74px;padding:0 12px!important}}

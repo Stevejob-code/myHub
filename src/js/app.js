@@ -399,6 +399,8 @@ onAuthStateChanged(auth, async (user) => {
 
 // ===== Watchlist v4.1: Platforms + Auto Poster =====
 const TMDB_API_KEY = ''; // ใส่ TMDB API Key ถ้าต้องการดึงโปสเตอร์อัตโนมัติ
+const GOOGLE_IMAGE_API_KEY = ''; // ใส่ Google Custom Search API Key ถ้าต้องการดึงโปสเตอร์จาก Google
+const GOOGLE_IMAGE_CX = ''; // ใส่ Google Programmable Search Engine CX
 const WATCH_TYPES = [
   { key: 'หนัง', label: 'หนัง', icon: '🎬' },
   { key: 'ซีรีส์', label: 'ซีรีส์', icon: '📺' },
@@ -484,7 +486,29 @@ async function resolvePosterUrl(title, year = '', manualUrl = '') {
   const cleanTitle = (title || '').trim();
   if (manualUrl || !cleanTitle) return manualUrl || '';
 
-  // ใช้ TMDB ก่อน ถ้าใส่ API Key ไว้ใน app.js
+  // Google Custom Search: ดึงรูปโปสเตอร์จาก Google แบบถูกทาง (ต้องใส่ API Key + CX)
+  if (GOOGLE_IMAGE_API_KEY && GOOGLE_IMAGE_CX) {
+    try {
+      const params = new URLSearchParams({
+        key: GOOGLE_IMAGE_API_KEY,
+        cx: GOOGLE_IMAGE_CX,
+        q: `${cleanTitle} movie poster`,
+        searchType: 'image',
+        imgType: 'photo',
+        safe: 'active',
+        num: '5'
+      });
+      const res = await fetch(`https://www.googleapis.com/customsearch/v1?${params}`);
+      if (res.ok) {
+        const data = await res.json();
+        const hit = (data.items || []).find(x => x?.link && /poster|movie|film|media|image|jpg|jpeg|png|webp/i.test(`${x.link} ${x.title || ''}`));
+        if (hit?.link) return hit.link;
+      }
+    } catch (err) { console.warn('Google poster fetch failed', err); }
+  }
+
+  // ใช้ TMDB ถ้าใส่ API Key ไว้ใน app.js
+
   if (TMDB_API_KEY) {
     try {
       const params = new URLSearchParams({ api_key: TMDB_API_KEY, query: cleanTitle, include_adult: 'false', language: 'th-TH' });
@@ -586,14 +610,13 @@ renderWatchItem = function(item) {
       <div class="movie-head-row"><h3>${escapeHtml(item.title)}</h3>${rating}</div>
       <div class="movie-badges"><span class="type-badge">${escapeHtml(item.type || 'หนัง')}</span><span class="status-badge status-${statusClass(status)}">${escapeHtml(status)}</span></div>
       <div class="platform-line">${platformIconHTML(platformData)}<span>${escapeHtml(platformData.label)}</span></div>
-      <div class="movie-status-actions">
-        <button class="pill-status-btn ${status === 'อยากดู' ? 'active' : ''}" data-watch-set-status="อยากดู" data-id="${item.id}">อยากดู</button>
-        <button class="pill-status-btn ${status === 'กำลังดู' ? 'active' : ''}" data-watch-set-status="กำลังดู" data-id="${item.id}">กำลังดู</button>
-        <button class="pill-status-btn done ${status === 'ดูจบแล้ว' ? 'active' : ''}" data-watch-set-status="ดูจบแล้ว" data-id="${item.id}">ดูจบแล้ว</button>
+      <div class="movie-status-actions two-status-actions">
+        <button class="pill-status-btn watch-btn ${status === 'กำลังดู' ? 'active' : ''}" data-watch-set-status="กำลังดู" data-id="${item.id}">▶ กำลังดู</button>
+        <button class="pill-status-btn done ${status === 'ดูจบแล้ว' ? 'active' : ''}" data-watch-set-status="ดูจบแล้ว" data-id="${item.id}">✓ ดูจบแล้ว</button>
       </div>
-      <div class="item-actions movie-actions">
-        <button class="icon-btn edit-btn" data-edit="watchlist" data-id="${item.id}">แก้ไข</button>
-        <button class="icon-btn delete" data-delete="watchlist" data-id="${item.id}">ลบ</button>
+      <div class="item-actions movie-actions pretty-actions">
+        <button class="icon-btn edit-btn" data-edit="watchlist" data-id="${item.id}">✎ แก้ไข</button>
+        <button class="icon-btn delete" data-delete="watchlist" data-id="${item.id}">🗑 ลบ</button>
       </div>
     </div>
   </article>`;
@@ -626,12 +649,13 @@ renderAll = function() {
 const posterHydrationQueue = new Set();
 async function hydrateMissingWatchPosters(items = []) {
   if (!state.user) return;
-  const missing = items.filter(x => x && x.id && x.title && !x.poster && !posterHydrationQueue.has(x.id)).slice(0, 3);
+  const shouldRefreshExisting = Boolean(GOOGLE_IMAGE_API_KEY && GOOGLE_IMAGE_CX) || Boolean(TMDB_API_KEY);
+  const missing = items.filter(x => x && x.id && x.title && (!x.poster || shouldRefreshExisting) && !posterHydrationQueue.has(x.id)).slice(0, 3);
   for (const item of missing) {
     posterHydrationQueue.add(item.id);
     try {
       const poster = await resolvePosterUrl(item.title, '', '');
-      if (poster) await updateDoc(userDoc('watchlist', item.id), { poster, updatedAt: serverTimestamp() });
+      if (poster && poster !== item.poster) await updateDoc(userDoc('watchlist', item.id), { poster, updatedAt: serverTimestamp() });
     } catch (err) {
       console.warn('Auto poster update failed', err);
     } finally {
