@@ -254,3 +254,62 @@ body.light-mode{color:#111827;background:linear-gradient(145deg,#eef2ff 0%,#f8fa
 .pretty-actions .delete{background:linear-gradient(135deg,#ffe4e6,#ffecef)!important;color:#e11d48!important;border-color:rgba(244,63,94,.14)!important}
 .movie-card.upgraded-movie-card{gap:18px}
 @media(max-width:420px){.two-status-actions{gap:8px}.two-status-actions .pill-status-btn{min-width:auto;padding:9px 11px;font-size:12px}.pretty-actions{gap:10px!important}.pretty-actions .icon-btn{height:36px;min-width:74px;padding:0 12px!important}}
+
+
+/* v4.7 Premium compact status controls */
+.two-status-actions{
+  display:inline-flex!important;
+  width:auto!important;
+  max-width:max-content!important;
+  gap:4px!important;
+  padding:4px;
+  margin-top:14px!important;
+  align-items:center;
+  flex-wrap:nowrap!important;
+  border-radius:999px;
+  background:rgba(226,232,240,.72);
+  border:1px solid rgba(148,163,184,.26);
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.7),0 12px 28px rgba(15,23,42,.07);
+}
+.two-status-actions .pill-status-btn{
+  min-width:0!important;
+  width:auto!important;
+  flex:0 0 auto!important;
+  border:0!important;
+  border-radius:999px!important;
+  padding:9px 13px!important;
+  font-size:12px!important;
+  line-height:1!important;
+  color:#334155!important;
+  background:transparent!important;
+  box-shadow:none!important;
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  gap:5px;
+  white-space:nowrap;
+}
+.two-status-actions .pill-status-btn.active{
+  color:#fff!important;
+  background:linear-gradient(135deg,#4f46e5,#7c3aed)!important;
+  box-shadow:0 10px 22px rgba(99,102,241,.28)!important;
+}
+.two-status-actions .pill-status-btn.done.active{
+  background:linear-gradient(135deg,#10b981,#22c55e)!important;
+  box-shadow:0 10px 22px rgba(16,185,129,.22)!important;
+}
+.two-status-actions .pill-status-btn:active{transform:scale(.96)}
+.pretty-actions{
+  gap:8px!important;
+  margin-top:12px!important;
+}
+.pretty-actions .icon-btn{
+  min-width:0!important;
+  height:36px!important;
+  padding:0 13px!important;
+}
+@media(max-width:420px){
+  .two-status-actions{gap:3px!important;padding:3px;margin-top:12px!important;}
+  .two-status-actions .pill-status-btn{padding:8px 11px!important;font-size:11.5px!important;}
+  .pretty-actions{gap:8px!important;}
+}
