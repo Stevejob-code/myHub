@@ -993,3 +993,39 @@ html, body { overflow-x: hidden; }
   .money-mini-card{padding:10px 7px!important;}
   .money-mini-card strong{font-size:13px!important;}
 }
+
+/* ===== MyHub v7.4 Money category mobile fix =====
+   Show every category chip clearly on real phones. */
+.money-category-chips{
+  max-height:none!important;
+  overflow:visible!important;
+  padding:2px 0 0!important;
+  margin-top:2px!important;
+}
+@media (max-width: 430px){
+  .money-category-chips{
+    display:grid!important;
+    grid-template-columns:repeat(3,minmax(0,1fr))!important;
+    gap:9px!important;
+    width:100%!important;
+  }
+  .money-category-chips button{
+    width:100%!important;
+    min-height:42px!important;
+    padding:9px 8px!important;
+    display:flex!important;
+    align-items:center!important;
+    justify-content:center!important;
+    gap:5px!important;
+    white-space:nowrap!important;
+    overflow:visible!important;
+    font-size:13px!important;
+    line-height:1.1!important;
+  }
+  .money-form-premium{gap:13px!important;}
+  .money-segment{margin-bottom:2px!important;}
+}
+@media (max-width: 370px){
+  .money-category-chips{grid-template-columns:repeat(2,minmax(0,1fr))!important;}
+  .money-category-chips button{font-size:13px!important;}
+}
