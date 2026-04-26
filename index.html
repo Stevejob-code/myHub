@@ -137,49 +137,52 @@
           <div id="transactionList" class="list-stack empty-box">ยังไม่มีรายการ</div>
         </section>
 
-        <section id="tasksPage" class="page tasks-premium-page">
-          <div class="task-hero-card">
-            <div>
-              <p class="eyebrow">Daily Planner</p>
-              <h3>งานวันนี้</h3>
-              <p class="muted">จัดลำดับงานสำคัญ กำหนดวัน และเคลียร์งานแบบรวดเร็ว</p>
-            </div>
-            <div class="task-hero-ring"><span id="taskDonePercent">0%</span><small>สำเร็จ</small></div>
-          </div>
-
-          <div class="task-stat-grid">
-            <article><span>วันนี้</span><strong id="taskTodayCount">0</strong></article>
-            <article><span>ค้าง</span><strong id="taskPendingCount">0</strong></article>
-            <article><span>เลยกำหนด</span><strong id="taskOverdueCount">0</strong></article>
-            <article><span>สำคัญ</span><strong id="taskImportantCount">0</strong></article>
-          </div>
-
-          <div class="panel-card task-add-card">
-            <div class="section-head"><h3>เพิ่มงานด่วน</h3><span class="mini-badge">v5</span></div>
-            <form id="taskForm" class="task-premium-form">
-              <input id="taskTitle" class="task-title-input" placeholder="เช่น อัปเดตเว็บ / จ่ายบิล / โทรหาลูกค้า" required />
-              <div class="task-form-row">
-                <input id="taskDue" type="date" />
-                <select id="taskPriority" class="task-priority-select">
-                  <option value="normal">⚪ ปกติ</option>
-                  <option value="important">🔥 สำคัญ</option>
-                </select>
+        <section id="tasksPage" class="page tasks-ux-page">
+          <div class="task-quick-card">
+            <div class="task-quick-head">
+              <div>
+                <p class="eyebrow">Focus Today</p>
+                <h3>วันนี้ต้องทำอะไร?</h3>
               </div>
-              <button class="primary-btn" type="submit">＋ เพิ่มงาน</button>
+              <span class="mini-badge">v5.1</span>
+            </div>
+            <form id="taskForm" class="task-ux-form">
+              <input id="taskTitle" class="task-ux-input" placeholder="พิมพ์งาน เช่น โทรหาลูกค้า / จ่ายบิล" required />
+              <input id="taskDue" type="hidden" />
+              <input id="taskPriority" type="hidden" value="normal" />
+              <div class="task-quick-options">
+                <button type="button" class="task-option-chip active" data-task-due="">ไม่กำหนดวัน</button>
+                <button type="button" class="task-option-chip" data-task-due="today">วันนี้</button>
+                <button type="button" class="task-option-chip" data-task-due="tomorrow">พรุ่งนี้</button>
+                <button type="button" class="task-option-chip priority" data-task-priority="important">🔥 สำคัญ</button>
+              </div>
+              <button class="primary-btn task-add-main" type="submit">＋ เพิ่มงาน</button>
             </form>
           </div>
 
-          <div class="task-toolbar">
-            <div class="task-view-tabs">
-              <button class="filter-chip active" data-task-view="all" type="button">ทั้งหมด</button>
-              <button class="filter-chip" data-task-view="today" type="button">วันนี้</button>
-              <button class="filter-chip" data-task-view="upcoming" type="button">ใกล้ถึง</button>
-              <button class="filter-chip" data-task-view="done" type="button">เสร็จแล้ว</button>
+          <div class="task-section-block">
+            <div class="task-section-title">
+              <h3>🔥 งานวันนี้</h3>
+              <span id="taskTodayCount" class="count-pill">0</span>
             </div>
-            <input id="taskSearch" class="task-search-input" placeholder="ค้นหางาน" />
+            <div id="taskTodayList" class="task-list-ux empty-box">ยังไม่มีงานวันนี้</div>
           </div>
 
-          <div id="taskList" class="task-list-premium empty-box">ยังไม่มีงาน</div>
+          <div class="task-section-block">
+            <div class="task-section-title">
+              <h3>รายการทั้งหมด</h3>
+            </div>
+            <div class="task-toolbar task-toolbar-ux">
+              <div class="task-view-tabs">
+                <button class="filter-chip active" data-task-view="all" type="button">ทั้งหมด</button>
+                <button class="filter-chip" data-task-view="pending" type="button">ค้าง</button>
+                <button class="filter-chip" data-task-view="upcoming" type="button">ใกล้ถึง</button>
+                <button class="filter-chip" data-task-view="done" type="button">เสร็จแล้ว</button>
+              </div>
+              <input id="taskSearch" class="task-search-input" placeholder="ค้นหางาน" />
+            </div>
+            <div id="taskList" class="task-list-ux empty-box">ยังไม่มีงาน</div>
+          </div>
         </section>
 
         <section id="watchPage" class="page">

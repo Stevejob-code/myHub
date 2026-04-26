@@ -877,3 +877,89 @@ function closeTaskMenus(except=null){ document.querySelectorAll('.task-menu[open
 document.addEventListener('click', (event)=>{ const menu=event.target.closest('.task-menu'); if(!menu) closeTaskMenus(); });
 document.addEventListener('toggle', (event)=>{ const menu=event.target; if(menu?.classList?.contains('task-menu') && menu.open) closeTaskMenus(menu); }, true);
 document.addEventListener('click', (event)=>{ if(event.target.closest('[data-edit="tasks"], [data-delete="tasks"], [data-done="tasks"]')) closeTaskMenus(); });
+
+
+// ===== MyHub v5.1: Tasks UX override =====
+function addDaysISO(days){
+  const d = new Date();
+  d.setDate(d.getDate() + days);
+  return d.toISOString().slice(0,10);
+}
+function initTaskQuickOptions(){
+  document.querySelectorAll('[data-task-due]').forEach(btn=>btn.addEventListener('click',()=>{
+    document.querySelectorAll('[data-task-due]').forEach(b=>b.classList.remove('active'));
+    btn.classList.add('active');
+    const mode = btn.dataset.taskDue;
+    const input = $('taskDue');
+    if (!input) return;
+    input.value = mode === 'today' ? todayISO() : mode === 'tomorrow' ? addDaysISO(1) : '';
+  }));
+  document.querySelectorAll('[data-task-priority]').forEach(btn=>btn.addEventListener('click',()=>{
+    btn.classList.toggle('active');
+    const input = $('taskPriority');
+    if (input) input.value = btn.classList.contains('active') ? btn.dataset.taskPriority : 'normal';
+  }));
+}
+
+renderTaskItem = function(task){
+  const done = Boolean(task.done);
+  const overdue = taskIsOverdue(task);
+  const important = task.priority === 'important';
+  return `<article class="task-card-premium ${done ? 'done' : ''} ${important ? 'priority-important' : ''} ${overdue ? 'overdue' : ''}">
+    <div class="task-card-main">
+      <div>
+        <div class="task-card-title">${escapeHtml(task.title)}</div>
+        <div class="task-meta-row">
+          <span class="task-chip ${overdue ? 'overdue' : done ? 'done' : ''}">📅 ${taskDueLabel(task)}</span>
+          ${important ? '<span class="task-chip priority">🔥 สำคัญ</span>' : ''}
+          ${done ? '<span class="task-chip done">เสร็จแล้ว</span>' : ''}
+        </div>
+      </div>
+      <button class="task-check-btn ${done ? 'done' : ''}" data-done="tasks" data-id="${task.id}" data-value="${!done}" aria-label="ทำงานให้เสร็จ">${done ? '↺' : '✓'}</button>
+      <details class="task-menu">
+        <summary>⋯</summary>
+        <div class="task-menu-panel">
+          <button type="button" data-edit="tasks" data-id="${task.id}">✎ แก้ไข</button>
+          <button type="button" class="delete" data-delete="tasks" data-id="${task.id}">🗑 ลบ</button>
+        </div>
+      </details>
+    </div>
+  </article>`;
+};
+
+const renderAllBeforeTasksV51 = renderAll;
+renderAll = function(){
+  renderDashboard();
+  const txs = state.transactions.filter((x) => state.filters.tx === 'all' || x.type === state.filters.tx);
+  const term = (state.filters.taskSearch || '').toLowerCase();
+  const view = state.filters.taskView || state.filters.task || 'all';
+  const sortedTasks = [...state.tasks].sort((a,b)=>{
+    if (a.done !== b.done) return a.done ? 1 : -1;
+    if (taskIsToday(a) !== taskIsToday(b)) return taskIsToday(a) ? -1 : 1;
+    if ((a.priority === 'important') !== (b.priority === 'important')) return a.priority === 'important' ? -1 : 1;
+    return String(a.dueDate || '9999').localeCompare(String(b.dueDate || '9999'));
+  });
+  const todayTasks = sortedTasks.filter(t=>!t.done && taskIsToday(t));
+  let tasks = sortedTasks.filter(t => {
+    const matchesTerm = !term || `${t.title || ''} ${t.priority || ''} ${t.dueDate || ''}`.toLowerCase().includes(term);
+    if (!matchesTerm) return false;
+    if (view === 'today') return !t.done && taskIsToday(t);
+    if (view === 'upcoming') return !t.done && t.dueDate && t.dueDate >= todayISO();
+    if (view === 'done') return t.done;
+    if (view === 'pending') return !t.done;
+    return true;
+  });
+  const watchTerm = (state.filters.watch || '').toLowerCase();
+  const watches = state.watchlist.filter((w) => (!watchTerm || `${w.title} ${w.type || ''} ${w.status || ''} ${w.genre || ''} ${w.platform || ''} ${w.year || ''}`.toLowerCase().includes(watchTerm)) && (state.filters.watchStatus === 'all' || w.status === state.filters.watchStatus));
+  const noteTerm = (state.filters.note || '').toLowerCase();
+  const notes = state.notes.filter((n) => !noteTerm || `${n.title} ${n.body} ${n.url}`.toLowerCase().includes(noteTerm));
+  renderList($('transactionList'), txs, renderTransactionItem, 'ยังไม่มีรายการ');
+  if ($('taskTodayList')) renderList($('taskTodayList'), todayTasks, renderTaskItem, '<div class="task-empty-hint">วันนี้ยังไม่มีงาน กด “วันนี้” ตอนเพิ่มงานเพื่อให้มาอยู่ตรงนี้</div>');
+  renderList($('taskList'), tasks, renderTaskItem, '<div class="task-empty-hint">ยังไม่มีงานในมุมมองนี้</div>');
+  renderList($('watchList'), watches, renderWatchItem, 'ยังไม่มีรายการ');
+  hydrateMissingWatchPosters(watches);
+  renderList($('noteList'), notes, renderNoteItem, 'ยังไม่มีโน้ต');
+  updateTaskStats();
+};
+
+initTaskQuickOptions();
