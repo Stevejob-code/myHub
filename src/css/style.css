@@ -509,3 +509,31 @@ body.light-mode{color:#111827;background:linear-gradient(145deg,#eef2ff 0%,#f8fa
   .task-swipe-actions{width:116px;gap:6px;padding-right:8px;}
   .swipe-action{width:52px;border-radius:20px;}
 }
+
+/* ===== MyHub v5.5: Hide swipe actions until user actually swipes ===== */
+.task-swipe-card{
+  overflow:hidden!important;
+  isolation:isolate;
+}
+.task-swipe-actions{
+  opacity:0!important;
+  visibility:hidden!important;
+  pointer-events:none!important;
+  transform:translateX(16px);
+  transition:opacity .18s ease, transform .22s cubic-bezier(.2,.8,.2,1), visibility .18s ease;
+}
+.task-swipe-card.swipe-open .task-swipe-actions,
+.task-swipe-card.swiping .task-swipe-actions{
+  opacity:1!important;
+  visibility:visible!important;
+  pointer-events:auto!important;
+  transform:translateX(0);
+}
+.task-card-surface{
+  width:100%;
+  min-height:100%;
+  box-sizing:border-box;
+}
+.task-swipe-card:not(.swipe-open):not(.swiping) .task-card-surface{
+  transform:translateX(0)!important;
+}

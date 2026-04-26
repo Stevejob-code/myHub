@@ -1003,6 +1003,11 @@ document.addEventListener('pointerdown', (event) => {
   }
   if (event.target.closest('button, input, select, textarea, a')) return;
   const card = surface.closest('.task-swipe-card');
+  if (state.openSwipeTaskId && state.openSwipeTaskId !== surface.dataset.taskId) {
+    state.openSwipeTaskId = null;
+    renderAll();
+    return;
+  }
   taskSwipe = {
     id: surface.dataset.taskId,
     surface,
@@ -1022,6 +1027,7 @@ document.addEventListener('pointermove', (event) => {
   if (!taskSwipe.dragging && Math.abs(dx) < 8 && Math.abs(dy) < 8) return;
   if (Math.abs(dy) > Math.abs(dx) && !taskSwipe.dragging) { taskSwipe = null; return; }
   taskSwipe.dragging = true;
+  taskSwipe.card?.classList.add('swiping');
   event.preventDefault();
   const base = taskSwipe.wasOpen ? -TASK_SWIPE_MAX : 0;
   const next = Math.max(-TASK_SWIPE_MAX, Math.min(0, base + dx));
@@ -1035,6 +1041,7 @@ document.addEventListener('pointerup', () => {
   const shouldOpen = taskSwipe.dx < -58;
   taskSwipe.surface.style.transition = '';
   taskSwipe.surface.style.transform = '';
+  taskSwipe.card?.classList.remove('swiping');
   state.openSwipeTaskId = shouldOpen ? taskSwipe.id : null;
   taskSwipe = null;
   renderAll();
