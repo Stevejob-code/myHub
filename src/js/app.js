@@ -873,10 +873,30 @@ document.querySelectorAll('[data-task-filter]').forEach(btn => btn.addEventListe
   renderAll();
 }));
 
-function closeTaskMenus(except=null){ document.querySelectorAll('.task-menu[open]').forEach(menu=>{ if(menu!==except) menu.removeAttribute('open'); }); }
-document.addEventListener('click', (event)=>{ const menu=event.target.closest('.task-menu'); if(!menu) closeTaskMenus(); });
-document.addEventListener('toggle', (event)=>{ const menu=event.target; if(menu?.classList?.contains('task-menu') && menu.open) closeTaskMenus(menu); }, true);
-document.addEventListener('click', (event)=>{ if(event.target.closest('[data-edit="tasks"], [data-delete="tasks"], [data-done="tasks"]')) closeTaskMenus(); });
+state.openTaskMenuId = null;
+function closeTaskMenus(){
+  if (state.openTaskMenuId) {
+    state.openTaskMenuId = null;
+    renderAll();
+  }
+}
+document.addEventListener('click', (event)=>{
+  const toggle = event.target.closest('[data-task-menu-toggle]');
+  if (toggle) {
+    event.preventDefault();
+    event.stopPropagation();
+    const id = toggle.dataset.taskMenuToggle;
+    state.openTaskMenuId = state.openTaskMenuId === id ? null : id;
+    renderAll();
+    return;
+  }
+  if (event.target.closest('.task-menu-panel-clean')) return;
+  if (event.target.closest('[data-edit="tasks"], [data-delete="tasks"], [data-done="tasks"]')) {
+    state.openTaskMenuId = null;
+    return;
+  }
+  if (state.openTaskMenuId) closeTaskMenus();
+});
 
 
 // ===== MyHub v5.1: Tasks UX override =====
@@ -905,7 +925,9 @@ renderTaskItem = function(task){
   const done = Boolean(task.done);
   const overdue = taskIsOverdue(task);
   const important = task.priority === 'important';
-  return `<article class="task-card-premium ${done ? 'done' : ''} ${important ? 'priority-important' : ''} ${overdue ? 'overdue' : ''}">
+  const menuOpen = state.openTaskMenuId === task.id;
+  return `<article class="task-card-premium ${done ? 'done' : ''} ${important ? 'priority-important' : ''} ${overdue ? 'overdue' : ''}" data-task-card="${task.id}">
+    <button class="task-menu-trigger ${menuOpen ? 'active' : ''}" type="button" data-task-menu-toggle="${task.id}" aria-label="เมนูงาน">•••</button>
     <div class="task-card-main">
       <div>
         <div class="task-card-title">${escapeHtml(task.title)}</div>
@@ -916,13 +938,10 @@ renderTaskItem = function(task){
         </div>
       </div>
       <button class="task-check-btn ${done ? 'done' : ''}" data-done="tasks" data-id="${task.id}" data-value="${!done}" aria-label="ทำงานให้เสร็จ">${done ? '↺' : '✓'}</button>
-      <details class="task-menu">
-        <summary>⋯</summary>
-        <div class="task-menu-panel">
-          <button type="button" data-edit="tasks" data-id="${task.id}">✎ แก้ไข</button>
-          <button type="button" class="delete" data-delete="tasks" data-id="${task.id}">🗑 ลบ</button>
-        </div>
-      </details>
+    </div>
+    <div class="task-menu-panel-clean ${menuOpen ? 'show' : ''}" role="menu">
+      <button type="button" data-edit="tasks" data-id="${task.id}">✎ แก้ไข</button>
+      <button type="button" class="delete" data-delete="tasks" data-id="${task.id}">🗑 ลบ</button>
     </div>
   </article>`;
 };
