@@ -6,7 +6,9 @@ import {
   signInWithEmailAndPassword,
   signOut,
   sendPasswordResetEmail,
-  updateProfile
+  updateProfile,
+  GoogleAuthProvider,
+  signInWithPopup
 } from 'https://www.gstatic.com/firebasejs/10.12.4/firebase-auth.js';
 import {
   getFirestore,
@@ -27,6 +29,7 @@ import { firebaseConfig } from './firebase.js';
 const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 const db = getFirestore(app);
+const googleProvider = new GoogleAuthProvider();
 
 const $ = (id) => document.getElementById(id);
 const baht = new Intl.NumberFormat('th-TH', { style: 'currency', currency: 'THB', maximumFractionDigits: 0 });
@@ -299,6 +302,13 @@ function escapeAttr(value = '') { return escapeHtml(value); }
 
 $('loginTab').addEventListener('click', () => setMode('login'));
 $('registerTab').addEventListener('click', () => setMode('register'));
+
+$('passwordToggle')?.addEventListener('click', () => {
+  const input = $('password');
+  const isPassword = input.type === 'password';
+  input.type = isPassword ? 'text' : 'password';
+  $('passwordToggle').textContent = isPassword ? '🙈' : '👁';
+});
 $('openProfileBtn').addEventListener('click', () => navTo('profile'));
 
 document.querySelectorAll('[data-nav]').forEach((btn) => btn.addEventListener('click', () => navTo(btn.dataset.nav)));
@@ -336,6 +346,18 @@ $('authForm').addEventListener('submit', async (event) => {
       await signInWithEmailAndPassword(auth, email, password);
       toast('เข้าสู่ระบบแล้ว');
     }
+  } catch (error) {
+    toast(error.message);
+  }
+});
+
+
+
+$('googleLoginBtn')?.addEventListener('click', async () => {
+  try {
+    const cred = await signInWithPopup(auth, googleProvider);
+    await ensureUserProfile(cred.user, cred.user.displayName || 'MyHub User');
+    toast('เข้าสู่ระบบด้วย Google แล้ว');
   } catch (error) {
     toast(error.message);
   }
