@@ -118,7 +118,7 @@
               <button class="primary-btn" type="submit">บันทึก</button>
             </form>
           </div>
-          <div class="section-head"><h3>รายการล่าสุด</h3></div>
+          <div class="section-head"><h3>รายการล่าสุด</h3><select id="txFilter" class="pill-select"><option value="all">ทั้งหมด</option><option value="income">รายรับ</option><option value="expense">รายจ่าย</option></select></div>
           <div id="transactionList" class="list-stack empty-box">ยังไม่มีรายการ</div>
         </section>
 
@@ -135,7 +135,7 @@
               <button class="primary-btn" type="submit">เพิ่มงาน</button>
             </form>
           </div>
-          <div id="taskList" class="list-stack empty-box">ยังไม่มีงาน</div>
+          <div class="filter-row"><button class="filter-chip active" data-task-filter="all" type="button">ทั้งหมด</button><button class="filter-chip" data-task-filter="pending" type="button">ค้าง</button><button class="filter-chip" data-task-filter="done" type="button">เสร็จแล้ว</button></div><div id="taskList" class="list-stack empty-box">ยังไม่มีงาน</div>
         </section>
 
         <section id="watchPage" class="page">
@@ -157,7 +157,7 @@
               <button class="primary-btn" type="submit">บันทึก</button>
             </form>
           </div>
-          <div id="watchList" class="list-stack empty-box">ยังไม่มีรายการ</div>
+          <div class="field search-field"><input id="watchSearch" placeholder="ค้นหาหนัง/ซีรีส์" /></div><div id="watchList" class="list-stack empty-box">ยังไม่มีรายการ</div>
         </section>
 
         <section id="notesPage" class="page">
@@ -170,7 +170,7 @@
               <button class="primary-btn" type="submit">บันทึก</button>
             </form>
           </div>
-          <div id="noteList" class="list-stack empty-box">ยังไม่มีโน้ต</div>
+          <div class="field search-field"><input id="noteSearch" placeholder="ค้นหาโน้ต/ลิงก์" /></div><div id="noteList" class="list-stack empty-box">ยังไม่มีโน้ต</div>
         </section>
 
         <section id="profilePage" class="page">
@@ -203,6 +203,27 @@
         </nav>
       </main>
 
+
+      <div id="quickSheet" class="sheet-backdrop hidden">
+        <div class="bottom-sheet">
+          <div class="sheet-handle"></div>
+          <div class="section-head sheet-title"><h3>เพิ่มด่วน</h3><button id="closeQuickSheet" class="mini-btn dark" type="button">ปิด</button></div>
+          <div class="quick-grid">
+            <button class="quick-card" data-quick="money" type="button"><span>฿</span><strong>รายรับ/รายจ่าย</strong><small>บันทึกเงินทันที</small></button>
+            <button class="quick-card" data-quick="tasks" type="button"><span>✓</span><strong>งาน</strong><small>เพิ่มสิ่งที่ต้องทำ</small></button>
+            <button class="quick-card" data-quick="watch" type="button"><span>▶</span><strong>หนัง/ซีรีส์</strong><small>เก็บรายการอยากดู</small></button>
+            <button class="quick-card" data-quick="notes" type="button"><span>✎</span><strong>โน้ต/ลิงก์</strong><small>จดไอเดียหรือลิงก์</small></button>
+          </div>
+        </div>
+      </div>
+
+      <div id="editModal" class="sheet-backdrop hidden">
+        <div class="bottom-sheet">
+          <div class="sheet-handle"></div>
+          <div class="section-head sheet-title"><h3 id="editTitle">แก้ไข</h3><button id="closeEditModal" class="mini-btn dark" type="button">ปิด</button></div>
+          <form id="editForm" class="compact-form"></form>
+        </div>
+      </div>
       <div id="toast" class="toast hidden"></div>
     </div>
 

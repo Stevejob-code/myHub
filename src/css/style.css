@@ -117,3 +117,26 @@ h1, h2, h3, p { margin-top: 0; }
 .nav-btn.active { background: #111827; color: white; }
 .toast { position: fixed; left: 50%; bottom: 96px; transform: translateX(-50%); background: #111827; color: white; padding: 12px 16px; border-radius: 999px; box-shadow: var(--shadow); z-index: 30; font-weight: 700; }
 @media (min-width: 720px) { .app-shell { max-width: 560px; } }
+
+/* MyHub v2 */
+.pill-select { width: auto; min-width: 118px; border-radius: 999px; padding: 8px 12px; font-size: 13px; font-weight: 800; }
+.filter-row { display: flex; gap: 8px; margin: -2px 0 14px; overflow-x: auto; }
+.filter-chip { flex: 0 0 auto; padding: 9px 13px; border-radius: 999px; background: rgba(255,255,255,.16); color: white; font-weight: 800; }
+.filter-chip.active { background: white; color: var(--primary); }
+.search-field { margin-bottom: 14px; }
+.sheet-backdrop { position: fixed; inset: 0; background: rgba(2,6,23,.55); z-index: 50; display: flex; align-items: flex-end; justify-content: center; padding: 14px; }
+.bottom-sheet { width: min(520px, 100%); background: rgba(255,255,255,.96); border-radius: 30px 30px 24px 24px; padding: 12px 16px 18px; box-shadow: 0 -24px 60px rgba(2,6,23,.32); animation: sheetUp .22s ease; max-height: 88vh; overflow-y: auto; }
+@keyframes sheetUp { from { transform: translateY(24px); opacity: .6; } to { transform: none; opacity: 1; } }
+.sheet-handle { width: 48px; height: 5px; border-radius: 99px; background: #cbd5e1; margin: 0 auto 10px; }
+.sheet-title { color: var(--text); margin: 4px 0 14px; }
+.mini-btn.dark { color: white; background: #111827; }
+.quick-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.quick-card { text-align: left; border-radius: 22px; padding: 16px; background: #f8fafc; border: 1px solid #e2e8f0; display: grid; gap: 4px; }
+.quick-card span { width: 42px; height: 42px; display: grid; place-items: center; border-radius: 16px; background: #111827; color: white; font-size: 22px; margin-bottom: 6px; }
+.quick-card strong { font-size: 15px; }
+.quick-card small { color: var(--muted); }
+.edit-btn { background: #e0f2fe; color: #0369a1; }
+.item-row strong.money-income { color: var(--success); }
+.item-row strong.money-expense { color: var(--danger); }
+.inline-date { color: #94a3b8; font-size: 12px; margin-top: 4px; }
+@media (max-width: 390px) { .quick-grid { grid-template-columns: 1fr; } .stat-card strong { font-size: 20px; } }

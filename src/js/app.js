@@ -250,7 +250,6 @@ function escapeAttr(value = '') { return escapeHtml(value); }
 $('loginTab').addEventListener('click', () => setMode('login'));
 $('registerTab').addEventListener('click', () => setMode('register'));
 $('openProfileBtn').addEventListener('click', () => navTo('profile'));
-$('quickAddBtn').addEventListener('click', () => navTo('money'));
 
 document.querySelectorAll('[data-nav]').forEach((btn) => btn.addEventListener('click', () => navTo(btn.dataset.nav)));
 
@@ -378,4 +377,130 @@ onAuthStateChanged(auth, async (user) => {
     $('authScreen').classList.remove('hidden');
     $('mainApp').classList.add('hidden');
   }
+});
+
+// ===== MyHub v2: Quick Add, Filters, Search, Edit =====
+state.filters = { tx: 'all', task: 'all', watch: '', note: '' };
+let editing = null;
+
+function itemDateText(item) {
+  const raw = item.date || item.createdAt || item.updatedAt;
+  const d = raw?.toDate ? raw.toDate() : raw ? new Date(raw) : null;
+  return d && !Number.isNaN(d.getTime()) ? d.toLocaleDateString('th-TH', { day: 'numeric', month: 'short', year: '2-digit' }) : '';
+}
+
+renderTransactionItem = function(tx) {
+  const isIncome = tx.type === 'income';
+  const sign = isIncome ? '+' : '-';
+  return `<article class="item-card">
+    <div class="item-row">
+      <div><div class="item-title">${escapeHtml(tx.title)}</div><div class="item-meta">${escapeHtml(tx.category || 'อื่น ๆ')} · ${isIncome ? 'รายรับ' : 'รายจ่าย'}</div><div class="inline-date">${itemDateText(tx)}</div></div>
+      <strong class="${isIncome ? 'money-income' : 'money-expense'}">${sign}${baht.format(Number(tx.amount || 0))}</strong>
+    </div>
+    <div class="item-actions"><button class="icon-btn edit-btn" data-edit="transactions" data-id="${tx.id}">แก้</button><button class="icon-btn delete" data-delete="transactions" data-id="${tx.id}">ลบ</button></div>
+  </article>`;
+};
+
+renderTaskItem = function(task) {
+  return `<article class="item-card ${task.done ? 'done' : ''}">
+    <div class="item-row">
+      <div><div class="item-title">${escapeHtml(task.title)}</div><div class="item-meta">${task.dueDate || 'ไม่กำหนดวัน'} · ${task.priority === 'important' ? 'สำคัญ' : 'ปกติ'}</div></div>
+      <div class="item-actions">
+        <button class="icon-btn" data-done="tasks" data-id="${task.id}" data-value="${!task.done}">${task.done ? '↺' : '✓'}</button>
+        <button class="icon-btn edit-btn" data-edit="tasks" data-id="${task.id}">แก้</button>
+        <button class="icon-btn delete" data-delete="tasks" data-id="${task.id}">ลบ</button>
+      </div>
+    </div>
+  </article>`;
+};
+
+renderWatchItem = function(item) {
+  return `<article class="item-card">
+    <div class="item-row">
+      <div><div class="item-title">${escapeHtml(item.title)}</div><div class="item-meta">${escapeHtml(item.type)} · ${escapeHtml(item.status)}</div>${item.note ? `<div class="item-meta">${escapeHtml(item.note)}</div>` : ''}</div>
+      <div class="item-actions"><button class="icon-btn edit-btn" data-edit="watchlist" data-id="${item.id}">แก้</button><button class="icon-btn delete" data-delete="watchlist" data-id="${item.id}">ลบ</button></div>
+    </div>
+  </article>`;
+};
+
+renderNoteItem = function(note) {
+  return `<article class="item-card">
+    <div class="item-row">
+      <div><div class="item-title">${escapeHtml(note.title)}</div>${note.body ? `<div class="item-meta">${escapeHtml(note.body)}</div>` : ''}${note.url ? `<a class="item-meta" href="${escapeAttr(note.url)}" target="_blank" rel="noopener">เปิดลิงก์</a>` : ''}</div>
+      <div class="item-actions"><button class="icon-btn edit-btn" data-edit="notes" data-id="${note.id}">แก้</button><button class="icon-btn delete" data-delete="notes" data-id="${note.id}">ลบ</button></div>
+    </div>
+  </article>`;
+};
+
+renderAll = function() {
+  renderDashboard();
+  const txs = state.transactions.filter((x) => state.filters.tx === 'all' || x.type === state.filters.tx);
+  const tasks = state.tasks.filter((t) => state.filters.task === 'all' || (state.filters.task === 'done' ? t.done : !t.done));
+  const watchTerm = state.filters.watch.toLowerCase();
+  const watches = state.watchlist.filter((w) => !watchTerm || `${w.title} ${w.type} ${w.status} ${w.note}`.toLowerCase().includes(watchTerm));
+  const noteTerm = state.filters.note.toLowerCase();
+  const notes = state.notes.filter((n) => !noteTerm || `${n.title} ${n.body} ${n.url}`.toLowerCase().includes(noteTerm));
+  renderList($('transactionList'), txs, renderTransactionItem, 'ยังไม่มีรายการ');
+  renderList($('taskList'), tasks, renderTaskItem, 'ยังไม่มีงาน');
+  renderList($('watchList'), watches, renderWatchItem, 'ยังไม่มีรายการ');
+  renderList($('noteList'), notes, renderNoteItem, 'ยังไม่มีโน้ต');
+};
+
+function openQuickSheet() { $('quickSheet').classList.remove('hidden'); }
+function closeQuickSheet() { $('quickSheet').classList.add('hidden'); }
+function closeEditModal() { $('editModal').classList.add('hidden'); editing = null; }
+function findItem(col, id) {
+  const map = { transactions: state.transactions, tasks: state.tasks, watchlist: state.watchlist, notes: state.notes };
+  return (map[col] || []).find((x) => x.id === id);
+}
+
+function openEditModal(col, id) {
+  const item = findItem(col, id);
+  if (!item) return toast('ไม่พบข้อมูล');
+  editing = { col, id };
+  const f = $('editForm');
+  const titleMap = { transactions: 'แก้ไขรายการเงิน', tasks: 'แก้ไขงาน', watchlist: 'แก้ไขหนัง/ซีรีส์', notes: 'แก้ไขโน้ต/ลิงก์' };
+  $('editTitle').textContent = titleMap[col] || 'แก้ไข';
+  if (col === 'transactions') {
+    f.innerHTML = `<input id="editTxTitle" value="${escapeAttr(item.title)}" required /><input id="editTxAmount" type="number" inputmode="decimal" value="${Number(item.amount || 0)}" required /><select id="editTxType"><option value="expense">รายจ่าย</option><option value="income">รายรับ</option></select><input id="editTxCategory" value="${escapeAttr(item.category || '')}" placeholder="หมวดหมู่" /><button class="primary-btn" type="submit">บันทึกการแก้ไข</button>`;
+    $('editTxType').value = item.type || 'expense';
+  } else if (col === 'tasks') {
+    f.innerHTML = `<input id="editTaskTitle" value="${escapeAttr(item.title)}" required /><input id="editTaskDue" type="date" value="${escapeAttr(item.dueDate || '')}" /><select id="editTaskPriority"><option value="normal">ปกติ</option><option value="important">สำคัญ</option></select><button class="primary-btn" type="submit">บันทึกการแก้ไข</button>`;
+    $('editTaskPriority').value = item.priority || 'normal';
+  } else if (col === 'watchlist') {
+    f.innerHTML = `<input id="editWatchTitle" value="${escapeAttr(item.title)}" required /><select id="editWatchType"><option>หนัง</option><option>ซีรีส์</option><option>อนิเมะ</option></select><select id="editWatchStatus"><option>อยากดู</option><option>กำลังดู</option><option>ดูจบแล้ว</option></select><input id="editWatchNote" value="${escapeAttr(item.note || '')}" placeholder="โน้ต" /><button class="primary-btn" type="submit">บันทึกการแก้ไข</button>`;
+    $('editWatchType').value = item.type || 'หนัง'; $('editWatchStatus').value = item.status || 'อยากดู';
+  } else {
+    f.innerHTML = `<input id="editNoteTitle" value="${escapeAttr(item.title)}" required /><input id="editNoteUrl" type="url" value="${escapeAttr(item.url || '')}" placeholder="ลิงก์" /><textarea id="editNoteBody" rows="3" placeholder="รายละเอียด">${escapeHtml(item.body || '')}</textarea><button class="primary-btn" type="submit">บันทึกการแก้ไข</button>`;
+  }
+  $('editModal').classList.remove('hidden');
+}
+
+$('quickAddBtn').addEventListener('click', openQuickSheet);
+$('closeQuickSheet').addEventListener('click', closeQuickSheet);
+$('closeEditModal').addEventListener('click', closeEditModal);
+$('quickSheet').addEventListener('click', (event) => { if (event.target.id === 'quickSheet') closeQuickSheet(); });
+$('editModal').addEventListener('click', (event) => { if (event.target.id === 'editModal') closeEditModal(); });
+document.querySelectorAll('[data-quick]').forEach((btn) => btn.addEventListener('click', () => { closeQuickSheet(); navTo(btn.dataset.quick); }));
+$('txFilter').addEventListener('change', (e) => { state.filters.tx = e.target.value; renderAll(); });
+document.querySelectorAll('[data-task-filter]').forEach((btn) => btn.addEventListener('click', () => { state.filters.task = btn.dataset.taskFilter; document.querySelectorAll('[data-task-filter]').forEach((b) => b.classList.toggle('active', b === btn)); renderAll(); }));
+$('watchSearch').addEventListener('input', (e) => { state.filters.watch = e.target.value; renderAll(); });
+$('noteSearch').addEventListener('input', (e) => { state.filters.note = e.target.value; renderAll(); });
+
+document.body.addEventListener('click', (event) => {
+  const editBtn = event.target.closest('[data-edit]');
+  if (editBtn) openEditModal(editBtn.dataset.edit, editBtn.dataset.id);
+});
+
+$('editForm').addEventListener('submit', async (event) => {
+  event.preventDefault();
+  if (!editing) return;
+  let data = { updatedAt: serverTimestamp() };
+  if (editing.col === 'transactions') data = { ...data, title: $('editTxTitle').value.trim(), amount: Number($('editTxAmount').value), type: $('editTxType').value, category: $('editTxCategory').value.trim() || 'อื่น ๆ' };
+  if (editing.col === 'tasks') data = { ...data, title: $('editTaskTitle').value.trim(), dueDate: $('editTaskDue').value, priority: $('editTaskPriority').value };
+  if (editing.col === 'watchlist') data = { ...data, title: $('editWatchTitle').value.trim(), type: $('editWatchType').value, status: $('editWatchStatus').value, note: $('editWatchNote').value.trim() };
+  if (editing.col === 'notes') data = { ...data, title: $('editNoteTitle').value.trim(), url: $('editNoteUrl').value.trim(), body: $('editNoteBody').value.trim() };
+  await updateDoc(userDoc(editing.col, editing.id), data);
+  closeEditModal();
+  toast('แก้ไขแล้ว');
 });
