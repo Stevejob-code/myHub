@@ -916,3 +916,80 @@ body.light-mode .task-card-surface{color:#0f172a!important;}
 body.light-mode .money-tx-meta,
 body.light-mode .muted{color:#64748b!important;}
 @media(max-width:420px){.top-install-btn{height:44px!important;padding:0 11px!important;font-size:12px!important;border-radius:16px!important}.money-month-nav{gap:5px}.money-month-nav button{width:32px;height:32px;border-radius:12px}.money-month-pill{padding-inline:10px!important}.money-add-toggle{font-size:16px;padding:15px}}
+
+/* ===== MyHub v7.3 Mobile parity fix =====
+   Make real phone Chrome render Money page closer to desktop responsive preview. */
+html, body { overflow-x: hidden; }
+.topbar-actions{ flex-shrink:0; }
+/* Keep install button readable and visible in normal browser mode. */
+.top-install-btn{
+  max-width: 150px!important;
+  height: 48px!important;
+  padding: 0 12px!important;
+  border-radius: 18px!important;
+  font-size: 13px!important;
+  font-weight: 950!important;
+  background: linear-gradient(135deg,#4f46e5,#7c3aed)!important;
+  color: #fff!important;
+  box-shadow: 0 16px 34px rgba(79,70,229,.32)!important;
+}
+@media(display-mode:standalone){.top-install-btn{display:none!important}}
+
+/* Do not stack the 3 money summary cards on phones. */
+.money-mini-grid{
+  grid-template-columns: repeat(3, minmax(0,1fr))!important;
+  gap: 10px!important;
+}
+.money-mini-card{
+  min-width:0!important;
+  padding: 12px 10px!important;
+  min-height: 74px!important;
+}
+.money-mini-card span,
+.money-mini-card strong{
+  overflow-wrap:anywhere;
+}
+
+/* Phone tuning: same structure as desktop, only slightly compressed. */
+@media (max-width: 430px){
+  .main-app{padding:18px 15px 98px!important;}
+  .topbar{padding:8px 0 18px!important;}
+  .topbar h2{font-size:28px!important;line-height:1.05!important;}
+  .topbar-actions{gap:8px!important;}
+  .top-install-btn{height:44px!important;padding:0 10px!important;font-size:12px!important;border-radius:16px!important;}
+  .avatar-btn{width:48px!important;height:48px!important;border-radius:18px!important;}
+
+  .money-premium-page{gap:16px!important;}
+  .money-hero-card{border-radius:30px!important;padding:18px!important;}
+  .money-hero-head{align-items:flex-start!important;gap:10px!important;}
+  .money-hero-head h3{font-size:20px!important;line-height:1.18!important;max-width:190px!important;}
+  .money-month-nav{gap:6px!important;flex-shrink:0!important;}
+  .money-month-nav button{width:34px!important;height:34px!important;border-radius:13px!important;font-size:22px!important;}
+  .money-month-pill{padding:8px 11px!important;font-size:12px!important;max-width:104px!important;text-align:center!important;line-height:1.2!important;}
+  .money-balance-row{margin-top:15px!important;align-items:center!important;}
+  .money-balance-row strong{font-size:32px!important;line-height:1.05!important;}
+  .money-ring{width:82px!important;height:82px!important;border-radius:24px!important;flex:0 0 82px!important;}
+  .money-ring span{font-size:23px!important;}
+  .money-mini-grid{grid-template-columns: repeat(3, minmax(0,1fr))!important;gap:9px!important;margin-top:15px!important;}
+  .money-mini-card{border-radius:18px!important;padding:11px 9px!important;min-height:72px!important;}
+  .money-mini-card span{font-size:11px!important;}
+  .money-mini-card strong{font-size:15px!important;line-height:1.15!important;}
+
+  .money-add-card,.money-insight-card{border-radius:28px!important;padding:18px!important;}
+  .money-add-toggle{font-size:16px!important;padding:15px!important;border-radius:22px!important;}
+  .money-quick-amounts,.money-category-chips{gap:7px!important;}
+  .money-quick-amounts button,.money-category-chips button,.money-filter-chips button,.money-segment button{padding:8px 11px!important;font-size:13px!important;}
+  .money-amount-wrap input{font-size:25px!important;}
+}
+
+@media (max-width: 370px){
+  .top-install-btn{max-width:120px!important;font-size:11px!important;padding-inline:8px!important;}
+  .money-hero-card{padding:16px!important;}
+  .money-hero-head h3{font-size:18px!important;max-width:160px!important;}
+  .money-month-nav button{width:31px!important;height:31px!important;}
+  .money-month-pill{max-width:92px!important;font-size:11px!important;padding:7px 9px!important;}
+  .money-ring{width:74px!important;height:74px!important;flex-basis:74px!important;}
+  .money-balance-row strong{font-size:29px!important;}
+  .money-mini-card{padding:10px 7px!important;}
+  .money-mini-card strong{font-size:13px!important;}
+}
