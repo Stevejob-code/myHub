@@ -138,29 +138,95 @@
           </div>
         </section>
 
-        <section id="moneyPage" class="page">
-          <div class="panel-card">
-            <h3>เพิ่มรายรับ / รายจ่าย</h3>
-            <form id="transactionForm" class="compact-form">
-              <input id="txTitle" placeholder="รายการ เช่น ข้าวกลางวัน" required />
-              <input id="txAmount" type="number" inputmode="decimal" placeholder="จำนวนเงิน" required />
-              <select id="txType">
+        <section id="moneyPage" class="page money-premium-page">
+          <div class="money-hero-card">
+            <div class="money-hero-head">
+              <div>
+                <p class="eyebrow">Money Control</p>
+                <h3>ภาพรวมการเงินเดือนนี้</h3>
+              </div>
+              <span id="moneyMonthLabel" class="money-month-pill">เดือนนี้</span>
+            </div>
+            <div class="money-balance-row">
+              <div>
+                <small>คงเหลือสุทธิ</small>
+                <strong id="moneyNetBalance">฿0</strong>
+              </div>
+              <div class="money-ring"><span id="moneySaveRate">0%</span><small>เหลือ</small></div>
+            </div>
+            <div class="money-mini-grid">
+              <div class="money-mini-card income"><span>รายรับ</span><strong id="moneyMonthIncome">฿0</strong></div>
+              <div class="money-mini-card expense"><span>รายจ่าย</span><strong id="moneyMonthExpense">฿0</strong></div>
+              <div class="money-mini-card today"><span>วันนี้ใช้ไป</span><strong id="moneyTodayExpense">฿0</strong></div>
+            </div>
+          </div>
+
+          <div class="money-add-card">
+            <div class="money-card-head">
+              <div><p class="eyebrow">Quick Add</p><h3>บันทึกเงินเร็ว</h3></div>
+              <span class="mini-badge">v7</span>
+            </div>
+            <form id="transactionForm" class="money-form-premium">
+              <input id="txTitle" class="money-title-input" placeholder="จ่ายอะไร / ได้เงินจากไหน เช่น ข้าวกลางวัน" required />
+              <div class="money-amount-wrap">
+                <span>฿</span>
+                <input id="txAmount" type="number" inputmode="decimal" placeholder="0" required />
+              </div>
+              <div class="money-quick-amounts">
+                <button type="button" data-amount-chip="20">฿20</button>
+                <button type="button" data-amount-chip="50">฿50</button>
+                <button type="button" data-amount-chip="100">฿100</button>
+                <button type="button" data-amount-chip="500">฿500</button>
+              </div>
+              <select id="txType" class="hidden-select" aria-label="ประเภทรายการ">
                 <option value="expense">รายจ่าย</option>
                 <option value="income">รายรับ</option>
               </select>
-              <select id="txCategory">
+              <div class="money-segment" role="group" aria-label="เลือกประเภทรายการ">
+                <button type="button" class="active" data-money-type="expense">− รายจ่าย</button>
+                <button type="button" data-money-type="income">＋ รายรับ</button>
+              </div>
+              <select id="txCategory" class="hidden-select" aria-label="หมวดหมู่">
                 <option>อาหาร</option>
                 <option>เดินทาง</option>
                 <option>บิล</option>
                 <option>ช้อปปิ้ง</option>
                 <option>เงินเดือน</option>
+                <option>สุขภาพ</option>
+                <option>ความบันเทิง</option>
                 <option>อื่น ๆ</option>
               </select>
-              <button class="primary-btn" type="submit">บันทึก</button>
+              <div class="money-category-chips" role="group" aria-label="เลือกหมวดหมู่">
+                <button type="button" class="active" data-money-category="อาหาร">🍜 อาหาร</button>
+                <button type="button" data-money-category="เดินทาง">🚗 เดินทาง</button>
+                <button type="button" data-money-category="บิล">🧾 บิล</button>
+                <button type="button" data-money-category="ช้อปปิ้ง">🛍️ ช้อปปิ้ง</button>
+                <button type="button" data-money-category="เงินเดือน">💼 เงินเดือน</button>
+                <button type="button" data-money-category="สุขภาพ">💊 สุขภาพ</button>
+                <button type="button" data-money-category="ความบันเทิง">🎮 บันเทิง</button>
+                <button type="button" data-money-category="อื่น ๆ">✨ อื่น ๆ</button>
+              </div>
+              <button class="primary-btn money-save-btn" type="submit">บันทึกรายการ</button>
             </form>
           </div>
-          <div class="section-head"><h3>รายการล่าสุด</h3><select id="txFilter" class="pill-select"><option value="all">ทั้งหมด</option><option value="income">รายรับ</option><option value="expense">รายจ่าย</option></select></div>
-          <div id="transactionList" class="list-stack empty-box">ยังไม่มีรายการ</div>
+
+          <div class="money-insight-card">
+            <div class="money-card-head"><div><p class="eyebrow">Money Pulse</p><h3>รายจ่าย 7 วันล่าสุด</h3></div><strong id="moneyWeekTotal" class="money-week-total">฿0</strong></div>
+            <div id="moneyWeekBars" class="money-week-bars"></div>
+            <div class="money-card-head money-cat-head"><div><p class="eyebrow">Top Categories</p><h3>หมวดที่ใช้เยอะ</h3></div></div>
+            <div id="moneyCategoryBars" class="money-category-bars"></div>
+          </div>
+
+          <div class="money-toolbar">
+            <div class="money-filter-chips">
+              <button type="button" class="active" data-money-filter="all">ทั้งหมด</button>
+              <button type="button" data-money-filter="expense">รายจ่าย</button>
+              <button type="button" data-money-filter="income">รายรับ</button>
+            </div>
+            <select id="txFilter" class="hidden-select"><option value="all">ทั้งหมด</option><option value="income">รายรับ</option><option value="expense">รายจ่าย</option></select>
+            <input id="txSearch" class="money-search" placeholder="ค้นหารายการ / หมวดหมู่" />
+          </div>
+          <div id="transactionList" class="money-list list-stack empty-box">ยังไม่มีรายการ</div>
         </section>
 
         <section id="tasksPage" class="page tasks-ux-page">

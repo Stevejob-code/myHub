@@ -1420,3 +1420,110 @@ renderTaskItem = function(task){
 // Make legacy search include both title/text subtask formats.
 const originalRenderAllV58 = renderAll;
 renderAll = function(){ originalRenderAllV58(); };
+
+// ===== MyHub v7: Money Premium UI =====
+state.filters.txSearch = state.filters.txSearch || '';
+const moneyCategoryIcons = {
+  'อาหาร': '🍜', 'เดินทาง': '🚗', 'บิล': '🧾', 'ช้อปปิ้ง': '🛍️',
+  'เงินเดือน': '💼', 'สุขภาพ': '💊', 'ความบันเทิง': '🎮', 'อื่น ๆ': '✨'
+};
+function txDateValue(tx){ return toDateValue(tx.date) || toDateValue(tx.createdAt) || new Date(); }
+function monthTxs(){
+  const now = new Date();
+  return state.transactions.filter((tx)=>{ const d = txDateValue(tx); return d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear(); });
+}
+function setMoneyType(type){
+  const select = $('txType'); if (select) select.value = type;
+  document.querySelectorAll('[data-money-type]').forEach(btn=>btn.classList.toggle('active', btn.dataset.moneyType === type));
+}
+function setMoneyCategory(cat){
+  const select = $('txCategory'); if (select) select.value = cat;
+  document.querySelectorAll('[data-money-category]').forEach(btn=>btn.classList.toggle('active', btn.dataset.moneyCategory === cat));
+}
+function setMoneyFilter(filter){
+  state.filters.tx = filter;
+  const select = $('txFilter'); if (select) select.value = filter;
+  document.querySelectorAll('[data-money-filter]').forEach(btn=>btn.classList.toggle('active', btn.dataset.moneyFilter === filter));
+  renderAll();
+}
+function renderMoneyPremium(){
+  if (!$('moneyNetBalance')) return;
+  const now = new Date();
+  safeSetText('moneyMonthLabel', now.toLocaleDateString('th-TH', { month:'long', year:'numeric' }));
+  const today = todayISO();
+  const month = monthTxs();
+  const income = month.filter(x=>x.type==='income').reduce((s,x)=>s+Number(x.amount||0),0);
+  const expense = month.filter(x=>x.type==='expense').reduce((s,x)=>s+Number(x.amount||0),0);
+  const todayExpense = state.transactions.filter(x=>x.type==='expense' && txDateValue(x).toISOString().slice(0,10)===today).reduce((s,x)=>s+Number(x.amount||0),0);
+  const net = income - expense;
+  safeSetText('moneyNetBalance', baht.format(net));
+  safeSetText('moneyMonthIncome', baht.format(income));
+  safeSetText('moneyMonthExpense', baht.format(expense));
+  safeSetText('moneyTodayExpense', baht.format(todayExpense));
+  safeSetText('moneySaveRate', income ? `${Math.max(0, Math.round((net / income) * 100))}%` : '0%');
+
+  const days = Array.from({length:7}, (_,i)=>{ const d = new Date(); d.setDate(d.getDate()-(6-i)); return { iso:d.toISOString().slice(0,10), label:d.toLocaleDateString('th-TH', { day:'numeric' }), total:0 }; });
+  state.transactions.filter(x=>x.type==='expense').forEach(tx=>{ const iso = txDateValue(tx).toISOString().slice(0,10); const day = days.find(d=>d.iso===iso); if (day) day.total += Number(tx.amount||0); });
+  const weekTotal = days.reduce((s,d)=>s+d.total,0);
+  safeSetText('moneyWeekTotal', baht.format(weekTotal));
+  const maxDay = Math.max(1, ...days.map(d=>d.total));
+  const bars = $('moneyWeekBars');
+  if (bars) bars.innerHTML = days.map(d=>`<div class="money-day-bar ${d.total ? '' : 'empty'}"><div class="money-day-fill" style="height:${Math.max(12, Math.round((d.total/maxDay)*112))}px"></div><small>${d.label}</small></div>`).join('');
+
+  const cats = {};
+  month.filter(x=>x.type==='expense').forEach(tx=>{ const cat = tx.category || 'อื่น ๆ'; cats[cat] = (cats[cat] || 0) + Number(tx.amount||0); });
+  const catRows = Object.entries(cats).sort((a,b)=>b[1]-a[1]).slice(0,5);
+  const maxCat = Math.max(1, ...catRows.map(x=>x[1]));
+  const catBox = $('moneyCategoryBars');
+  if (catBox) catBox.innerHTML = catRows.length ? catRows.map(([cat,total])=>`<div class="money-cat-row"><div class="money-cat-name">${moneyCategoryIcons[cat] || '✨'} ${escapeHtml(cat)}</div><div class="money-cat-track"><div class="money-cat-fill" style="width:${Math.max(8, Math.round((total/maxCat)*100))}%"></div></div><div class="money-cat-amount">${baht.format(total)}</div></div>`).join('') : '<div class="dash-empty">ยังไม่มีรายจ่ายเดือนนี้</div>';
+}
+
+renderTransactionItem = function(tx){
+  const isIncome = tx.type === 'income';
+  const amount = Number(tx.amount || 0);
+  const cat = tx.category || 'อื่น ๆ';
+  const icon = moneyCategoryIcons[cat] || (isIncome ? '💰' : '✨');
+  return `<article class="money-tx-card ${isIncome ? 'income' : 'expense'}">
+    <div class="money-tx-main">
+      <div class="money-tx-icon">${icon}</div>
+      <div class="money-tx-info">
+        <h3>${escapeHtml(tx.title || 'ไม่มีชื่อรายการ')}</h3>
+        <div class="money-tx-meta"><span>${escapeHtml(cat)}</span><span>${isIncome ? 'รายรับ' : 'รายจ่าย'}</span><span>${itemDateText(tx) || 'วันนี้'}</span></div>
+      </div>
+      <strong class="money-tx-amount">${isIncome ? '+' : '-'}${baht.format(amount)}</strong>
+    </div>
+    <div class="money-tx-actions">
+      <button type="button" class="money-action-btn edit" data-edit="transactions" data-id="${tx.id}">✎ แก้ไข</button>
+      <button type="button" class="money-action-btn delete" data-delete="transactions" data-id="${tx.id}">🗑 ลบ</button>
+    </div>
+  </article>`;
+};
+
+const originalRenderAllMoneyV7 = renderAll;
+renderAll = function(){
+  originalRenderAllMoneyV7();
+  renderMoneyPremium();
+  if ($('transactionList')) {
+    const term = (state.filters.txSearch || '').toLowerCase();
+    const txs = state.transactions
+      .filter((x)=> state.filters.tx === 'all' || x.type === state.filters.tx)
+      .filter((x)=> !term || `${x.title || ''} ${x.category || ''} ${x.type || ''} ${x.amount || ''}`.toLowerCase().includes(term))
+      .sort((a,b)=> txDateValue(b) - txDateValue(a));
+    renderList($('transactionList'), txs, renderTransactionItem, '<div class="dash-empty">ยังไม่มีรายการตามตัวกรองนี้</div>');
+  }
+};
+
+document.body.addEventListener('click', (event)=>{
+  const typeBtn = event.target.closest('[data-money-type]');
+  if (typeBtn) { event.preventDefault(); setMoneyType(typeBtn.dataset.moneyType); return; }
+  const catBtn = event.target.closest('[data-money-category]');
+  if (catBtn) { event.preventDefault(); setMoneyCategory(catBtn.dataset.moneyCategory); return; }
+  const filterBtn = event.target.closest('[data-money-filter]');
+  if (filterBtn) { event.preventDefault(); setMoneyFilter(filterBtn.dataset.moneyFilter); return; }
+  const amountBtn = event.target.closest('[data-amount-chip]');
+  if (amountBtn) { event.preventDefault(); const input = $('txAmount'); if (input) input.value = amountBtn.dataset.amountChip; return; }
+});
+$('txSearch')?.addEventListener('input', (event)=>{ state.filters.txSearch = event.target.value || ''; renderAll(); });
+$('transactionForm')?.addEventListener('reset', ()=>{ window.setTimeout(()=>{ setMoneyType('expense'); setMoneyCategory('อาหาร'); }, 0); });
+setMoneyType('expense');
+setMoneyCategory('อาหาร');
