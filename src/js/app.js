@@ -1441,7 +1441,9 @@ function setMoneyMonthOffset(offset){
 function setMoneyType(type){
   const select = $('txType'); if (select) select.value = type;
   document.querySelectorAll('[data-money-type]').forEach(btn=>btn.classList.toggle('active', btn.dataset.moneyType === type));
+  if (type === 'income') setMoneyCategory('เงินเดือน');
 }
+
 function setMoneyCategory(cat){
   const select = $('txCategory'); if (select) select.value = cat;
   document.querySelectorAll('[data-money-category]').forEach(btn=>btn.classList.toggle('active', btn.dataset.moneyCategory === cat));
