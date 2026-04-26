@@ -4,6 +4,9 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
     <meta name="theme-color" content="#111827" />
+    <meta name="description" content="MyHub Personal Life Hub" />
+    <link rel="manifest" href="manifest.webmanifest" />
+    <link rel="apple-touch-icon" href="icons/icon-192.svg" />
     <title>MyHub | Personal Life Hub</title>
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
@@ -65,6 +68,8 @@
             <button id="quickAddBtn" class="round-btn" type="button">+</button>
           </div>
 
+          <div class="dashboard-actions"><button id="installAppBtn" class="mini-btn install hidden" type="button">ติดตั้งเป็นแอป</button><button id="themeToggleBtn" class="mini-btn" type="button">สลับธีม</button></div>
+
           <div class="stats-grid">
             <article class="stat-card income">
               <span>รายรับเดือนนี้</span>
@@ -82,6 +87,16 @@
               <span>งานค้าง</span>
               <strong id="pendingTasks">0</strong>
             </article>
+          </div>
+
+          <div class="panel-card dashboard-chart-card">
+            <div class="section-head"><h3>กราฟรายจ่าย 7 วันล่าสุด</h3><span id="topCategoryText" class="mini-badge">ยังไม่มีข้อมูล</span></div>
+            <canvas id="expenseChart" height="170" aria-label="Expense chart"></canvas>
+          </div>
+          <div class="insight-grid">
+            <article class="mini-stat"><span>งานเลยกำหนด</span><strong id="overdueTasks">0</strong></article>
+            <article class="mini-stat"><span>รอดู</span><strong id="watchPending">0</strong></article>
+            <article class="mini-stat"><span>โน้ตทั้งหมด</span><strong id="noteCount">0</strong></article>
           </div>
 
           <div class="section-head">
@@ -181,6 +196,16 @@
             </div>
             <h2 id="profileName">MyHub User</h2>
             <p id="profileEmail" class="muted">email</p>
+          </div>
+
+          <div class="panel-card">
+            <h3>สถิติของฉัน</h3>
+            <div class="profile-stats">
+              <div><span>รายการเงิน</span><strong id="profileTxCount">0</strong></div>
+              <div><span>งานทั้งหมด</span><strong id="profileTaskCount">0</strong></div>
+              <div><span>Watchlist</span><strong id="profileWatchCount">0</strong></div>
+              <div><span>โน้ต</span><strong id="profileNoteCount">0</strong></div>
+            </div>
           </div>
 
           <div class="panel-card">
