@@ -263,6 +263,12 @@ document.body.addEventListener('click', async (event) => {
   if (doneBtn) {
     await updateDoc(userDoc(doneBtn.dataset.done, doneBtn.dataset.id), { done: doneBtn.dataset.value === 'true', updatedAt: serverTimestamp() });
   }
+
+  const watchStatusBtn = event.target.closest('[data-watch-set-status]');
+  if (watchStatusBtn) {
+    await updateDoc(userDoc('watchlist', watchStatusBtn.dataset.id), { status: watchStatusBtn.dataset.watchSetStatus, updatedAt: serverTimestamp() });
+    toast(`เปลี่ยนเป็น ${watchStatusBtn.dataset.watchSetStatus} แล้ว`);
+  }
 });
 
 $('authForm').addEventListener('submit', async (event) => {
@@ -337,6 +343,13 @@ $('watchForm').addEventListener('submit', async (event) => {
     createdAt: serverTimestamp()
   });
   event.target.reset();
+  $('watchStatus').value = 'อยากดู';
+  $('watchType').value = 'หนัง';
+  $('watchPlatform').value = 'Netflix';
+  renderAppDropdown('watchPlatformDropdown', 'Netflix', 'platform');
+  renderAppDropdown('watchTypeDropdown', 'หนัง', 'type');
+  setupStatusTabs('#watchStatusTabs .status-tab', 'watchStatus', 'อยากดู');
+  initAppDropdowns();
   toast('เพิ่มเข้ารายการแล้ว');
 });
 
@@ -467,17 +480,37 @@ function setupStatusTabs(selector, inputId, selected = 'อยากดู', dat
   });
 }
 function statusClass(status) { return status === 'กำลังดู' ? 'watching' : status === 'ดูจบแล้ว' ? 'done' : 'queued'; }
-async function resolvePosterUrl(title, year, manualUrl) {
-  if (manualUrl || !TMDB_API_KEY || !title) return manualUrl;
+async function resolvePosterUrl(title, year = '', manualUrl = '') {
+  const cleanTitle = (title || '').trim();
+  if (manualUrl || !cleanTitle) return manualUrl || '';
+
+  // ใช้ TMDB ก่อน ถ้าใส่ API Key ไว้ใน app.js
+  if (TMDB_API_KEY) {
+    try {
+      const params = new URLSearchParams({ api_key: TMDB_API_KEY, query: cleanTitle, include_adult: 'false', language: 'th-TH' });
+      if (year) params.set('year', year);
+      const res = await fetch(`https://api.themoviedb.org/3/search/multi?${params}`);
+      if (res.ok) {
+        const data = await res.json();
+        const hit = (data.results || []).find(x => x.poster_path);
+        if (hit?.poster_path) return `https://image.tmdb.org/t/p/w500${hit.poster_path}`;
+      }
+    } catch (err) { console.warn('TMDB poster fetch failed', err); }
+  }
+
+  // Fallback ไม่ต้องใช้ API Key: IMDb suggestion image
   try {
-    const params = new URLSearchParams({ api_key: TMDB_API_KEY, query: title, include_adult: 'false', language: 'th-TH' });
-    if (year) params.set('year', year);
-    const res = await fetch(`https://api.themoviedb.org/3/search/multi?${params}`);
-    if (!res.ok) return '';
-    const data = await res.json();
-    const hit = (data.results || []).find(x => x.poster_path);
-    return hit?.poster_path ? `https://image.tmdb.org/t/p/w500${hit.poster_path}` : '';
-  } catch (err) { console.warn('poster auto fetch failed', err); return ''; }
+    const key = cleanTitle.toLowerCase().replace(/[^a-z0-9]+/gi, '_').replace(/^_+|_+$/g, '').slice(0, 80) || 'movie';
+    const first = key[0] || 'a';
+    const res = await fetch(`https://v3.sg.media-imdb.com/suggestion/${encodeURIComponent(first)}/${encodeURIComponent(key)}.json`);
+    if (res.ok) {
+      const data = await res.json();
+      const hit = (data.d || []).find(x => x?.i?.imageUrl);
+      if (hit?.i?.imageUrl) return hit.i.imageUrl;
+    }
+  } catch (err) { console.warn('IMDb poster fetch failed', err); }
+
+  return '';
 }
 
 // ===== MyHub v2: Quick Add, Filters, Search, Edit =====
@@ -528,7 +561,11 @@ renderWatchItem = function(item) {
       <div class="movie-head-row"><h3>${escapeHtml(item.title)}</h3>${rating}</div>
       <div class="movie-badges"><span class="type-badge">${escapeHtml(item.type || 'หนัง')}</span><span class="status-badge status-${statusClass(status)}">${escapeHtml(status)}</span></div>
       <div class="platform-line">${platformIconHTML(platformData)}<span>${escapeHtml(platformData.label)}</span></div>
-      <div class="item-actions movie-actions"><button class="icon-btn edit-btn" data-edit="watchlist" data-id="${item.id}">แก้</button><button class="icon-btn delete" data-delete="watchlist" data-id="${item.id}">ลบ</button></div>
+      <div class="item-actions movie-actions">
+        ${status !== 'กำลังดู' ? `<button class="icon-btn status-action" data-watch-set-status="กำลังดู" data-id="${item.id}">กำลังดู</button>` : ''}
+        ${status !== 'ดูจบแล้ว' ? `<button class="icon-btn status-action done-action" data-watch-set-status="ดูจบแล้ว" data-id="${item.id}">ดูจบแล้ว</button>` : `<button class="icon-btn status-action" data-watch-set-status="อยากดู" data-id="${item.id}">อยากดู</button>`}
+        <button class="icon-btn edit-btn" data-edit="watchlist" data-id="${item.id}">แก้</button><button class="icon-btn delete" data-delete="watchlist" data-id="${item.id}">ลบ</button>
+      </div>
     </div>
   </article>`;
 };

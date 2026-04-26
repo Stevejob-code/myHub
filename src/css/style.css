@@ -214,3 +214,15 @@ body.light-mode{color:#111827;background:linear-gradient(145deg,#eef2ff 0%,#f8fa
 .platform-line .brand-icon img{width:15px;height:15px}
 .platform-line{margin-top:8px}
 @media(max-width:420px){.dropdown-trigger{min-height:52px;border-radius:18px;padding:10px 12px}.dropdown-menu{max-height:270px}.brand-icon{width:28px;height:28px}.dropdown-option{padding:10px 9px}}
+
+/* v4.4 Watchlist polish */
+.watch-status-filter{margin-bottom:10px}
+#watchSearch{margin-top:8px}
+#watchList{margin-top:14px}
+.search-field{margin-bottom:18px}
+.movie-actions{display:flex;flex-wrap:wrap;gap:7px;margin-top:10px}
+.status-action{background:#eef2ff;color:#4338ca;font-weight:900}
+.done-action{background:#dcfce7;color:#047857}
+.movie-poster img{background:#1e1b4b}
+.poster-fallback{font-size:30px}
+@media(max-width:420px){.movie-actions .icon-btn{padding:8px 10px;font-size:12px}.watch-status-filter{gap:7px}}
