@@ -1,0 +1,211 @@
+<!doctype html>
+<html lang="th">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+    <meta name="theme-color" content="#111827" />
+    <title>MyHub | Personal Life Hub</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Thai:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="src/css/style.css" />
+  </head>
+  <body>
+    <div id="app" class="app-shell">
+      <section id="authScreen" class="auth-screen">
+        <div class="auth-card glass-card">
+          <div class="brand-mark">M</div>
+          <p class="eyebrow">Personal Life Hub</p>
+          <h1>MyHub</h1>
+          <p class="muted">จัดการเงิน งาน หนัง/ซีรีส์ โน้ต และลิงก์ส่วนตัวในที่เดียว</p>
+
+          <div class="auth-tabs">
+            <button id="loginTab" class="tab-btn active" type="button">เข้าสู่ระบบ</button>
+            <button id="registerTab" class="tab-btn" type="button">สมัครสมาชิก</button>
+          </div>
+
+          <form id="authForm" class="form-stack">
+            <div id="nameField" class="field hidden">
+              <label for="displayName">ชื่อโปรไฟล์</label>
+              <input id="displayName" type="text" autocomplete="name" placeholder="เช่น Job" />
+            </div>
+            <div class="field">
+              <label for="email">อีเมล</label>
+              <input id="email" type="email" autocomplete="email" placeholder="you@email.com" required />
+            </div>
+            <div class="field">
+              <label for="password">รหัสผ่าน</label>
+              <input id="password" type="password" autocomplete="current-password" placeholder="อย่างน้อย 6 ตัวอักษร" required />
+            </div>
+            <button id="authSubmit" class="primary-btn" type="submit">เข้าสู่ระบบ</button>
+            <button id="forgotPasswordBtn" class="text-btn" type="button">ลืมรหัสผ่าน?</button>
+          </form>
+        </div>
+      </section>
+
+      <main id="mainApp" class="main-app hidden">
+        <header class="topbar">
+          <div>
+            <p id="todayText" class="eyebrow">วันนี้</p>
+            <h2 id="pageTitle">Dashboard</h2>
+          </div>
+          <button id="openProfileBtn" class="avatar-btn" type="button" aria-label="Open profile">
+            <img id="headerAvatar" src="" alt="" class="avatar-img hidden" />
+            <span id="headerAvatarText">M</span>
+          </button>
+        </header>
+
+        <section id="dashboardPage" class="page active-page">
+          <div class="hero-card">
+            <div>
+              <p class="eyebrow">ยินดีต้อนรับ</p>
+              <h1 id="welcomeName">พี่จ๊อบ</h1>
+              <p class="muted">นี่คือภาพรวมชีวิตวันนี้ของพี่</p>
+            </div>
+            <button id="quickAddBtn" class="round-btn" type="button">+</button>
+          </div>
+
+          <div class="stats-grid">
+            <article class="stat-card income">
+              <span>รายรับเดือนนี้</span>
+              <strong id="incomeTotal">฿0</strong>
+            </article>
+            <article class="stat-card expense">
+              <span>รายจ่ายเดือนนี้</span>
+              <strong id="expenseTotal">฿0</strong>
+            </article>
+            <article class="stat-card balance">
+              <span>คงเหลือ</span>
+              <strong id="balanceTotal">฿0</strong>
+            </article>
+            <article class="stat-card tasks">
+              <span>งานค้าง</span>
+              <strong id="pendingTasks">0</strong>
+            </article>
+          </div>
+
+          <div class="section-head">
+            <h3>งานวันนี้</h3>
+            <button class="mini-btn" data-nav="tasks" type="button">ดูทั้งหมด</button>
+          </div>
+          <div id="todayTasks" class="list-stack empty-box">ยังไม่มีงานวันนี้</div>
+
+          <div class="section-head">
+            <h3>โน้ต/ลิงก์ล่าสุด</h3>
+            <button class="mini-btn" data-nav="notes" type="button">ดูทั้งหมด</button>
+          </div>
+          <div id="recentNotes" class="list-stack empty-box">ยังไม่มีโน้ต</div>
+        </section>
+
+        <section id="moneyPage" class="page">
+          <div class="panel-card">
+            <h3>เพิ่มรายรับ / รายจ่าย</h3>
+            <form id="transactionForm" class="compact-form">
+              <input id="txTitle" placeholder="รายการ เช่น ข้าวกลางวัน" required />
+              <input id="txAmount" type="number" inputmode="decimal" placeholder="จำนวนเงิน" required />
+              <select id="txType">
+                <option value="expense">รายจ่าย</option>
+                <option value="income">รายรับ</option>
+              </select>
+              <select id="txCategory">
+                <option>อาหาร</option>
+                <option>เดินทาง</option>
+                <option>บิล</option>
+                <option>ช้อปปิ้ง</option>
+                <option>เงินเดือน</option>
+                <option>อื่น ๆ</option>
+              </select>
+              <button class="primary-btn" type="submit">บันทึก</button>
+            </form>
+          </div>
+          <div class="section-head"><h3>รายการล่าสุด</h3></div>
+          <div id="transactionList" class="list-stack empty-box">ยังไม่มีรายการ</div>
+        </section>
+
+        <section id="tasksPage" class="page">
+          <div class="panel-card">
+            <h3>เพิ่มงาน</h3>
+            <form id="taskForm" class="compact-form">
+              <input id="taskTitle" placeholder="ชื่องาน" required />
+              <input id="taskDue" type="date" />
+              <select id="taskPriority">
+                <option value="normal">ปกติ</option>
+                <option value="important">สำคัญ</option>
+              </select>
+              <button class="primary-btn" type="submit">เพิ่มงาน</button>
+            </form>
+          </div>
+          <div id="taskList" class="list-stack empty-box">ยังไม่มีงาน</div>
+        </section>
+
+        <section id="watchPage" class="page">
+          <div class="panel-card">
+            <h3>เพิ่มหนัง / ซีรีส์</h3>
+            <form id="watchForm" class="compact-form">
+              <input id="watchTitle" placeholder="ชื่อเรื่อง" required />
+              <select id="watchType">
+                <option>หนัง</option>
+                <option>ซีรีส์</option>
+                <option>อนิเมะ</option>
+              </select>
+              <select id="watchStatus">
+                <option>อยากดู</option>
+                <option>กำลังดู</option>
+                <option>ดูจบแล้ว</option>
+              </select>
+              <input id="watchNote" placeholder="โน้ตสั้น ๆ" />
+              <button class="primary-btn" type="submit">บันทึก</button>
+            </form>
+          </div>
+          <div id="watchList" class="list-stack empty-box">ยังไม่มีรายการ</div>
+        </section>
+
+        <section id="notesPage" class="page">
+          <div class="panel-card">
+            <h3>เพิ่มโน้ต / ลิงก์</h3>
+            <form id="noteForm" class="compact-form">
+              <input id="noteTitle" placeholder="หัวข้อ" required />
+              <input id="noteUrl" type="url" placeholder="ลิงก์ (ไม่ใส่ก็ได้)" />
+              <textarea id="noteBody" rows="3" placeholder="รายละเอียด"></textarea>
+              <button class="primary-btn" type="submit">บันทึก</button>
+            </form>
+          </div>
+          <div id="noteList" class="list-stack empty-box">ยังไม่มีโน้ต</div>
+        </section>
+
+        <section id="profilePage" class="page">
+          <div class="profile-card glass-card">
+            <div class="profile-avatar-wrap">
+              <img id="profileAvatar" src="" alt="Profile" class="profile-avatar hidden" />
+              <span id="profileAvatarText">M</span>
+            </div>
+            <h2 id="profileName">MyHub User</h2>
+            <p id="profileEmail" class="muted">email</p>
+          </div>
+
+          <div class="panel-card">
+            <h3>จัดการโปรไฟล์</h3>
+            <form id="profileForm" class="compact-form">
+              <input id="profileDisplayName" placeholder="ชื่อโปรไฟล์" />
+              <input id="profilePhotoUrl" type="url" placeholder="URL รูปโปรไฟล์ (ชั่วคราว v1)" />
+              <button class="primary-btn" type="submit">บันทึกโปรไฟล์</button>
+            </form>
+            <button id="logoutBtn" class="danger-btn" type="button">ออกจากระบบ</button>
+          </div>
+        </section>
+
+        <nav class="bottom-nav">
+          <button class="nav-btn active" data-nav="dashboard" type="button"><span>⌂</span>หน้าแรก</button>
+          <button class="nav-btn" data-nav="money" type="button"><span>฿</span>เงิน</button>
+          <button class="nav-btn" data-nav="tasks" type="button"><span>✓</span>งาน</button>
+          <button class="nav-btn" data-nav="watch" type="button"><span>▶</span>ดู</button>
+          <button class="nav-btn" data-nav="notes" type="button"><span>✎</span>โน้ต</button>
+        </nav>
+      </main>
+
+      <div id="toast" class="toast hidden"></div>
+    </div>
+
+    <script type="module" src="src/js/app.js"></script>
+  </body>
+</html>
