@@ -925,23 +925,24 @@ renderTaskItem = function(task){
   const done = Boolean(task.done);
   const overdue = taskIsOverdue(task);
   const important = task.priority === 'important';
-  const menuOpen = state.openTaskMenuId === task.id;
-  return `<article class="task-card-premium ${done ? 'done' : ''} ${important ? 'priority-important' : ''} ${overdue ? 'overdue' : ''}" data-task-card="${task.id}">
-    <button class="task-menu-trigger ${menuOpen ? 'active' : ''}" type="button" data-task-menu-toggle="${task.id}" aria-label="เมนูงาน">•••</button>
-    <div class="task-card-main">
-      <div>
-        <div class="task-card-title">${escapeHtml(task.title)}</div>
-        <div class="task-meta-row">
-          <span class="task-chip ${overdue ? 'overdue' : done ? 'done' : ''}">📅 ${taskDueLabel(task)}</span>
-          ${important ? '<span class="task-chip priority">🔥 สำคัญ</span>' : ''}
-          ${done ? '<span class="task-chip done">เสร็จแล้ว</span>' : ''}
-        </div>
-      </div>
-      <button class="task-check-btn ${done ? 'done' : ''}" data-done="tasks" data-id="${task.id}" data-value="${!done}" aria-label="ทำงานให้เสร็จ">${done ? '↺' : '✓'}</button>
+  const open = state.openSwipeTaskId === task.id;
+  return `<article class="task-card-premium task-swipe-card ${open ? 'swipe-open' : ''} ${done ? 'done' : ''} ${important ? 'priority-important' : ''} ${overdue ? 'overdue' : ''}" data-task-card="${task.id}">
+    <div class="task-swipe-actions" aria-hidden="${open ? 'false' : 'true'}">
+      <button type="button" class="swipe-action edit" data-edit="tasks" data-id="${task.id}">✎<span>แก้ไข</span></button>
+      <button type="button" class="swipe-action delete" data-delete="tasks" data-id="${task.id}">🗑<span>ลบ</span></button>
     </div>
-    <div class="task-menu-panel-clean ${menuOpen ? 'show' : ''}" role="menu">
-      <button type="button" data-edit="tasks" data-id="${task.id}">✎ แก้ไข</button>
-      <button type="button" class="delete" data-delete="tasks" data-id="${task.id}">🗑 ลบ</button>
+    <div class="task-card-surface" data-task-swipe-surface data-task-id="${task.id}">
+      <div class="task-card-main">
+        <div>
+          <div class="task-card-title">${escapeHtml(task.title)}</div>
+          <div class="task-meta-row">
+            <span class="task-chip ${overdue ? 'overdue' : done ? 'done' : ''}">📅 ${taskDueLabel(task)}</span>
+            ${important ? '<span class="task-chip priority">🔥 สำคัญ</span>' : ''}
+            ${done ? '<span class="task-chip done">เสร็จแล้ว</span>' : ''}
+          </div>
+        </div>
+        <button class="task-check-btn ${done ? 'done' : ''}" data-done="tasks" data-id="${task.id}" data-value="${!done}" aria-label="ทำงานให้เสร็จ">${done ? '↺' : '✓'}</button>
+      </div>
     </div>
   </article>`;
 };
@@ -982,3 +983,71 @@ renderAll = function(){
 };
 
 initTaskQuickOptions();
+
+// ===== MyHub v5.4: Swipe actions for Tasks =====
+state.openSwipeTaskId = state.openSwipeTaskId || null;
+let taskSwipe = null;
+const TASK_SWIPE_MAX = 132;
+function closeTaskSwipe(){
+  if (state.openSwipeTaskId) {
+    state.openSwipeTaskId = null;
+    renderAll();
+  }
+}
+
+document.addEventListener('pointerdown', (event) => {
+  const surface = event.target.closest('[data-task-swipe-surface]');
+  if (!surface) {
+    if (!event.target.closest('.task-swipe-actions')) closeTaskSwipe();
+    return;
+  }
+  if (event.target.closest('button, input, select, textarea, a')) return;
+  const card = surface.closest('.task-swipe-card');
+  taskSwipe = {
+    id: surface.dataset.taskId,
+    surface,
+    card,
+    startX: event.clientX,
+    startY: event.clientY,
+    dx: 0,
+    dragging: false,
+    wasOpen: card.classList.contains('swipe-open')
+  };
+});
+
+document.addEventListener('pointermove', (event) => {
+  if (!taskSwipe) return;
+  const dx = event.clientX - taskSwipe.startX;
+  const dy = event.clientY - taskSwipe.startY;
+  if (!taskSwipe.dragging && Math.abs(dx) < 8 && Math.abs(dy) < 8) return;
+  if (Math.abs(dy) > Math.abs(dx) && !taskSwipe.dragging) { taskSwipe = null; return; }
+  taskSwipe.dragging = true;
+  event.preventDefault();
+  const base = taskSwipe.wasOpen ? -TASK_SWIPE_MAX : 0;
+  const next = Math.max(-TASK_SWIPE_MAX, Math.min(0, base + dx));
+  taskSwipe.dx = next;
+  taskSwipe.surface.style.transition = 'none';
+  taskSwipe.surface.style.transform = `translateX(${next}px)`;
+}, { passive: false });
+
+document.addEventListener('pointerup', () => {
+  if (!taskSwipe) return;
+  const shouldOpen = taskSwipe.dx < -58;
+  taskSwipe.surface.style.transition = '';
+  taskSwipe.surface.style.transform = '';
+  state.openSwipeTaskId = shouldOpen ? taskSwipe.id : null;
+  taskSwipe = null;
+  renderAll();
+});
+
+document.addEventListener('click', (event) => {
+  if (event.target.closest('.task-swipe-actions')) {
+    state.openSwipeTaskId = null;
+    return;
+  }
+  const surface = event.target.closest('[data-task-swipe-surface]');
+  if (surface && state.openSwipeTaskId && surface.dataset.taskId !== state.openSwipeTaskId) {
+    closeTaskSwipe();
+  }
+});
+
