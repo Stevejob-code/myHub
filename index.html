@@ -15,34 +15,61 @@
   </head>
   <body>
     <div id="app" class="app-shell">
-      <section id="authScreen" class="auth-screen">
-        <div class="auth-card glass-card">
-          <div class="brand-mark">M</div>
-          <p class="eyebrow">Personal Life Hub</p>
-          <h1>MyHub</h1>
-          <p class="muted">จัดการเงิน งาน หนัง/ซีรีส์ โน้ต และลิงก์ส่วนตัวในที่เดียว</p>
-
-          <div class="auth-tabs">
-            <button id="loginTab" class="tab-btn active" type="button">เข้าสู่ระบบ</button>
-            <button id="registerTab" class="tab-btn" type="button">สมัครสมาชิก</button>
+      <section id="authScreen" class="auth-screen auth-ultra">
+        <div class="auth-orb orb-one"></div>
+        <div class="auth-orb orb-two"></div>
+        <div class="auth-card auth-pro-card glass-card">
+          <div class="auth-hero-panel">
+            <div class="brand-lockup">
+              <div class="brand-mark pro-mark">M</div>
+              <div>
+                <p class="eyebrow">Personal Life Hub</p>
+                <h1>MyHub</h1>
+              </div>
+            </div>
+            <p class="auth-hero-copy">ศูนย์ควบคุมชีวิตส่วนตัว จัดการเงิน งาน หนัง/ซีรีส์ โน้ต และทุกเรื่องสำคัญในที่เดียว</p>
+            <div class="auth-floating-ui" aria-hidden="true">
+              <div class="float-card calendar-card"><span>APR</span><strong>27</strong><small>Tasks</small></div>
+              <div class="float-card money-card"><span>Balance</span><strong>฿24,850</strong><small>+12%</small></div>
+              <div class="float-card note-card"><span>Notes</span><strong>8</strong><small>saved</small></div>
+              <div class="float-core">M</div>
+            </div>
+            <div class="auth-benefits">
+              <span>🔒 ปลอดภัย</span>
+              <span>⚡ ใช้งานเร็ว</span>
+              <span>☁️ ซิงค์ทุกอุปกรณ์</span>
+            </div>
           </div>
 
-          <form id="authForm" class="form-stack">
-            <div id="nameField" class="field hidden">
-              <label for="displayName">ชื่อโปรไฟล์</label>
-              <input id="displayName" type="text" autocomplete="name" placeholder="เช่น Job" />
+          <div class="auth-form-panel">
+            <div class="auth-welcome">
+              <p class="eyebrow">Welcome back</p>
+              <h2>เข้าสู่ MyHub</h2>
+              <p class="muted">ลงชื่อเข้าใช้เพื่อกลับไปจัดการทุกอย่างของคุณ</p>
             </div>
-            <div class="field">
-              <label for="email">อีเมล</label>
-              <input id="email" type="email" autocomplete="email" placeholder="you@email.com" required />
+
+            <div class="auth-tabs pro-tabs">
+              <button id="loginTab" class="tab-btn active" type="button">เข้าสู่ระบบ</button>
+              <button id="registerTab" class="tab-btn" type="button">สมัครสมาชิก</button>
             </div>
-            <div class="field">
-              <label for="password">รหัสผ่าน</label>
-              <input id="password" type="password" autocomplete="current-password" placeholder="อย่างน้อย 6 ตัวอักษร" required />
-            </div>
-            <button id="authSubmit" class="primary-btn" type="submit">เข้าสู่ระบบ</button>
-            <button id="forgotPasswordBtn" class="text-btn" type="button">ลืมรหัสผ่าน?</button>
-          </form>
+
+            <form id="authForm" class="form-stack pro-form">
+              <div id="nameField" class="field hidden">
+                <label for="displayName">ชื่อโปรไฟล์</label>
+                <div class="input-shell"><span>👤</span><input id="displayName" type="text" autocomplete="name" placeholder="เช่น Job" /></div>
+              </div>
+              <div class="field">
+                <label for="email">อีเมล</label>
+                <div class="input-shell"><span>✉️</span><input id="email" type="email" autocomplete="email" placeholder="you@email.com" required /></div>
+              </div>
+              <div class="field">
+                <label for="password">รหัสผ่าน</label>
+                <div class="input-shell"><span>🔐</span><input id="password" type="password" autocomplete="current-password" placeholder="อย่างน้อย 6 ตัวอักษร" required /></div>
+              </div>
+              <button id="authSubmit" class="primary-btn auth-glow-btn" type="submit">เข้าสู่ระบบ</button>
+              <button id="forgotPasswordBtn" class="text-btn auth-forgot" type="button">ลืมรหัสผ่าน?</button>
+            </form>
+          </div>
         </div>
       </section>
 
