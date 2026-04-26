@@ -430,3 +430,11 @@ body.light-mode{color:#111827;background:linear-gradient(145deg,#eef2ff 0%,#f8fa
 .task-check-btn{min-width:92px!important;width:auto!important;}
 @keyframes menuPop{from{opacity:0;transform:translateY(-4px) scale(.96)}to{opacity:1;transform:translateY(0) scale(1)}}
 @media(max-width:430px){.task-card-main{grid-template-columns:1fr auto!important}.task-check-btn{width:auto!important;min-width:86px!important}.task-menu-panel-clean{right:12px;top:50px}.task-card-premium .task-card-main>div{padding-right:42px!important}}
+
+/* ===== v5.3 fix: keep inactive pages hidden even when a page has layout display rules ===== */
+.page:not(.active-page) {
+  display: none !important;
+}
+.page.active-page.tasks-ux-page {
+  display: grid;
+}
