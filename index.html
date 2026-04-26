@@ -99,11 +99,6 @@
             <article class="mini-stat"><span>โน้ตทั้งหมด</span><strong id="noteCount">0</strong></article>
           </div>
 
-          <div class="panel-card smart-panel">
-            <div class="section-head inline-head"><h3>Smart Insights</h3><span class="mini-badge">v4</span></div>
-            <div id="smartInsights" class="smart-list empty-box">ยังไม่มี Insight</div>
-          </div>
-
           <div class="section-head">
             <h3>งานวันนี้</h3>
             <button class="mini-btn" data-nav="tasks" type="button">ดูทั้งหมด</button>
@@ -135,7 +130,6 @@
                 <option>เงินเดือน</option>
                 <option>อื่น ๆ</option>
               </select>
-              <input id="txTags" placeholder="แท็ก เช่น #กิน #ประจำ" />
               <button class="primary-btn" type="submit">บันทึก</button>
             </form>
           </div>
@@ -153,7 +147,6 @@
                 <option value="normal">ปกติ</option>
                 <option value="important">สำคัญ</option>
               </select>
-              <input id="taskTags" placeholder="แท็ก เช่น #งาน #บ้าน" />
               <button class="primary-btn" type="submit">เพิ่มงาน</button>
             </form>
           </div>
@@ -164,23 +157,35 @@
           <div class="panel-card">
             <h3>เพิ่มหนัง / ซีรีส์</h3>
             <form id="watchForm" class="compact-form">
-              <input id="watchTitle" placeholder="ชื่อเรื่อง" required />
-              <select id="watchType">
-                <option>หนัง</option>
-                <option>ซีรีส์</option>
-                <option>อนิเมะ</option>
-              </select>
-              <select id="watchStatus">
-                <option>อยากดู</option>
-                <option>กำลังดู</option>
-                <option>ดูจบแล้ว</option>
-              </select>
+              <input id="watchTitle" placeholder="ชื่อเรื่อง เช่น Avatar" required />
+              <input id="watchPoster" type="url" placeholder="ลิงก์โปสเตอร์ / รูปภาพ (ไม่ใส่ก็ได้)" />
+              <div class="form-grid-2">
+                <select id="watchType">
+                  <option>หนัง</option>
+                  <option>ซีรีส์</option>
+                  <option>อนิเมะ</option>
+                  <option>สารคดี</option>
+                </select>
+                <select id="watchStatus">
+                  <option>อยากดู</option>
+                  <option>กำลังดู</option>
+                  <option>ดูจบแล้ว</option>
+                  <option>พักไว้ก่อน</option>
+                </select>
+              </div>
+              <div class="form-grid-2">
+                <input id="watchGenre" placeholder="แนว เช่น Action, Sci‑fi" />
+                <input id="watchPlatform" placeholder="แพลตฟอร์ม เช่น Netflix" />
+              </div>
+              <div class="form-grid-2">
+                <input id="watchYear" type="number" inputmode="numeric" placeholder="ปี เช่น 2024" />
+                <input id="watchRating" type="number" inputmode="decimal" min="0" max="10" step="0.5" placeholder="คะแนน 0-10" />
+              </div>
               <input id="watchNote" placeholder="โน้ตสั้น ๆ" />
-              <input id="watchTags" placeholder="แท็ก เช่น #netflix #anime" />
-              <button class="primary-btn" type="submit">บันทึก</button>
+              <button class="primary-btn" type="submit">บันทึกเข้าคลังดูหนัง</button>
             </form>
           </div>
-          <div class="field search-field"><input id="watchSearch" placeholder="ค้นหาหนัง/ซีรีส์" /></div><div id="watchList" class="list-stack empty-box">ยังไม่มีรายการ</div>
+          <div class="section-head"><h3>คลังหนัง / ซีรีส์</h3><select id="watchViewFilter" class="pill-select"><option value="all">ทั้งหมด</option><option value="อยากดู">อยากดู</option><option value="กำลังดู">กำลังดู</option><option value="ดูจบแล้ว">ดูจบแล้ว</option></select></div><div class="field search-field"><input id="watchSearch" placeholder="ค้นหาชื่อเรื่อง / แนว / แพลตฟอร์ม" /></div><div id="watchList" class="movie-grid empty-box">ยังไม่มีรายการ</div>
         </section>
 
         <section id="notesPage" class="page">
@@ -190,7 +195,6 @@
               <input id="noteTitle" placeholder="หัวข้อ" required />
               <input id="noteUrl" type="url" placeholder="ลิงก์ (ไม่ใส่ก็ได้)" />
               <textarea id="noteBody" rows="3" placeholder="รายละเอียด"></textarea>
-              <input id="noteTags" placeholder="แท็ก เช่น #dev #idea" />
               <button class="primary-btn" type="submit">บันทึก</button>
             </form>
           </div>
@@ -242,12 +246,6 @@
         <div class="bottom-sheet">
           <div class="sheet-handle"></div>
           <div class="section-head sheet-title"><h3>เพิ่มด่วน</h3><button id="closeQuickSheet" class="mini-btn dark" type="button">ปิด</button></div>
-          <form id="smartQuickForm" class="smart-quick-form">
-            <label for="smartQuickInput">Quick Add อัจฉริยะ</label>
-            <textarea id="smartQuickInput" rows="3" placeholder="ตัวอย่าง: กินข้าว 80 #อาหาร&#10;พรุ่งนี้ประชุม 10 โมง #งาน&#10;ดู One Piece #anime"></textarea>
-            <button class="primary-btn" type="submit">ให้ MyHub แยกประเภทให้</button>
-            <small>ระบบจะเดาเป็น รายจ่าย / งาน / หนัง / โน้ต จากข้อความที่พิมพ์</small>
-          </form>
           <div class="quick-grid">
             <button class="quick-card" data-quick="money" type="button"><span>฿</span><strong>รายรับ/รายจ่าย</strong><small>บันทึกเงินทันที</small></button>
             <button class="quick-card" data-quick="tasks" type="button"><span>✓</span><strong>งาน</strong><small>เพิ่มสิ่งที่ต้องทำ</small></button>

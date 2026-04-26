@@ -326,8 +326,13 @@ $('watchForm').addEventListener('submit', async (event) => {
   event.preventDefault();
   await addDoc(userCol('watchlist'), {
     title: $('watchTitle').value.trim(),
+    poster: $('watchPoster')?.value.trim() || '',
     type: $('watchType').value,
     status: $('watchStatus').value,
+    genre: $('watchGenre')?.value.trim() || '',
+    platform: $('watchPlatform')?.value.trim() || '',
+    year: $('watchYear')?.value.trim() || '',
+    rating: $('watchRating')?.value.trim() || '',
     note: $('watchNote').value.trim(),
     createdAt: serverTimestamp()
   });
@@ -380,7 +385,7 @@ onAuthStateChanged(auth, async (user) => {
 });
 
 // ===== MyHub v2: Quick Add, Filters, Search, Edit =====
-state.filters = { tx: 'all', task: 'all', watch: '', note: '' };
+state.filters = { tx: 'all', task: 'all', watch: '', watchStatus: 'all', note: '' };
 let editing = null;
 
 function itemDateText(item) {
@@ -415,10 +420,20 @@ renderTaskItem = function(task) {
 };
 
 renderWatchItem = function(item) {
-  return `<article class="item-card">
-    <div class="item-row">
-      <div><div class="item-title">${escapeHtml(item.title)}</div><div class="item-meta">${escapeHtml(item.type)} · ${escapeHtml(item.status)}</div>${item.note ? `<div class="item-meta">${escapeHtml(item.note)}</div>` : ''}</div>
-      <div class="item-actions"><button class="icon-btn edit-btn" data-edit="watchlist" data-id="${item.id}">แก้</button><button class="icon-btn delete" data-delete="watchlist" data-id="${item.id}">ลบ</button></div>
+  const poster = item.poster ? `<img src="${escapeAttr(item.poster)}" alt="${escapeAttr(item.title)}" loading="lazy" />` : `<div class="poster-fallback">▶</div>`;
+  const rating = item.rating ? `<span class="movie-rating">★ ${escapeHtml(item.rating)}/10</span>` : '';
+  const year = item.year ? ` · ${escapeHtml(item.year)}` : '';
+  const genre = item.genre ? `<span>${escapeHtml(item.genre)}</span>` : '';
+  const platform = item.platform ? `<span>${escapeHtml(item.platform)}</span>` : '';
+  const note = item.note ? `<p class="movie-note">${escapeHtml(item.note)}</p>` : '';
+  return `<article class="movie-card">
+    <div class="movie-poster">${poster}</div>
+    <div class="movie-info">
+      <div class="movie-topline"><span class="movie-type">${escapeHtml(item.type || 'หนัง')}${year}</span>${rating}</div>
+      <h3>${escapeHtml(item.title)}</h3>
+      <div class="movie-badges"><span class="status-badge">${escapeHtml(item.status || 'อยากดู')}</span>${genre}${platform}</div>
+      ${note}
+      <div class="item-actions movie-actions"><button class="icon-btn edit-btn" data-edit="watchlist" data-id="${item.id}">แก้</button><button class="icon-btn delete" data-delete="watchlist" data-id="${item.id}">ลบ</button></div>
     </div>
   </article>`;
 };
@@ -437,7 +452,7 @@ renderAll = function() {
   const txs = state.transactions.filter((x) => state.filters.tx === 'all' || x.type === state.filters.tx);
   const tasks = state.tasks.filter((t) => state.filters.task === 'all' || (state.filters.task === 'done' ? t.done : !t.done));
   const watchTerm = state.filters.watch.toLowerCase();
-  const watches = state.watchlist.filter((w) => !watchTerm || `${w.title} ${w.type} ${w.status} ${w.note}`.toLowerCase().includes(watchTerm));
+  const watches = state.watchlist.filter((w) => (!watchTerm || `${w.title} ${w.type} ${w.status} ${w.genre || ''} ${w.platform || ''} ${w.year || ''} ${w.note}`.toLowerCase().includes(watchTerm)) && (state.filters.watchStatus === 'all' || w.status === state.filters.watchStatus));
   const noteTerm = state.filters.note.toLowerCase();
   const notes = state.notes.filter((n) => !noteTerm || `${n.title} ${n.body} ${n.url}`.toLowerCase().includes(noteTerm));
   renderList($('transactionList'), txs, renderTransactionItem, 'ยังไม่มีรายการ');
@@ -468,7 +483,7 @@ function openEditModal(col, id) {
     f.innerHTML = `<input id="editTaskTitle" value="${escapeAttr(item.title)}" required /><input id="editTaskDue" type="date" value="${escapeAttr(item.dueDate || '')}" /><select id="editTaskPriority"><option value="normal">ปกติ</option><option value="important">สำคัญ</option></select><button class="primary-btn" type="submit">บันทึกการแก้ไข</button>`;
     $('editTaskPriority').value = item.priority || 'normal';
   } else if (col === 'watchlist') {
-    f.innerHTML = `<input id="editWatchTitle" value="${escapeAttr(item.title)}" required /><select id="editWatchType"><option>หนัง</option><option>ซีรีส์</option><option>อนิเมะ</option></select><select id="editWatchStatus"><option>อยากดู</option><option>กำลังดู</option><option>ดูจบแล้ว</option></select><input id="editWatchNote" value="${escapeAttr(item.note || '')}" placeholder="โน้ต" /><button class="primary-btn" type="submit">บันทึกการแก้ไข</button>`;
+    f.innerHTML = `<input id="editWatchTitle" value="${escapeAttr(item.title)}" required /><input id="editWatchPoster" type="url" value="${escapeAttr(item.poster || '')}" placeholder="ลิงก์โปสเตอร์ / รูปภาพ" /><div class="form-grid-2"><select id="editWatchType"><option>หนัง</option><option>ซีรีส์</option><option>อนิเมะ</option><option>สารคดี</option></select><select id="editWatchStatus"><option>อยากดู</option><option>กำลังดู</option><option>ดูจบแล้ว</option><option>พักไว้ก่อน</option></select></div><div class="form-grid-2"><input id="editWatchGenre" value="${escapeAttr(item.genre || '')}" placeholder="แนว" /><input id="editWatchPlatform" value="${escapeAttr(item.platform || '')}" placeholder="แพลตฟอร์ม" /></div><div class="form-grid-2"><input id="editWatchYear" type="number" value="${escapeAttr(item.year || '')}" placeholder="ปี" /><input id="editWatchRating" type="number" min="0" max="10" step="0.5" value="${escapeAttr(item.rating || '')}" placeholder="คะแนน 0-10" /></div><input id="editWatchNote" value="${escapeAttr(item.note || '')}" placeholder="โน้ต" /><button class="primary-btn" type="submit">บันทึกการแก้ไข</button>`;
     $('editWatchType').value = item.type || 'หนัง'; $('editWatchStatus').value = item.status || 'อยากดู';
   } else {
     f.innerHTML = `<input id="editNoteTitle" value="${escapeAttr(item.title)}" required /><input id="editNoteUrl" type="url" value="${escapeAttr(item.url || '')}" placeholder="ลิงก์" /><textarea id="editNoteBody" rows="3" placeholder="รายละเอียด">${escapeHtml(item.body || '')}</textarea><button class="primary-btn" type="submit">บันทึกการแก้ไข</button>`;
@@ -485,6 +500,7 @@ document.querySelectorAll('[data-quick]').forEach((btn) => btn.addEventListener(
 $('txFilter').addEventListener('change', (e) => { state.filters.tx = e.target.value; renderAll(); });
 document.querySelectorAll('[data-task-filter]').forEach((btn) => btn.addEventListener('click', () => { state.filters.task = btn.dataset.taskFilter; document.querySelectorAll('[data-task-filter]').forEach((b) => b.classList.toggle('active', b === btn)); renderAll(); }));
 $('watchSearch').addEventListener('input', (e) => { state.filters.watch = e.target.value; renderAll(); });
+$('watchViewFilter')?.addEventListener('change', (e) => { state.filters.watchStatus = e.target.value; renderAll(); });
 $('noteSearch').addEventListener('input', (e) => { state.filters.note = e.target.value; renderAll(); });
 
 document.body.addEventListener('click', (event) => {
@@ -498,7 +514,7 @@ $('editForm').addEventListener('submit', async (event) => {
   let data = { updatedAt: serverTimestamp() };
   if (editing.col === 'transactions') data = { ...data, title: $('editTxTitle').value.trim(), amount: Number($('editTxAmount').value), type: $('editTxType').value, category: $('editTxCategory').value.trim() || 'อื่น ๆ' };
   if (editing.col === 'tasks') data = { ...data, title: $('editTaskTitle').value.trim(), dueDate: $('editTaskDue').value, priority: $('editTaskPriority').value };
-  if (editing.col === 'watchlist') data = { ...data, title: $('editWatchTitle').value.trim(), type: $('editWatchType').value, status: $('editWatchStatus').value, note: $('editWatchNote').value.trim() };
+  if (editing.col === 'watchlist') data = { ...data, title: $('editWatchTitle').value.trim(), poster: $('editWatchPoster')?.value.trim() || '', type: $('editWatchType').value, status: $('editWatchStatus').value, genre: $('editWatchGenre')?.value.trim() || '', platform: $('editWatchPlatform')?.value.trim() || '', year: $('editWatchYear')?.value.trim() || '', rating: $('editWatchRating')?.value.trim() || '', note: $('editWatchNote').value.trim() };
   if (editing.col === 'notes') data = { ...data, title: $('editNoteTitle').value.trim(), url: $('editNoteUrl').value.trim(), body: $('editNoteBody').value.trim() };
   await updateDoc(userDoc(editing.col, editing.id), data);
   closeEditModal();
@@ -516,325 +532,3 @@ function renderExpenseChart(){const canvas=$('expenseChart');if(!canvas)return;c
 function roundRect(ctx,x,y,w,h,r){ctx.beginPath();ctx.moveTo(x+r,y);ctx.arcTo(x+w,y,x+w,y+h,r);ctx.arcTo(x+w,y+h,x,y+h,r);ctx.arcTo(x,y+h,x,y,r);ctx.arcTo(x,y,x+w,y,r);ctx.closePath();}
 function setTheme(theme){document.body.classList.toggle('light-mode',theme==='light');localStorage.setItem('myhub-theme',theme);const btn=$('themeToggleBtn');if(btn)btn.textContent=theme==='light'?'โหมดมืด':'โหมดสว่าง';}
 setTheme(localStorage.getItem('myhub-theme')||'dark');$('themeToggleBtn')?.addEventListener('click',()=>setTheme(document.body.classList.contains('light-mode')?'dark':'light'));window.addEventListener('resize',()=>renderExpenseChart());if('serviceWorker'in navigator){window.addEventListener('load',()=>navigator.serviceWorker.register('./sw.js').catch(()=>{}));}window.addEventListener('beforeinstallprompt',(event)=>{event.preventDefault();deferredInstallPrompt=event;$('installAppBtn')?.classList.remove('hidden');});$('installAppBtn')?.addEventListener('click',async()=>{if(!deferredInstallPrompt)return toast('ติดตั้งได้จากเมนูของเบราว์เซอร์');deferredInstallPrompt.prompt();await deferredInstallPrompt.userChoice;deferredInstallPrompt=null;$('installAppBtn')?.classList.add('hidden');});
-
-
-// ===== MyHub v4 Phase 1: Smart Insights, Smart Quick Add, Tags =====
-function parseTags(value = '') {
-  const matches = String(value).match(/#[\p{L}\p{N}_-]+/gu) || [];
-  return [...new Set(matches.map((tag) => tag.trim()))];
-}
-
-function cleanTagsFromText(value = '') {
-  return String(value).replace(/#[\p{L}\p{N}_-]+/gu, '').replace(/\s+/g, ' ').trim();
-}
-
-function renderTags(tags = []) {
-  if (!Array.isArray(tags) || !tags.length) return '';
-  return `<div class="tag-row">${tags.map((tag) => `<span class="tag-pill">${escapeHtml(tag)}</span>`).join('')}</div>`;
-}
-
-function collectionForItem(col) {
-  const map = { transactions: state.transactions, tasks: state.tasks, watchlist: state.watchlist, notes: state.notes };
-  return map[col] || [];
-}
-
-function smartDateFromText(text = '') {
-  const now = new Date();
-  const lower = text.toLowerCase();
-  if (lower.includes('วันนี้')) return todayISO();
-  if (lower.includes('พรุ่งนี้')) {
-    const d = new Date();
-    d.setDate(d.getDate() + 1);
-    return d.toISOString().slice(0, 10);
-  }
-  const dateMatch = text.match(/(\d{4})-(\d{2})-(\d{2})/);
-  if (dateMatch) return dateMatch[0];
-  return '';
-}
-
-function detectQuickType(text = '') {
-  const lower = text.toLowerCase();
-  if (/(ดู|หนัง|ซีรีส์|series|movie|anime|อนิเมะ|netflix|disney|prime)/i.test(lower)) return 'watch';
-  if (/(งาน|todo|task|ประชุม|นัด|เตือน|ต้อง|พรุ่งนี้|วันนี้|deadline|ส่งงาน)/i.test(lower)) return 'task';
-  if (/(http|www\.|ลิงก์|link|note|โน้ต|จด|ไอเดีย|idea)/i.test(lower)) return 'note';
-  if (/\d+/.test(lower) || /(บาท|฿|กิน|ซื้อ|จ่าย|เงินเดือน|รายรับ|ค่า|บิล|ช้อป)/i.test(lower)) return 'transaction';
-  return 'note';
-}
-
-function guessTxCategory(text = '') {
-  const lower = text.toLowerCase();
-  if (/(กิน|ข้าว|กาแฟ|อาหาร|ชา|น้ำ)/i.test(lower)) return 'อาหาร';
-  if (/(รถ|แท็กซี่|bts|mrt|เดินทาง|น้ำมัน)/i.test(lower)) return 'เดินทาง';
-  if (/(ไฟ|น้ำ|เน็ต|โทรศัพท์|บิล)/i.test(lower)) return 'บิล';
-  if (/(ซื้อ|ช้อป|ของ|shop)/i.test(lower)) return 'ช้อปปิ้ง';
-  if (/(เงินเดือน|รายรับ|salary|ขาย)/i.test(lower)) return 'เงินเดือน';
-  return 'อื่น ๆ';
-}
-
-function guessTxType(text = '') {
-  return /(ได้เงิน|รายรับ|เงินเดือน|salary|ขาย|รับเงิน|\+)/i.test(text) ? 'income' : 'expense';
-}
-
-function firstAmount(text = '') {
-  const match = String(text).replace(/,/g, '').match(/(\d+(?:\.\d+)?)/);
-  return match ? Number(match[1]) : 0;
-}
-
-function buildSmartInsights() {
-  const insights = [];
-  const today = todayISO();
-  const pending = state.tasks.filter((t) => !t.done);
-  const overdue = pending.filter((t) => t.dueDate && t.dueDate < today);
-  const dueToday = pending.filter((t) => t.dueDate === today);
-
-  if (overdue.length) insights.push({ icon: '⚠️', title: `มีงานเลยกำหนด ${overdue.length} งาน`, detail: 'เปิดหน้า Tasks แล้วเคลียร์งานค้างก่อนดีสุด' });
-  else if (dueToday.length) insights.push({ icon: '⏰', title: `วันนี้มีงานต้องทำ ${dueToday.length} งาน`, detail: 'งานวันนี้ถูกดึงมาไว้หน้า Dashboard แล้ว' });
-
-  const now = new Date();
-  const thisMonthExpense = state.transactions.filter((tx) => {
-    const d = toDateValue(tx.date) || toDateValue(tx.createdAt);
-    return tx.type === 'expense' && d && d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear();
-  });
-  const totalExpense = thisMonthExpense.reduce((sum, tx) => sum + Number(tx.amount || 0), 0);
-  const avgPerDay = totalExpense / Math.max(1, now.getDate());
-  if (totalExpense > 0) {
-    insights.push({ icon: '💸', title: `เดือนนี้ใช้ไป ${baht.format(totalExpense)}`, detail: `เฉลี่ยประมาณ ${baht.format(avgPerDay)} ต่อวัน` });
-  }
-
-  const catTotals = {};
-  thisMonthExpense.forEach((tx) => {
-    const cat = tx.category || 'อื่น ๆ';
-    catTotals[cat] = (catTotals[cat] || 0) + Number(tx.amount || 0);
-  });
-  const top = Object.entries(catTotals).sort((a, b) => b[1] - a[1])[0];
-  if (top) insights.push({ icon: '🏷️', title: `หมวดที่ใช้เยอะสุดคือ ${top[0]}`, detail: `รวม ${baht.format(top[1])} ในเดือนนี้` });
-
-  const watchPending = state.watchlist.filter((w) => w.status !== 'ดูจบแล้ว').length;
-  if (watchPending >= 5) insights.push({ icon: '🎬', title: `Watchlist รอดู ${watchPending} เรื่อง`, detail: 'ลองเลือกเรื่องหนึ่งไว้ดูคืนนี้ได้เลย' });
-
-  const allTags = [...state.transactions, ...state.tasks, ...state.watchlist, ...state.notes].flatMap((x) => Array.isArray(x.tags) ? x.tags : []);
-  if (allTags.length) {
-    const tagCount = allTags.reduce((acc, tag) => { acc[tag] = (acc[tag] || 0) + 1; return acc; }, {});
-    const hotTag = Object.entries(tagCount).sort((a, b) => b[1] - a[1])[0];
-    if (hotTag) insights.push({ icon: '#', title: `แท็กที่ใช้บ่อย: ${hotTag[0]}`, detail: `พบ ${hotTag[1]} รายการในระบบ` });
-  }
-
-  if (!insights.length) insights.push({ icon: '✨', title: 'เริ่มเพิ่มข้อมูลแรกได้เลย', detail: 'กดปุ่ม + แล้วใช้ Quick Add เพื่อให้ MyHub จัดหมวดให้อัตโนมัติ' });
-  return insights.slice(0, 4);
-}
-
-function renderSmartInsights() {
-  const el = $('smartInsights');
-  if (!el) return;
-  const insights = buildSmartInsights();
-  el.classList.remove('empty-box');
-  el.innerHTML = insights.map((item) => `<article class="smart-item"><span>${item.icon}</span><div><strong>${escapeHtml(item.title)}</strong><small>${escapeHtml(item.detail)}</small></div></article>`).join('');
-}
-
-const previousRenderDashboardV4 = renderDashboard;
-renderDashboard = function() {
-  previousRenderDashboardV4();
-  renderSmartInsights();
-};
-
-renderTransactionItem = function(tx) {
-  const isIncome = tx.type === 'income';
-  const sign = isIncome ? '+' : '-';
-  return `<article class="item-card">
-    <div class="item-row">
-      <div><div class="item-title">${escapeHtml(tx.title)}</div><div class="item-meta">${escapeHtml(tx.category || 'อื่น ๆ')} · ${isIncome ? 'รายรับ' : 'รายจ่าย'}</div><div class="inline-date">${itemDateText(tx)}</div>${renderTags(tx.tags)}</div>
-      <strong class="${isIncome ? 'money-income' : 'money-expense'}">${sign}${baht.format(Number(tx.amount || 0))}</strong>
-    </div>
-    <div class="item-actions"><button class="icon-btn edit-btn" data-edit="transactions" data-id="${tx.id}">แก้</button><button class="icon-btn delete" data-delete="transactions" data-id="${tx.id}">ลบ</button></div>
-  </article>`;
-};
-
-renderTaskItem = function(task) {
-  return `<article class="item-card ${task.done ? 'done' : ''}">
-    <div class="item-row">
-      <div><div class="item-title">${escapeHtml(task.title)}</div><div class="item-meta">${task.dueDate || 'ไม่กำหนดวัน'} · ${task.priority === 'important' ? 'สำคัญ' : 'ปกติ'}</div>${renderTags(task.tags)}</div>
-      <div class="item-actions">
-        <button class="icon-btn" data-done="tasks" data-id="${task.id}" data-value="${!task.done}">${task.done ? '↺' : '✓'}</button>
-        <button class="icon-btn edit-btn" data-edit="tasks" data-id="${task.id}">แก้</button>
-        <button class="icon-btn delete" data-delete="tasks" data-id="${task.id}">ลบ</button>
-      </div>
-    </div>
-  </article>`;
-};
-
-renderWatchItem = function(item) {
-  return `<article class="item-card">
-    <div class="item-row">
-      <div><div class="item-title">${escapeHtml(item.title)}</div><div class="item-meta">${escapeHtml(item.type)} · ${escapeHtml(item.status)}</div>${item.note ? `<div class="item-meta">${escapeHtml(item.note)}</div>` : ''}${renderTags(item.tags)}</div>
-      <div class="item-actions"><button class="icon-btn edit-btn" data-edit="watchlist" data-id="${item.id}">แก้</button><button class="icon-btn delete" data-delete="watchlist" data-id="${item.id}">ลบ</button></div>
-    </div>
-  </article>`;
-};
-
-renderNoteItem = function(note) {
-  return `<article class="item-card">
-    <div class="item-row">
-      <div><div class="item-title">${escapeHtml(note.title)}</div>${note.body ? `<div class="item-meta">${escapeHtml(note.body)}</div>` : ''}${note.url ? `<a class="item-meta" href="${escapeAttr(note.url)}" target="_blank" rel="noopener">เปิดลิงก์</a>` : ''}${renderTags(note.tags)}</div>
-      <div class="item-actions"><button class="icon-btn edit-btn" data-edit="notes" data-id="${note.id}">แก้</button><button class="icon-btn delete" data-delete="notes" data-id="${note.id}">ลบ</button></div>
-    </div>
-  </article>`;
-};
-
-const previousRenderAllV4 = renderAll;
-renderAll = function() {
-  const txTerm = (state.filters?.txSearch || '').toLowerCase();
-  previousRenderAllV4();
-  if (txTerm) {
-    const txs = state.transactions.filter((x) => `${x.title} ${x.category} ${(x.tags || []).join(' ')}`.toLowerCase().includes(txTerm));
-    renderList($('transactionList'), txs, renderTransactionItem, 'ไม่พบรายการ');
-  }
-};
-
-async function createFromSmartText(text) {
-  const tags = parseTags(text);
-  const clean = cleanTagsFromText(text);
-  const type = detectQuickType(clean);
-  if (type === 'transaction') {
-    const amount = firstAmount(clean);
-    if (!amount) throw new Error('ไม่พบจำนวนเงินในข้อความ');
-    const title = clean.replace(/(\d+(?:\.\d+)?)/, '').replace(/บาท|฿/g, '').trim() || 'รายการด่วน';
-    await addDoc(userCol('transactions'), {
-      title,
-      amount,
-      type: guessTxType(clean),
-      category: guessTxCategory(clean),
-      tags,
-      date: new Date(),
-      createdAt: serverTimestamp(),
-      source: 'smartQuick'
-    });
-    return 'บันทึกรายการเงินแล้ว';
-  }
-  if (type === 'task') {
-    await addDoc(userCol('tasks'), {
-      title: clean || 'งานด่วน',
-      dueDate: smartDateFromText(text),
-      priority: /(สำคัญ|ด่วน|urgent|important)/i.test(text) ? 'important' : 'normal',
-      tags,
-      done: false,
-      createdAt: serverTimestamp(),
-      updatedAt: serverTimestamp(),
-      source: 'smartQuick'
-    });
-    return 'เพิ่มงานจาก Quick Add แล้ว';
-  }
-  if (type === 'watch') {
-    await addDoc(userCol('watchlist'), {
-      title: clean.replace(/^(ดู|หนัง|ซีรีส์|อนิเมะ)\s*/i, '') || 'รายการน่าดู',
-      type: /(ซีรีส์|series)/i.test(text) ? 'ซีรีส์' : /(อนิเมะ|anime)/i.test(text) ? 'อนิเมะ' : 'หนัง',
-      status: 'อยากดู',
-      note: '',
-      tags,
-      createdAt: serverTimestamp(),
-      source: 'smartQuick'
-    });
-    return 'เพิ่มเข้ารายการอยากดูแล้ว';
-  }
-  const urlMatch = text.match(/https?:\/\/\S+|www\.\S+/i);
-  await addDoc(userCol('notes'), {
-    title: clean.slice(0, 80) || 'โน้ตด่วน',
-    url: urlMatch ? (urlMatch[0].startsWith('http') ? urlMatch[0] : `https://${urlMatch[0]}`) : '',
-    body: clean,
-    tags,
-    createdAt: serverTimestamp(),
-    source: 'smartQuick'
-  });
-  return 'บันทึกโน้ตจาก Quick Add แล้ว';
-}
-
-$('smartQuickForm')?.addEventListener('submit', async (event) => {
-  event.preventDefault();
-  const text = $('smartQuickInput').value.trim();
-  if (!text) return toast('พิมพ์ข้อความก่อนนะครับ');
-  try {
-    const message = await createFromSmartText(text);
-    $('smartQuickInput').value = '';
-    closeQuickSheet();
-    toast(message);
-  } catch (error) {
-    toast(error.message);
-  }
-});
-
-// upgrade normal forms to save tags
-const oldTxSubmit = $('transactionForm').onsubmit;
-$('transactionForm').addEventListener('submit', () => { window.__pendingTxTags = parseTags($('txTags')?.value || ''); }, true);
-const oldTaskSubmit = $('taskForm').onsubmit;
-$('taskForm').addEventListener('submit', () => { window.__pendingTaskTags = parseTags($('taskTags')?.value || ''); }, true);
-
-// Override form handlers by capturing and stopping the previous bubble handlers where tags are present
-function resetFormWithTags(form, tagId) {
-  form.reset();
-  const tagEl = $(tagId);
-  if (tagEl) tagEl.value = '';
-}
-
-$('transactionForm').addEventListener('submit', async (event) => {
-  if (!$('txTags')) return;
-  event.stopImmediatePropagation();
-  event.preventDefault();
-  await addDoc(userCol('transactions'), {
-    title: $('txTitle').value.trim(),
-    amount: Number($('txAmount').value),
-    type: $('txType').value,
-    category: $('txCategory').value,
-    tags: parseTags($('txTags').value),
-    date: new Date(),
-    createdAt: serverTimestamp()
-  });
-  resetFormWithTags(event.target, 'txTags');
-  toast('บันทึกรายการแล้ว');
-}, true);
-
-$('taskForm').addEventListener('submit', async (event) => {
-  if (!$('taskTags')) return;
-  event.stopImmediatePropagation();
-  event.preventDefault();
-  await addDoc(userCol('tasks'), {
-    title: $('taskTitle').value.trim(),
-    dueDate: $('taskDue').value,
-    priority: $('taskPriority').value,
-    tags: parseTags($('taskTags').value),
-    done: false,
-    createdAt: serverTimestamp(),
-    updatedAt: serverTimestamp()
-  });
-  resetFormWithTags(event.target, 'taskTags');
-  toast('เพิ่มงานแล้ว');
-}, true);
-
-$('watchForm').addEventListener('submit', async (event) => {
-  if (!$('watchTags')) return;
-  event.stopImmediatePropagation();
-  event.preventDefault();
-  await addDoc(userCol('watchlist'), {
-    title: $('watchTitle').value.trim(),
-    type: $('watchType').value,
-    status: $('watchStatus').value,
-    note: $('watchNote').value.trim(),
-    tags: parseTags($('watchTags').value),
-    createdAt: serverTimestamp()
-  });
-  resetFormWithTags(event.target, 'watchTags');
-  toast('เพิ่มเข้ารายการแล้ว');
-}, true);
-
-$('noteForm').addEventListener('submit', async (event) => {
-  if (!$('noteTags')) return;
-  event.stopImmediatePropagation();
-  event.preventDefault();
-  await addDoc(userCol('notes'), {
-    title: $('noteTitle').value.trim(),
-    url: $('noteUrl').value.trim(),
-    body: $('noteBody').value.trim(),
-    tags: parseTags($('noteTags').value),
-    createdAt: serverTimestamp()
-  });
-  resetFormWithTags(event.target, 'noteTags');
-  toast('บันทึกโน้ตแล้ว');
-}, true);
