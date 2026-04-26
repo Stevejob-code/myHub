@@ -386,28 +386,75 @@ onAuthStateChanged(auth, async (user) => {
 
 // ===== Watchlist v4.1: Platforms + Auto Poster =====
 const TMDB_API_KEY = ''; // ใส่ TMDB API Key ถ้าต้องการดึงโปสเตอร์อัตโนมัติ
+const WATCH_TYPES = [
+  { key: 'หนัง', label: 'หนัง', icon: '🎬' },
+  { key: 'ซีรีส์', label: 'ซีรีส์', icon: '📺' },
+  { key: 'อนิเมะ', label: 'อนิเมะ', icon: '✨' },
+  { key: 'สารคดี', label: 'สารคดี', icon: '🌎' }
+];
 const WATCH_PLATFORMS = [
-  { key: 'YouTube', label: 'YouTube', icon: '▶️' },
-  { key: 'Netflix', label: 'Netflix', icon: 'N' },
-  { key: 'HBO Max', label: 'HBO Max', icon: 'H' },
-  { key: 'Disney+', label: 'Disney+', icon: 'D+' },
-  { key: 'Prime Video', label: 'Prime', icon: 'P' },
-  { key: 'Apple TV+', label: 'Apple TV+', icon: '' },
-  { key: 'Viu', label: 'Viu', icon: 'V' },
-  { key: 'iQIYI', label: 'iQIYI', icon: 'iQ' },
-  { key: 'WeTV', label: 'WeTV', icon: 'W' },
-  { key: 'TrueID', label: 'TrueID', icon: 'T' },
-  { key: 'MonoMax', label: 'MonoMax', icon: 'M' },
-  { key: 'Crunchyroll', label: 'Crunchyroll', icon: 'C' },
-  { key: 'Bilibili', label: 'Bilibili', icon: 'B' },
-  { key: 'อื่น ๆ', label: 'อื่น ๆ', icon: '⋯' }
+  { key: 'YouTube', label: 'YouTube', icon: 'https://cdn.jsdelivr.net/npm/simple-icons@v11/icons/youtube.svg' },
+  { key: 'Netflix', label: 'Netflix', icon: 'https://cdn.jsdelivr.net/npm/simple-icons@v11/icons/netflix.svg' },
+  { key: 'HBO Max', label: 'HBO Max', icon: 'https://cdn.jsdelivr.net/npm/simple-icons@v11/icons/hbo.svg' },
+  { key: 'Disney+', label: 'Disney+', icon: 'https://cdn.jsdelivr.net/npm/simple-icons@v11/icons/disneyplus.svg' },
+  { key: 'Prime Video', label: 'Prime Video', icon: 'https://cdn.jsdelivr.net/npm/simple-icons@v11/icons/primevideo.svg' },
+  { key: 'Apple TV+', label: 'Apple TV+', icon: 'https://cdn.jsdelivr.net/npm/simple-icons@v11/icons/appletv.svg' },
+  { key: 'Viu', label: 'Viu', fallback: 'V' },
+  { key: 'iQIYI', label: 'iQIYI', icon: 'https://cdn.jsdelivr.net/npm/simple-icons@v11/icons/iqiyi.svg' },
+  { key: 'WeTV', label: 'WeTV', fallback: 'W' },
+  { key: 'TrueID', label: 'TrueID', fallback: 'T' },
+  { key: 'MonoMax', label: 'MonoMax', fallback: 'M' },
+  { key: 'Crunchyroll', label: 'Crunchyroll', icon: 'https://cdn.jsdelivr.net/npm/simple-icons@v11/icons/crunchyroll.svg' },
+  { key: 'Bilibili', label: 'Bilibili', icon: 'https://cdn.jsdelivr.net/npm/simple-icons@v11/icons/bilibili.svg' },
+  { key: 'อื่น ๆ', label: 'อื่น ๆ', fallback: '⋯' }
 ];
 function getPlatform(key) { return WATCH_PLATFORMS.find(p => p.key === key) || WATCH_PLATFORMS[WATCH_PLATFORMS.length - 1]; }
-function renderPlatformSelect(selectId, selected = 'Netflix') {
-  const el = $(selectId); if (!el) return;
-  el.innerHTML = WATCH_PLATFORMS.map(p => `<option value="${escapeAttr(p.key)}">${p.icon} ${escapeHtml(p.label)}</option>`).join('');
-  el.value = selected;
+function platformIconHTML(p) {
+  if (p.icon) return `<span class="brand-icon"><img src="${escapeAttr(p.icon)}" alt="" loading="lazy" /></span>`;
+  return `<span class="brand-icon text-icon">${escapeHtml(p.fallback || p.icon || p.label[0] || '?')}</span>`;
 }
+function typeIconHTML(t) { return `<span class="brand-icon type-icon">${escapeHtml(t.icon)}</span>`; }
+function getDropdownOptions(kind) { return kind === 'type' ? WATCH_TYPES : WATCH_PLATFORMS; }
+function optionIconHTML(kind, item) { return kind === 'type' ? typeIconHTML(item) : platformIconHTML(item); }
+function renderAppDropdown(dropdownId, selected, kind = 'platform') {
+  const root = $(dropdownId); if (!root) return;
+  const inputId = root.dataset.input;
+  const input = inputId ? $(inputId) : null;
+  const options = getDropdownOptions(kind);
+  const current = options.find(o => o.key === selected) || options[0];
+  if (input) input.value = current.key;
+  root.innerHTML = `
+    <button class="dropdown-trigger" type="button" aria-expanded="false">
+      <span class="dropdown-current">${optionIconHTML(kind, current)}<span>${escapeHtml(current.label)}</span></span>
+      <span class="dropdown-chevron">⌄</span>
+    </button>
+    <div class="dropdown-menu" role="listbox">
+      ${options.map(o => `<button class="dropdown-option ${o.key === current.key ? 'selected' : ''}" type="button" data-value="${escapeAttr(o.key)}">${optionIconHTML(kind, o)}<span>${escapeHtml(o.label)}</span><b>✓</b></button>`).join('')}
+    </div>`;
+}
+function initAppDropdowns() {
+  document.querySelectorAll('.app-dropdown').forEach(root => {
+    const kind = root.dataset.kind || 'platform';
+    const input = root.dataset.input ? $(root.dataset.input) : null;
+    if (!root.innerHTML.trim()) renderAppDropdown(root.id, input?.value || (kind === 'type' ? 'หนัง' : 'Netflix'), kind);
+    const trigger = root.querySelector('.dropdown-trigger');
+    trigger?.addEventListener('click', (e) => {
+      e.stopPropagation();
+      document.querySelectorAll('.app-dropdown.open').forEach(x => { if (x !== root) x.classList.remove('open'); });
+      root.classList.toggle('open');
+      trigger.setAttribute('aria-expanded', root.classList.contains('open') ? 'true' : 'false');
+    });
+    root.querySelectorAll('.dropdown-option').forEach(btn => btn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      const value = btn.dataset.value;
+      if (input) input.value = value;
+      renderAppDropdown(root.id, value, kind);
+      root.classList.remove('open');
+      initAppDropdowns();
+    }));
+  });
+}
+document.addEventListener('click', () => document.querySelectorAll('.app-dropdown.open').forEach(x => x.classList.remove('open')));
 function setupStatusTabs(selector, inputId, selected = 'อยากดู', dataName = 'data-status') {
   const input = $(inputId); if (input) input.value = selected;
   document.querySelectorAll(selector).forEach(btn => {
@@ -480,7 +527,7 @@ renderWatchItem = function(item) {
     <div class="movie-info">
       <div class="movie-head-row"><h3>${escapeHtml(item.title)}</h3>${rating}</div>
       <div class="movie-badges"><span class="type-badge">${escapeHtml(item.type || 'หนัง')}</span><span class="status-badge status-${statusClass(status)}">${escapeHtml(status)}</span></div>
-      <div class="platform-line"><span class="platform-mini-icon">${platformData.icon}</span><span>${escapeHtml(platformData.label)}</span></div>
+      <div class="platform-line">${platformIconHTML(platformData)}<span>${escapeHtml(platformData.label)}</span></div>
       <div class="item-actions movie-actions"><button class="icon-btn edit-btn" data-edit="watchlist" data-id="${item.id}">แก้</button><button class="icon-btn delete" data-delete="watchlist" data-id="${item.id}">ลบ</button></div>
     </div>
   </article>`;
@@ -531,9 +578,11 @@ function openEditModal(col, id) {
     f.innerHTML = `<input id="editTaskTitle" value="${escapeAttr(item.title)}" required /><input id="editTaskDue" type="date" value="${escapeAttr(item.dueDate || '')}" /><select id="editTaskPriority"><option value="normal">ปกติ</option><option value="important">สำคัญ</option></select><button class="primary-btn" type="submit">บันทึกการแก้ไข</button>`;
     $('editTaskPriority').value = item.priority || 'normal';
   } else if (col === 'watchlist') {
-    f.innerHTML = `<input id="editWatchTitle" value="${escapeAttr(item.title)}" required /><div class="watch-simple-grid"><select id="editWatchType"><option value="หนัง">หนัง</option><option value="ซีรีส์">ซีรีส์</option><option value="อนิเมะ">อนิเมะ</option><option value="สารคดี">สารคดี</option></select><select id="editWatchPlatform" class="platform-select"></select></div><div class="status-tabs edit-status-tabs"><button type="button" class="status-tab" data-edit-status="อยากดู">อยากดู</button><button type="button" class="status-tab" data-edit-status="กำลังดู">กำลังดู</button><button type="button" class="status-tab" data-edit-status="ดูจบแล้ว">ดูจบแล้ว</button></div><input id="editWatchStatus" type="hidden" value="${escapeAttr(item.status || 'อยากดู')}" /><button class="primary-btn" type="submit">บันทึกการแก้ไข</button>`;
+    f.innerHTML = `<input id="editWatchTitle" value="${escapeAttr(item.title)}" required /><div class="watch-simple-grid"><input id="editWatchType" type="hidden" value="${escapeAttr(item.type || 'หนัง')}" /><div id="editWatchTypeDropdown" class="app-dropdown" data-input="editWatchType" data-kind="type"></div><input id="editWatchPlatform" type="hidden" value="${escapeAttr(item.platform || 'Netflix')}" /><div id="editWatchPlatformDropdown" class="app-dropdown" data-input="editWatchPlatform" data-kind="platform"></div></div><div class="status-tabs edit-status-tabs"><button type="button" class="status-tab" data-edit-status="อยากดู">อยากดู</button><button type="button" class="status-tab" data-edit-status="กำลังดู">กำลังดู</button><button type="button" class="status-tab" data-edit-status="ดูจบแล้ว">ดูจบแล้ว</button></div><input id="editWatchStatus" type="hidden" value="${escapeAttr(item.status || 'อยากดู')}" /><button class="primary-btn" type="submit">บันทึกการแก้ไข</button>`;
     $('editWatchType').value = item.type || 'หนัง';
-    renderPlatformSelect('editWatchPlatform', item.platform || 'Netflix');
+    renderAppDropdown('editWatchPlatformDropdown', item.platform || 'Netflix', 'platform');
+    renderAppDropdown('editWatchTypeDropdown', item.type || 'หนัง', 'type');
+    initAppDropdowns();
     setupStatusTabs('.edit-status-tabs .status-tab', 'editWatchStatus', item.status || 'อยากดู', 'data-edit-status');
   } else {
     f.innerHTML = `<input id="editNoteTitle" value="${escapeAttr(item.title)}" required /><input id="editNoteUrl" type="url" value="${escapeAttr(item.url || '')}" placeholder="ลิงก์" /><textarea id="editNoteBody" rows="3" placeholder="รายละเอียด">${escapeHtml(item.body || '')}</textarea><button class="primary-btn" type="submit">บันทึกการแก้ไข</button>`;
@@ -584,7 +633,9 @@ function setTheme(theme){document.body.classList.toggle('light-mode',theme==='li
 setTheme(localStorage.getItem('myhub-theme')||'dark');$('themeToggleBtn')?.addEventListener('click',()=>setTheme(document.body.classList.contains('light-mode')?'dark':'light'));window.addEventListener('resize',()=>renderExpenseChart());if('serviceWorker'in navigator){window.addEventListener('load',()=>navigator.serviceWorker.register('./sw.js').catch(()=>{}));}window.addEventListener('beforeinstallprompt',(event)=>{event.preventDefault();deferredInstallPrompt=event;$('installAppBtn')?.classList.remove('hidden');});$('installAppBtn')?.addEventListener('click',async()=>{if(!deferredInstallPrompt)return toast('ติดตั้งได้จากเมนูของเบราว์เซอร์');deferredInstallPrompt.prompt();await deferredInstallPrompt.userChoice;deferredInstallPrompt=null;$('installAppBtn')?.classList.add('hidden');});
 
 // Init watchlist platform and status controls
-renderPlatformSelect('watchPlatform', 'Netflix');
+renderAppDropdown('watchPlatformDropdown', 'Netflix', 'platform');
+renderAppDropdown('watchTypeDropdown', 'หนัง', 'type');
+initAppDropdowns();
 setupStatusTabs('#watchStatusTabs .status-tab', 'watchStatus', 'อยากดู');
 document.querySelectorAll('[data-watch-status]').forEach(btn => btn.addEventListener('click', () => {
   document.querySelectorAll('[data-watch-status]').forEach(b => b.classList.remove('active'));

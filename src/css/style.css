@@ -187,3 +187,30 @@ body.light-mode{color:#111827;background:linear-gradient(145deg,#eef2ff 0%,#f8fa
 .platform-select{font-weight:900}
 .type-badge{background:#e0f2fe!important;color:#075985!important}
 @media (max-width:420px){.watch-simple-grid{grid-template-columns:1fr}.status-tabs .status-tab{flex:1;min-width:0;padding-inline:8px}}
+
+/* v4.3 Premium custom dropdowns */
+.app-dropdown{position:relative;width:100%;z-index:3}
+.app-dropdown.open{z-index:60}
+.dropdown-trigger{width:100%;min-height:54px;border:1px solid rgba(148,163,184,.32);border-radius:20px;background:linear-gradient(180deg,#fff,#f8fafc);box-shadow:0 10px 24px rgba(15,23,42,.08);display:flex;align-items:center;justify-content:space-between;gap:10px;padding:10px 14px;color:#0f172a;font-weight:900;cursor:pointer;transition:.18s ease}
+.dropdown-trigger:hover{transform:translateY(-1px);box-shadow:0 16px 30px rgba(15,23,42,.12)}
+.app-dropdown.open .dropdown-trigger{border-color:#7c3aed;box-shadow:0 0 0 4px rgba(124,58,237,.14),0 18px 36px rgba(15,23,42,.14)}
+.dropdown-current{display:flex;align-items:center;gap:10px;min-width:0}
+.dropdown-current span:last-child{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.dropdown-chevron{width:30px;height:30px;border-radius:999px;background:#eef2ff;color:#4f46e5;display:grid;place-items:center;font-size:18px;line-height:1;transition:.18s ease;flex:0 0 auto}
+.app-dropdown.open .dropdown-chevron{transform:rotate(180deg);background:#7c3aed;color:#fff}
+.dropdown-menu{position:absolute;top:calc(100% + 8px);left:0;right:0;max-height:310px;overflow:auto;border:1px solid rgba(148,163,184,.32);border-radius:22px;background:rgba(255,255,255,.96);backdrop-filter:blur(14px);box-shadow:0 24px 56px rgba(15,23,42,.25);padding:8px;display:none}
+.app-dropdown.open .dropdown-menu{display:block;animation:dropdownPop .16s ease-out}
+@keyframes dropdownPop{from{opacity:0;transform:translateY(-6px) scale(.98)}to{opacity:1;transform:translateY(0) scale(1)}}
+.dropdown-option{width:100%;border:0;background:transparent;border-radius:16px;display:flex;align-items:center;gap:10px;padding:11px 10px;color:#0f172a;font-weight:900;text-align:left;cursor:pointer}
+.dropdown-option:hover{background:#f1f5f9}
+.dropdown-option.selected{background:linear-gradient(135deg,rgba(99,102,241,.12),rgba(124,58,237,.14));color:#5b21b6}
+.dropdown-option b{margin-left:auto;display:none;color:#7c3aed}
+.dropdown-option.selected b{display:block}
+.brand-icon{width:30px;height:30px;border-radius:11px;background:#0f172a;display:grid;place-items:center;overflow:hidden;flex:0 0 auto;box-shadow:0 7px 14px rgba(15,23,42,.18)}
+.brand-icon img{width:19px;height:19px;filter:brightness(0) invert(1);display:block}
+.text-icon,.type-icon{color:#fff;font-size:13px;font-weight:1000}
+.type-icon{background:linear-gradient(135deg,#4f46e5,#7c3aed)}
+.platform-line .brand-icon{width:25px;height:25px;border-radius:9px;box-shadow:none}
+.platform-line .brand-icon img{width:15px;height:15px}
+.platform-line{margin-top:8px}
+@media(max-width:420px){.dropdown-trigger{min-height:52px;border-radius:18px;padding:10px 12px}.dropdown-menu{max-height:270px}.brand-icon{width:28px;height:28px}.dropdown-option{padding:10px 9px}}

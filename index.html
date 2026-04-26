@@ -159,13 +159,10 @@
             <form id="watchForm" class="compact-form movie-form-simple">
               <input id="watchTitle" placeholder="ชื่อเรื่อง เช่น Avatar" required />
               <div class="watch-simple-grid">
-                <select id="watchType" aria-label="หมวดหมู่">
-                  <option value="หนัง">หนัง</option>
-                  <option value="ซีรีส์">ซีรีส์</option>
-                  <option value="อนิเมะ">อนิเมะ</option>
-                  <option value="สารคดี">สารคดี</option>
-                </select>
-                <select id="watchPlatform" class="platform-select" aria-label="แพลตฟอร์ม"></select>
+                <input id="watchType" type="hidden" value="หนัง" />
+                <div id="watchTypeDropdown" class="app-dropdown" data-input="watchType" data-kind="type"></div>
+                <input id="watchPlatform" type="hidden" value="Netflix" />
+                <div id="watchPlatformDropdown" class="app-dropdown" data-input="watchPlatform" data-kind="platform"></div>
               </div>
               <div class="status-tabs" id="watchStatusTabs">
                 <button type="button" class="status-tab active" data-status="อยากดู">อยากดู</button>
