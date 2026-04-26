@@ -1159,41 +1159,7 @@ document.body.addEventListener('click', async (event)=>{
   }
 });
 
-// Swipe right on task surface = mark done quickly
-const OLD_TASK_SWIPE_MAX = TASK_SWIPE_MAX;
-let rightSwipeTask = null;
-document.addEventListener('pointerdown', (event)=>{
-  const surface = event.target.closest('[data-task-swipe-surface]');
-  if (!surface || event.target.closest('button, input, select, textarea, a, .subtask-pill')) return;
-  rightSwipeTask = { id: surface.dataset.taskId, startX: event.clientX, startY: event.clientY, surface, moved:false };
-}, true);
-document.addEventListener('pointermove', (event)=>{
-  if (!rightSwipeTask) return;
-  const dx = event.clientX - rightSwipeTask.startX;
-  const dy = event.clientY - rightSwipeTask.startY;
-  if (Math.abs(dy) > Math.abs(dx) && Math.abs(dy) > 12) { rightSwipeTask = null; return; }
-  if (dx > 10) {
-    rightSwipeTask.moved = true;
-    const next = Math.min(92, dx);
-    rightSwipeTask.surface.style.transition = 'none';
-    rightSwipeTask.surface.style.transform = `translateX(${next}px)`;
-  }
-}, { passive:false, capture:true });
-document.addEventListener('pointerup', async ()=>{
-  if (!rightSwipeTask) return;
-  const surface = rightSwipeTask.surface;
-  const task = state.tasks.find(t=>t.id === rightSwipeTask.id);
-  const transform = surface.style.transform || '';
-  const px = Number((transform.match(/translateX\(([-0-9.]+)px\)/)||[])[1] || 0);
-  surface.style.transition = '';
-  surface.style.transform = '';
-  if (px > 64 && task && !task.done) {
-    await updateDoc(userDoc('tasks', task.id), { done: true, updatedAt: serverTimestamp() });
-    toast('ทำงานเสร็จแล้ว');
-  }
-  rightSwipeTask = null;
-}, true);
-
+// MyHub v5.7: Removed swipe-right-to-done because it conflicted with normal card gestures.
 let draggedTaskId = null;
 document.addEventListener('dragstart', (event)=>{
   const card = event.target.closest('.task-swipe-card');
@@ -1228,3 +1194,177 @@ document.addEventListener('drop', async (event)=>{
 });
 
 renderAll();
+
+// ===== MyHub v5.8: Premium Subtask UI =====
+let taskDraftSubtasks = [];
+let editTaskSubtasks = [];
+function subtaskTitle(sub){ return String(sub?.title || sub?.text || '').trim(); }
+function normalizeSubtasks(list){
+  return (Array.isArray(list) ? list : [])
+    .map((s)=> typeof s === 'string' ? { title: s.trim(), done: false } : { title: subtaskTitle(s), done: Boolean(s?.done) })
+    .filter((s)=>s.title);
+}
+function syncTaskDraftHidden(){
+  const hidden = $('taskSubtasks');
+  if (hidden) hidden.value = taskDraftSubtasks.map((s)=>s.title).join(', ');
+}
+function renderTaskDraftSubtasks(){
+  const list = $('subtaskDraftList');
+  if (!list) return;
+  syncTaskDraftHidden();
+  if (!taskDraftSubtasks.length) {
+    list.innerHTML = '<div class="subtask-empty-hint">แตะ + เพื่อเพิ่มงานย่อยได้หลายรายการ</div>';
+    return;
+  }
+  list.innerHTML = taskDraftSubtasks.map((sub, index)=>`
+    <div class="subtask-draft-chip">
+      <span class="subtask-draft-dot">${index + 1}</span>
+      <span class="subtask-draft-text">${escapeHtml(sub.title)}</span>
+      <button type="button" class="subtask-remove-btn" data-remove-draft-subtask="${index}" aria-label="ลบงานย่อย">×</button>
+    </div>`).join('');
+}
+function addTaskDraftSubtask(){
+  const input = $('subtaskDraftInput');
+  const title = (input?.value || '').trim();
+  if (!title) return;
+  taskDraftSubtasks.push({ title, done: false });
+  input.value = '';
+  renderTaskDraftSubtasks();
+}
+$('addSubtaskDraftBtn')?.addEventListener('click', addTaskDraftSubtask);
+$('subtaskDraftInput')?.addEventListener('keydown', (event)=>{
+  if (event.key === 'Enter') { event.preventDefault(); addTaskDraftSubtask(); }
+});
+document.body.addEventListener('click', (event)=>{
+  const remove = event.target.closest('[data-remove-draft-subtask]');
+  if (!remove) return;
+  taskDraftSubtasks.splice(Number(remove.dataset.removeDraftSubtask), 1);
+  renderTaskDraftSubtasks();
+});
+$('taskForm')?.addEventListener('submit', ()=>{ syncTaskDraftHidden(); }, true);
+$('taskForm')?.addEventListener('submit', ()=>{
+  setTimeout(()=>{ taskDraftSubtasks = []; renderTaskDraftSubtasks(); }, 80);
+});
+renderTaskDraftSubtasks();
+
+function renderEditSubtasks(){
+  const list = $('editSubtaskList');
+  if (!list) return;
+  if (!editTaskSubtasks.length) {
+    list.innerHTML = '<div class="subtask-empty-hint">ยังไม่มีงานย่อย</div>';
+    return;
+  }
+  list.innerHTML = editTaskSubtasks.map((sub, index)=>`
+    <div class="edit-subtask-row ${sub.done ? 'done' : ''}">
+      <button type="button" class="mini-check" data-toggle-edit-subtask="${index}">${sub.done ? '✓' : '○'}</button>
+      <span class="edit-subtask-text">${escapeHtml(sub.title)}</span>
+      <button type="button" class="edit-subtask-remove-btn" data-remove-edit-subtask="${index}">×</button>
+    </div>`).join('');
+}
+function addEditSubtask(){
+  const input = $('editSubtaskInput');
+  const title = (input?.value || '').trim();
+  if (!title) return;
+  editTaskSubtasks.push({ title, done: false });
+  input.value = '';
+  renderEditSubtasks();
+}
+const originalOpenEditModalV58 = openEditModal;
+openEditModal = function(col, id){
+  if (col !== 'tasks') return originalOpenEditModalV58(col, id);
+  const item = findItem(col, id);
+  if (!item) return toast('ไม่พบข้อมูล');
+  editing = { col, id };
+  $('editTitle').textContent = 'แก้ไขงาน';
+  editTaskSubtasks = normalizeSubtasks(item.subtasks);
+  const f = $('editForm');
+  f.innerHTML = `<input id="editTaskTitle" value="${escapeAttr(item.title)}" required />
+    <input id="editTaskDue" type="date" value="${escapeAttr(item.dueDate || '')}" />
+    <select id="editTaskPriority"><option value="normal">ปกติ</option><option value="important">สำคัญ</option></select>
+    <div class="edit-subtask-builder">
+      <label class="subtask-composer-label">งานย่อย</label>
+      <div class="subtask-input-row">
+        <input id="editSubtaskInput" class="edit-subtask-input" placeholder="เพิ่มงานย่อย" />
+        <button id="addEditSubtaskBtn" type="button" class="edit-subtask-add-btn">＋</button>
+      </div>
+      <div id="editSubtaskList" class="edit-subtask-list"></div>
+    </div>
+    <button class="primary-btn" type="submit">บันทึกการแก้ไข</button>`;
+  $('editTaskPriority').value = item.priority || 'normal';
+  $('addEditSubtaskBtn')?.addEventListener('click', addEditSubtask);
+  $('editSubtaskInput')?.addEventListener('keydown', (event)=>{
+    if (event.key === 'Enter') { event.preventDefault(); addEditSubtask(); }
+  });
+  renderEditSubtasks();
+  $('editModal').classList.remove('hidden');
+};
+document.body.addEventListener('click', (event)=>{
+  const toggle = event.target.closest('[data-toggle-edit-subtask]');
+  if (toggle) {
+    const i = Number(toggle.dataset.toggleEditSubtask);
+    editTaskSubtasks[i].done = !editTaskSubtasks[i].done;
+    renderEditSubtasks();
+    return;
+  }
+  const remove = event.target.closest('[data-remove-edit-subtask]');
+  if (remove) {
+    editTaskSubtasks.splice(Number(remove.dataset.removeEditSubtask), 1);
+    renderEditSubtasks();
+  }
+});
+$('editForm')?.addEventListener('submit', async (event)=>{
+  if (!editing || editing.col !== 'tasks') return;
+  event.preventDefault();
+  event.stopImmediatePropagation();
+  await updateDoc(userDoc('tasks', editing.id), {
+    title: $('editTaskTitle').value.trim(),
+    dueDate: $('editTaskDue').value,
+    priority: $('editTaskPriority').value,
+    subtasks: normalizeSubtasks(editTaskSubtasks),
+    updatedAt: serverTimestamp()
+  });
+  closeEditModal();
+  toast('แก้ไขงานแล้ว');
+}, true);
+
+// Override task rendering with premium subtask checklist and progress bar.
+renderTaskItem = function(task){
+  const done = Boolean(task.done);
+  const overdue = taskIsOverdue(task);
+  const important = task.priority === 'important';
+  const open = state.openSwipeTaskId === task.id;
+  const subs = normalizeSubtasks(task.subtasks);
+  const doneSubs = subs.filter((s)=>s.done).length;
+  const pct = subs.length ? Math.round((doneSubs / subs.length) * 100) : 0;
+  return `<article class="task-card-premium task-swipe-card ${open ? 'swipe-open' : ''} ${done ? 'done' : ''} ${important ? 'priority-important' : ''} ${overdue ? 'overdue' : ''}" data-task-card="${task.id}" draggable="true">
+    <div class="task-swipe-actions" aria-hidden="${open ? 'false' : 'true'}">
+      <button type="button" class="swipe-action edit" data-edit="tasks" data-id="${task.id}">✎<span>แก้ไข</span></button>
+      <button type="button" class="swipe-action delete" data-delete="tasks" data-id="${task.id}">🗑<span>ลบ</span></button>
+    </div>
+    <div class="task-card-surface" data-task-swipe-surface data-task-id="${task.id}">
+      <div class="task-card-main">
+        <button class="drag-handle" type="button" aria-label="ลากเพื่อจัดลำดับ">☰</button>
+        <div class="task-content-block">
+          <div class="task-card-title">${escapeHtml(task.title)}</div>
+          <div class="task-meta-row">
+            <span class="task-chip ${overdue ? 'overdue' : done ? 'done' : ''}">📅 ${taskDueLabel(task)}</span>
+            ${important ? '<span class="task-chip priority">🔥 สำคัญ</span>' : ''}
+            ${subs.length ? `<span class="task-chip subtask-progress">▦ ${doneSubs}/${subs.length}</span>` : ''}
+          </div>
+          ${subs.length ? `<div class="task-subtask-panel">
+            <div class="subtask-progress-head"><span class="subtask-progress-title">งานย่อย</span><span class="subtask-progress-count">${pct}%</span></div>
+            <div class="subtask-progress-track"><div class="subtask-progress-fill" style="width:${pct}%"></div></div>
+            <div class="subtask-check-list">
+              ${subs.map((sub,i)=>`<button type="button" class="subtask-check-item ${sub.done ? 'done' : ''}" data-subtask-toggle="${task.id}" data-subtask-index="${i}"><span class="subtask-checkbox">✓</span><span class="subtask-check-text">${escapeHtml(sub.title)}</span></button>`).join('')}
+            </div>
+          </div>` : ''}
+        </div>
+        <button class="task-check-btn ${done ? 'done' : ''}" data-done="tasks" data-id="${task.id}" data-value="${!done}" aria-label="ทำงานให้เสร็จ">${done ? '↺' : '✓ เสร็จ'}</button>
+      </div>
+    </div>
+  </article>`;
+};
+
+// Make legacy search include both title/text subtask formats.
+const originalRenderAllV58 = renderAll;
+renderAll = function(){ originalRenderAllV58(); };

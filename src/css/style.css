@@ -539,7 +539,7 @@ body.light-mode{color:#111827;background:linear-gradient(145deg,#eef2ff 0%,#f8fa
 }
 
 
-/* ===== MyHub v5.6: Drag + Swipe Right + Subtasks ===== */
+/* ===== MyHub v5.7: Drag + Subtasks (right-swipe done removed) ===== */
 .mini-badge{background:linear-gradient(135deg,#ede9fe,#ddd6fe)!important;color:#5b21b6!important;}
 .subtask-input{margin-top:10px;}
 .task-card-main{grid-template-columns:auto 1fr auto!important;gap:12px!important;align-items:center!important;}
@@ -552,6 +552,66 @@ body.light-mode{color:#111827;background:linear-gradient(145deg,#eef2ff 0%,#f8fa
 .task-chip.subtask-progress{background:#eef2ff;color:#4f46e5;}
 .task-swipe-card.dragging{opacity:.58;transform:scale(.985);}
 .task-swipe-card.drag-over .task-card-surface{box-shadow:0 0 0 3px rgba(124,58,237,.28),0 18px 42px rgba(15,23,42,.12);}
-.task-card-surface:after{content:'ปัดขวา = เสร็จ';position:absolute;left:14px;top:50%;transform:translateY(-50%);background:linear-gradient(135deg,#10b981,#22c55e);color:#fff;border-radius:999px;padding:8px 12px;font-size:12px;font-weight:900;opacity:0;pointer-events:none;box-shadow:0 12px 24px rgba(16,185,129,.25);}
-.task-swipe-card:not(.swipe-open) .task-card-surface[style*='translateX']::after{opacity:1;}
 @media(max-width:430px){.task-card-main{grid-template-columns:28px 1fr auto!important;gap:8px!important}.drag-handle{width:28px;height:38px;font-size:15px}.subtask-pill{font-size:11px;padding:6px 8px}.task-check-btn{min-width:76px!important}}
+
+/* ===== MyHub v5.8: Premium Subtask UI ===== */
+.subtask-composer{
+  margin-top:12px;
+  padding:12px;
+  border-radius:22px;
+  background:rgba(255,255,255,.08);
+  border:1px solid rgba(148,163,184,.18);
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.08);
+}
+.light-mode .subtask-composer{background:#f8fafc;border-color:#e2e8f0;}
+.subtask-composer-label{font-size:12px;font-weight:900;color:#94a3b8;margin:0 0 8px 4px;letter-spacing:.02em;}
+.subtask-input-row{display:grid;grid-template-columns:1fr 44px;gap:8px;align-items:center;}
+.subtask-draft-input,
+.edit-subtask-input{
+  width:100%;box-sizing:border-box;border:0;outline:none;border-radius:18px;padding:13px 14px;
+  background:rgba(15,23,42,.50);color:#fff;font-weight:800;font-size:14px;
+  box-shadow:inset 0 0 0 1px rgba(148,163,184,.18);
+}
+.light-mode .subtask-draft-input,.light-mode .edit-subtask-input{background:#fff;color:#0f172a;box-shadow:inset 0 0 0 1px #e2e8f0;}
+.subtask-add-btn,.edit-subtask-add-btn{
+  height:44px;border:0;border-radius:16px;cursor:pointer;font-weight:1000;font-size:18px;color:#fff;
+  background:linear-gradient(135deg,#7c3aed,#ec4899);box-shadow:0 12px 28px rgba(124,58,237,.28);
+}
+.subtask-draft-list,.edit-subtask-list{display:flex;flex-direction:column;gap:8px;margin-top:10px;}
+.subtask-draft-chip,.edit-subtask-row{
+  display:flex;align-items:center;gap:9px;padding:9px 10px;border-radius:16px;
+  background:rgba(15,23,42,.35);border:1px solid rgba(148,163,184,.14);
+}
+.light-mode .subtask-draft-chip,.light-mode .edit-subtask-row{background:#fff;border-color:#e2e8f0;}
+.subtask-draft-dot{width:18px;height:18px;border-radius:50%;display:grid;place-items:center;background:rgba(124,58,237,.14);color:#a78bfa;font-size:11px;font-weight:1000;flex:0 0 18px;}
+.subtask-draft-text,.edit-subtask-text{flex:1;font-size:13px;font-weight:850;color:#e2e8f0;line-height:1.35;}
+.light-mode .subtask-draft-text,.light-mode .edit-subtask-text{color:#0f172a;}
+.subtask-remove-btn,.edit-subtask-remove-btn{border:0;background:rgba(239,68,68,.12);color:#fca5a5;width:30px;height:30px;border-radius:12px;font-weight:1000;cursor:pointer;}
+.light-mode .subtask-remove-btn,.light-mode .edit-subtask-remove-btn{color:#dc2626;background:#fee2e2;}
+.task-subtask-panel{margin-top:12px;padding:10px;border-radius:18px;background:rgba(255,255,255,.07);border:1px solid rgba(148,163,184,.15);}
+.light-mode .task-subtask-panel{background:#f8fafc;border-color:#e2e8f0;}
+.subtask-progress-head{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:8px;}
+.subtask-progress-title{font-size:12px;font-weight:950;color:#c4b5fd;}
+.light-mode .subtask-progress-title{color:#6d28d9;}
+.subtask-progress-count{font-size:11px;font-weight:950;color:#94a3b8;}
+.subtask-progress-track{height:7px;border-radius:999px;background:rgba(148,163,184,.20);overflow:hidden;margin-bottom:9px;}
+.subtask-progress-fill{height:100%;border-radius:inherit;background:linear-gradient(135deg,#7c3aed,#22c55e);transition:width .25s ease;}
+.subtask-check-list{display:flex;flex-direction:column;gap:7px;}
+.subtask-check-item{display:flex;align-items:center;gap:9px;width:100%;border:0;background:transparent;color:inherit;text-align:left;padding:6px;border-radius:13px;cursor:pointer;}
+.subtask-check-item:hover{background:rgba(148,163,184,.10);}
+.subtask-checkbox{width:22px;height:22px;border-radius:9px;display:grid;place-items:center;flex:0 0 22px;background:rgba(148,163,184,.18);color:transparent;font-size:13px;font-weight:1000;box-shadow:inset 0 0 0 1px rgba(148,163,184,.20);}
+.subtask-check-item.done .subtask-checkbox{background:linear-gradient(135deg,#22c55e,#10b981);color:#fff;box-shadow:none;}
+.subtask-check-text{font-size:12.5px;font-weight:850;color:#cbd5e1;line-height:1.35;}
+.light-mode .subtask-check-text{color:#334155;}
+.subtask-check-item.done .subtask-check-text{text-decoration:line-through;opacity:.62;}
+.edit-subtask-builder{display:flex;flex-direction:column;gap:9px;margin:10px 0 12px;}
+.edit-subtask-row .mini-check{width:22px;height:22px;border-radius:8px;border:0;background:#e0f2fe;color:#0284c7;font-weight:1000;cursor:pointer;}
+.edit-subtask-row.done .mini-check{background:#dcfce7;color:#047857;}
+.edit-subtask-row.done .edit-subtask-text{text-decoration:line-through;opacity:.65;}
+@media(max-width:430px){
+  .subtask-composer{padding:10px;border-radius:18px;}
+  .subtask-draft-input,.edit-subtask-input{font-size:13px;padding:12px;}
+  .subtask-add-btn,.edit-subtask-add-btn{height:42px;border-radius:15px;}
+  .task-subtask-panel{padding:9px;}
+  .subtask-check-text{font-size:12px;}
+}

@@ -144,11 +144,19 @@
                 <p class="eyebrow">Focus Today</p>
                 <h3>วันนี้ต้องทำอะไร?</h3>
               </div>
-              <span class="mini-badge">v5.6</span>
+              <span class="mini-badge">v5.8</span>
             </div>
             <form id="taskForm" class="task-ux-form">
               <input id="taskTitle" class="task-ux-input" placeholder="พิมพ์งาน เช่น โทรหาลูกค้า / จ่ายบิล" required />
-              <input id="taskSubtasks" class="task-ux-input subtask-input" placeholder="งานย่อย เช่น เตรียมไฟล์, ส่งอีเมล (ไม่ใส่ก็ได้)" />
+              <input id="taskSubtasks" type="hidden" />
+              <div class="subtask-composer" id="subtaskComposer">
+                <div class="subtask-composer-label">งานย่อย</div>
+                <div class="subtask-input-row">
+                  <input id="subtaskDraftInput" class="subtask-draft-input" placeholder="เพิ่มงานย่อย เช่น เตรียมไฟล์" />
+                  <button id="addSubtaskDraftBtn" type="button" class="subtask-add-btn">＋</button>
+                </div>
+                <div id="subtaskDraftList" class="subtask-draft-list"></div>
+              </div>
               <input id="taskDue" type="hidden" />
               <input id="taskPriority" type="hidden" value="normal" />
               <div class="task-quick-options">
