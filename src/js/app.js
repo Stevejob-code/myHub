@@ -604,7 +604,14 @@ renderWatchItem = function(item) {
   const poster = hasPoster ? `<img src="${escapeAttr(item.poster)}" alt="${escapeAttr(item.title)}" loading="lazy" onerror="this.closest('.movie-poster').classList.add('poster-error');this.remove();" />` : `<div class="poster-fallback" data-auto-poster="${escapeAttr(item.id)}" data-title="${escapeAttr(item.title)}"><span>▶</span><small>กำลังหาโปสเตอร์</small></div>`;
   const rating = item.rating ? `<span class="movie-rating">★ ${escapeHtml(item.rating)}/10</span>` : '';
   const status = item.status || 'อยากดู';
-  return `<article class="movie-card upgraded-movie-card">
+  return `<article class="movie-card upgraded-movie-card movie-card-menu-card">
+    <details class="movie-more-menu">
+      <summary aria-label="จัดการรายการ">⋯</summary>
+      <div class="movie-more-panel">
+        <button type="button" class="more-action edit-btn" data-edit="watchlist" data-id="${item.id}">✎ แก้ไข</button>
+        <button type="button" class="more-action danger" data-delete="watchlist" data-id="${item.id}">🗑 ลบ</button>
+      </div>
+    </details>
     <div class="movie-poster">${poster}</div>
     <div class="movie-info">
       <div class="movie-head-row"><h3>${escapeHtml(item.title)}</h3>${rating}</div>
@@ -613,10 +620,6 @@ renderWatchItem = function(item) {
       <div class="movie-status-actions two-status-actions">
         <button class="pill-status-btn watch-btn ${status === 'กำลังดู' ? 'active' : ''}" data-watch-set-status="กำลังดู" data-id="${item.id}">▶ กำลังดู</button>
         <button class="pill-status-btn done ${status === 'ดูจบแล้ว' ? 'active' : ''}" data-watch-set-status="ดูจบแล้ว" data-id="${item.id}">✓ ดูจบแล้ว</button>
-      </div>
-      <div class="item-actions movie-actions pretty-actions">
-        <button class="icon-btn edit-btn" data-edit="watchlist" data-id="${item.id}">✎ แก้ไข</button>
-        <button class="icon-btn delete" data-delete="watchlist" data-id="${item.id}">🗑 ลบ</button>
       </div>
     </div>
   </article>`;
