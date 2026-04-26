@@ -49,7 +49,7 @@
       <main id="mainApp" class="main-app hidden">
         <header class="topbar">
           <div>
-            
+            <p id="todayText" class="eyebrow">วันนี้</p>
             <h2 id="pageTitle">Dashboard</h2>
           </div>
           <div class="topbar-actions">
@@ -83,7 +83,7 @@
           <div class="dash-stat-v6-grid">
             <article class="dash-stat-v6 spend">
               <span>ใช้วันนี้</span>
-              
+              <strong id="dashTodaySpend">฿0</strong>
               <small id="dashTopCategory">ยังไม่มีหมวดสูงสุด</small>
             </article>
             <article class="dash-stat-v6 balance">
@@ -101,7 +101,27 @@
               </div>
               <span id="dashWeekSpend" class="dash-pill">฿0</span>
             </div>
-            <canvas id="expenseChart" height="150" aria-label="Expense chart"></canwatch" type="button">เปิดคลัง</button>
+            <canvas id="expenseChart" height="150" aria-label="Expense chart"></canvas>
+          </div>
+
+          <div class="dash-section-card">
+            <div class="dash-section-head">
+              <div>
+                <p class="eyebrow">Today Focus</p>
+                <h3>งานวันนี้</h3>
+              </div>
+              <button class="mini-btn" data-nav="tasks" type="button">เปิดงาน</button>
+            </div>
+            <div id="todayTasks" class="dash-list empty-box">ยังไม่มีงานวันนี้</div>
+          </div>
+
+          <div class="dash-section-card">
+            <div class="dash-section-head">
+              <div>
+                <p class="eyebrow">Watch Next</p>
+                <h3>ดูต่อ / รอดู</h3>
+              </div>
+              <button class="mini-btn" data-nav="watch" type="button">เปิดคลัง</button>
             </div>
             <div id="dashboardWatchPreview" class="dash-list empty-box">ยังไม่มีรายการรอดู</div>
           </div>
@@ -137,7 +157,7 @@
             <div class="money-mini-grid">
               <div class="money-mini-card income"><span>รายรับ</span><strong id="moneyMonthIncome">฿0</strong></div>
               <div class="money-mini-card expense"><span>รายจ่าย</span><strong id="moneyMonthExpense">฿0</strong></div>
-              </div>
+              <div class="money-mini-card today"><span>วันนี้ใช้ไป</span><strong id="moneyTodayExpense">฿0</strong></div>
             </div>
           </div>
 
@@ -233,7 +253,7 @@
               <input id="taskPriority" type="hidden" value="normal" />
               <div class="task-quick-options">
                 <button type="button" class="task-option-chip active" data-task-due="">ไม่กำหนดวัน</button>
-                
+                <button type="button" class="task-option-chip" data-task-due="today">วันนี้</button>
                 <button type="button" class="task-option-chip" data-task-due="tomorrow">พรุ่งนี้</button>
                 <button type="button" class="task-option-chip priority" data-task-priority="important">🔥 สำคัญ</button>
               </div>
@@ -253,7 +273,17 @@
               <span id="taskSelectedDateLabel" class="count-pill">วันนี้</span>
             </div>
             <div id="taskWeekCalendar" class="task-week-calendar"></div>
-            <div id="taskSelectedDattask-view="all" type="button">ทั้งหมด</button>
+            <div id="taskSelectedDateList" class="task-selected-date-list empty-box">เลือกวันเพื่อดูงาน</div>
+          </div>
+
+
+          <div class="task-section-block">
+            <div class="task-section-title">
+              <h3>รายการทั้งหมด</h3>
+            </div>
+            <div class="task-toolbar task-toolbar-ux">
+              <div class="task-view-tabs">
+                <button class="filter-chip active" data-task-view="all" type="button">ทั้งหมด</button>
                 <button class="filter-chip" data-task-view="pending" type="button">ค้าง</button>
                 <button class="filter-chip" data-task-view="upcoming" type="button">ใกล้ถึง</button>
                 <button class="filter-chip" data-task-view="done" type="button">เสร็จแล้ว</button>
