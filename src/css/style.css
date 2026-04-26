@@ -180,3 +180,10 @@ body.light-mode{color:#111827;background:linear-gradient(145deg,#eef2ff 0%,#f8fa
 .status-badge.status-queued{background:linear-gradient(135deg,#4f46e5,#7c3aed)}
 .upgraded-movie-card{grid-template-columns:104px 1fr}
 @media (max-width:420px){.platform-picker{grid-template-columns:1fr 1fr}.platform-chip{font-size:12px;padding:9px 10px}.upgraded-movie-card{grid-template-columns:88px 1fr}}
+
+/* Watchlist v4.2 cleanup */
+.movie-form-simple{gap:12px}
+.watch-simple-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.platform-select{font-weight:900}
+.type-badge{background:#e0f2fe!important;color:#075985!important}
+@media (max-width:420px){.watch-simple-grid{grid-template-columns:1fr}.status-tabs .status-tab{flex:1;min-width:0;padding-inline:8px}}

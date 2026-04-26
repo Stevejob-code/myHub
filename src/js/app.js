@@ -326,13 +326,13 @@ $('watchForm').addEventListener('submit', async (event) => {
   event.preventDefault();
   await addDoc(userCol('watchlist'), {
     title: $('watchTitle').value.trim(),
-    poster: await resolvePosterUrl($('watchTitle').value.trim(), $('watchYear')?.value.trim(), $('watchPoster')?.value.trim() || ''),
-    type: 'หนัง/ซีรีส์',
+    poster: await resolvePosterUrl($('watchTitle').value.trim(), '', ''),
+    type: $('watchType')?.value || 'หนัง',
     status: $('watchStatus').value,
-    genre: $('watchGenre')?.value.trim() || '',
-    platform: $('watchPlatform')?.value.trim() || '',
-    year: $('watchYear')?.value.trim() || '',
-    rating: $('watchRating')?.value.trim() || '',
+    genre: '',
+    platform: $('watchPlatform')?.value || 'Netflix',
+    year: '',
+    rating: '',
     note: '',
     createdAt: serverTimestamp()
   });
@@ -403,15 +403,10 @@ const WATCH_PLATFORMS = [
   { key: 'อื่น ๆ', label: 'อื่น ๆ', icon: '⋯' }
 ];
 function getPlatform(key) { return WATCH_PLATFORMS.find(p => p.key === key) || WATCH_PLATFORMS[WATCH_PLATFORMS.length - 1]; }
-function renderPlatformPicker(containerId, inputId, selected = 'Netflix') {
-  const el = $(containerId); if (!el) return;
-  const input = $(inputId); if (input) input.value = selected;
-  el.innerHTML = WATCH_PLATFORMS.map(p => `<button type="button" class="platform-chip ${p.key === selected ? 'active' : ''}" data-platform="${escapeAttr(p.key)}"><span>${p.icon}</span>${escapeHtml(p.label)}</button>`).join('');
-  el.querySelectorAll('.platform-chip').forEach(btn => btn.addEventListener('click', () => {
-    el.querySelectorAll('.platform-chip').forEach(b => b.classList.remove('active'));
-    btn.classList.add('active');
-    if (input) input.value = btn.dataset.platform;
-  }));
+function renderPlatformSelect(selectId, selected = 'Netflix') {
+  const el = $(selectId); if (!el) return;
+  el.innerHTML = WATCH_PLATFORMS.map(p => `<option value="${escapeAttr(p.key)}">${p.icon} ${escapeHtml(p.label)}</option>`).join('');
+  el.value = selected;
 }
 function setupStatusTabs(selector, inputId, selected = 'อยากดู', dataName = 'data-status') {
   const input = $(inputId); if (input) input.value = selected;
@@ -484,7 +479,7 @@ renderWatchItem = function(item) {
     <div class="movie-poster">${poster}</div>
     <div class="movie-info">
       <div class="movie-head-row"><h3>${escapeHtml(item.title)}</h3>${rating}</div>
-      <div class="movie-badges"><span class="status-badge status-${statusClass(status)}">${escapeHtml(status)}</span>${genre}${year}</div>
+      <div class="movie-badges"><span class="type-badge">${escapeHtml(item.type || 'หนัง')}</span><span class="status-badge status-${statusClass(status)}">${escapeHtml(status)}</span></div>
       <div class="platform-line"><span class="platform-mini-icon">${platformData.icon}</span><span>${escapeHtml(platformData.label)}</span></div>
       <div class="item-actions movie-actions"><button class="icon-btn edit-btn" data-edit="watchlist" data-id="${item.id}">แก้</button><button class="icon-btn delete" data-delete="watchlist" data-id="${item.id}">ลบ</button></div>
     </div>
@@ -536,9 +531,10 @@ function openEditModal(col, id) {
     f.innerHTML = `<input id="editTaskTitle" value="${escapeAttr(item.title)}" required /><input id="editTaskDue" type="date" value="${escapeAttr(item.dueDate || '')}" /><select id="editTaskPriority"><option value="normal">ปกติ</option><option value="important">สำคัญ</option></select><button class="primary-btn" type="submit">บันทึกการแก้ไข</button>`;
     $('editTaskPriority').value = item.priority || 'normal';
   } else if (col === 'watchlist') {
-    f.innerHTML = `<input id="editWatchTitle" value="${escapeAttr(item.title)}" required /><div class="status-tabs edit-status-tabs"><button type="button" class="status-tab" data-edit-status="อยากดู">อยากดู</button><button type="button" class="status-tab" data-edit-status="กำลังดู">กำลังดู</button><button type="button" class="status-tab" data-edit-status="ดูจบแล้ว">ดูจบแล้ว</button></div><input id="editWatchStatus" type="hidden" value="${escapeAttr(item.status || 'อยากดู')}" /><div class="form-grid-2"><input id="editWatchGenre" value="${escapeAttr(item.genre || '')}" placeholder="แนว" /><input id="editWatchYear" type="number" value="${escapeAttr(item.year || '')}" placeholder="ปี" /></div><div class="form-grid-2"><input id="editWatchRating" type="number" min="0" max="10" step="0.5" value="${escapeAttr(item.rating || '')}" placeholder="คะแนน 0-10" /><input id="editWatchPoster" type="url" value="${escapeAttr(item.poster || '')}" placeholder="ลิงก์โปสเตอร์" /></div><input id="editWatchPlatform" type="hidden" value="${escapeAttr(item.platform || 'Netflix')}" /><div class="platform-picker" id="editWatchPlatformPicker"></div><button class="primary-btn" type="submit">บันทึกการแก้ไข</button>`;
+    f.innerHTML = `<input id="editWatchTitle" value="${escapeAttr(item.title)}" required /><div class="watch-simple-grid"><select id="editWatchType"><option value="หนัง">หนัง</option><option value="ซีรีส์">ซีรีส์</option><option value="อนิเมะ">อนิเมะ</option><option value="สารคดี">สารคดี</option></select><select id="editWatchPlatform" class="platform-select"></select></div><div class="status-tabs edit-status-tabs"><button type="button" class="status-tab" data-edit-status="อยากดู">อยากดู</button><button type="button" class="status-tab" data-edit-status="กำลังดู">กำลังดู</button><button type="button" class="status-tab" data-edit-status="ดูจบแล้ว">ดูจบแล้ว</button></div><input id="editWatchStatus" type="hidden" value="${escapeAttr(item.status || 'อยากดู')}" /><button class="primary-btn" type="submit">บันทึกการแก้ไข</button>`;
+    $('editWatchType').value = item.type || 'หนัง';
+    renderPlatformSelect('editWatchPlatform', item.platform || 'Netflix');
     setupStatusTabs('.edit-status-tabs .status-tab', 'editWatchStatus', item.status || 'อยากดู', 'data-edit-status');
-    renderPlatformPicker('editWatchPlatformPicker', 'editWatchPlatform', item.platform || 'Netflix');
   } else {
     f.innerHTML = `<input id="editNoteTitle" value="${escapeAttr(item.title)}" required /><input id="editNoteUrl" type="url" value="${escapeAttr(item.url || '')}" placeholder="ลิงก์" /><textarea id="editNoteBody" rows="3" placeholder="รายละเอียด">${escapeHtml(item.body || '')}</textarea><button class="primary-btn" type="submit">บันทึกการแก้ไข</button>`;
   }
@@ -568,7 +564,7 @@ $('editForm').addEventListener('submit', async (event) => {
   let data = { updatedAt: serverTimestamp() };
   if (editing.col === 'transactions') data = { ...data, title: $('editTxTitle').value.trim(), amount: Number($('editTxAmount').value), type: $('editTxType').value, category: $('editTxCategory').value.trim() || 'อื่น ๆ' };
   if (editing.col === 'tasks') data = { ...data, title: $('editTaskTitle').value.trim(), dueDate: $('editTaskDue').value, priority: $('editTaskPriority').value };
-  if (editing.col === 'watchlist') data = { ...data, title: $('editWatchTitle').value.trim(), poster: await resolvePosterUrl($('editWatchTitle').value.trim(), $('editWatchYear')?.value.trim(), $('editWatchPoster')?.value.trim() || ''), type: 'หนัง/ซีรีส์', status: $('editWatchStatus').value, genre: $('editWatchGenre')?.value.trim() || '', platform: $('editWatchPlatform')?.value.trim() || '', year: $('editWatchYear')?.value.trim() || '', rating: $('editWatchRating')?.value.trim() || '', note: '' };
+  if (editing.col === 'watchlist') data = { ...data, title: $('editWatchTitle').value.trim(), poster: await resolvePosterUrl($('editWatchTitle').value.trim(), '', ''), type: $('editWatchType')?.value || 'หนัง', status: $('editWatchStatus').value, genre: '', platform: $('editWatchPlatform')?.value || 'Netflix', year: '', rating: '', note: '' };
   if (editing.col === 'notes') data = { ...data, title: $('editNoteTitle').value.trim(), url: $('editNoteUrl').value.trim(), body: $('editNoteBody').value.trim() };
   await updateDoc(userDoc(editing.col, editing.id), data);
   closeEditModal();
@@ -588,7 +584,7 @@ function setTheme(theme){document.body.classList.toggle('light-mode',theme==='li
 setTheme(localStorage.getItem('myhub-theme')||'dark');$('themeToggleBtn')?.addEventListener('click',()=>setTheme(document.body.classList.contains('light-mode')?'dark':'light'));window.addEventListener('resize',()=>renderExpenseChart());if('serviceWorker'in navigator){window.addEventListener('load',()=>navigator.serviceWorker.register('./sw.js').catch(()=>{}));}window.addEventListener('beforeinstallprompt',(event)=>{event.preventDefault();deferredInstallPrompt=event;$('installAppBtn')?.classList.remove('hidden');});$('installAppBtn')?.addEventListener('click',async()=>{if(!deferredInstallPrompt)return toast('ติดตั้งได้จากเมนูของเบราว์เซอร์');deferredInstallPrompt.prompt();await deferredInstallPrompt.userChoice;deferredInstallPrompt=null;$('installAppBtn')?.classList.add('hidden');});
 
 // Init watchlist platform and status controls
-renderPlatformPicker('watchPlatformPicker', 'watchPlatform', 'Netflix');
+renderPlatformSelect('watchPlatform', 'Netflix');
 setupStatusTabs('#watchStatusTabs .status-tab', 'watchStatus', 'อยากดู');
 document.querySelectorAll('[data-watch-status]').forEach(btn => btn.addEventListener('click', () => {
   document.querySelectorAll('[data-watch-status]').forEach(b => b.classList.remove('active'));
