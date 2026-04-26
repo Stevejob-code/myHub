@@ -1428,9 +1428,15 @@ const moneyCategoryIcons = {
   'เงินเดือน': '💼', 'สุขภาพ': '💊', 'ความบันเทิง': '🎮', 'อื่น ๆ': '✨'
 };
 function txDateValue(tx){ return toDateValue(tx.date) || toDateValue(tx.createdAt) || new Date(); }
+state.filters.moneyMonthOffset = state.filters.moneyMonthOffset || 0;
+function selectedMoneyMonthDate(){ const d = new Date(); d.setDate(1); d.setMonth(d.getMonth() + (state.filters.moneyMonthOffset || 0)); return d; }
 function monthTxs(){
-  const now = new Date();
-  return state.transactions.filter((tx)=>{ const d = txDateValue(tx); return d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear(); });
+  const selected = selectedMoneyMonthDate();
+  return state.transactions.filter((tx)=>{ const d = txDateValue(tx); return d.getMonth() === selected.getMonth() && d.getFullYear() === selected.getFullYear(); });
+}
+function setMoneyMonthOffset(offset){
+  state.filters.moneyMonthOffset = Math.min(0, offset);
+  renderAll();
 }
 function setMoneyType(type){
   const select = $('txType'); if (select) select.value = type;
@@ -1448,8 +1454,9 @@ function setMoneyFilter(filter){
 }
 function renderMoneyPremium(){
   if (!$('moneyNetBalance')) return;
-  const now = new Date();
+  const now = selectedMoneyMonthDate();
   safeSetText('moneyMonthLabel', now.toLocaleDateString('th-TH', { month:'long', year:'numeric' }));
+  const nextBtn = $('moneyMonthNext'); if (nextBtn) nextBtn.disabled = (state.filters.moneyMonthOffset || 0) >= 0;
   const today = todayISO();
   const month = monthTxs();
   const income = month.filter(x=>x.type==='income').reduce((s,x)=>s+Number(x.amount||0),0);
@@ -1521,9 +1528,19 @@ document.body.addEventListener('click', (event)=>{
   const filterBtn = event.target.closest('[data-money-filter]');
   if (filterBtn) { event.preventDefault(); setMoneyFilter(filterBtn.dataset.moneyFilter); return; }
   const amountBtn = event.target.closest('[data-amount-chip]');
-  if (amountBtn) { event.preventDefault(); const input = $('txAmount'); if (input) input.value = amountBtn.dataset.amountChip; return; }
+  if (amountBtn) { event.preventDefault(); const input = $('txAmount'); if (input) input.value = Number(input.value || 0) + Number(amountBtn.dataset.amountChip || 0); return; }
 });
 $('txSearch')?.addEventListener('input', (event)=>{ state.filters.txSearch = event.target.value || ''; renderAll(); });
 $('transactionForm')?.addEventListener('reset', ()=>{ window.setTimeout(()=>{ setMoneyType('expense'); setMoneyCategory('อาหาร'); }, 0); });
 setMoneyType('expense');
 setMoneyCategory('อาหาร');
+
+// ===== MyHub v7.1: Money UX cleanup =====
+$('toggleMoneyQuickAdd')?.addEventListener('click', () => {
+  $('moneyAddCard')?.classList.toggle('collapsed');
+  const input = $('txTitle');
+  if (!$('moneyAddCard')?.classList.contains('collapsed')) setTimeout(() => input?.focus(), 120);
+});
+$('moneyMonthPrev')?.addEventListener('click', () => setMoneyMonthOffset((state.filters.moneyMonthOffset || 0) - 1));
+$('moneyMonthNext')?.addEventListener('click', () => setMoneyMonthOffset((state.filters.moneyMonthOffset || 0) + 1));
+window.addEventListener('appinstalled', () => $('installAppBtn')?.classList.add('hidden'));

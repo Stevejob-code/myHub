@@ -53,7 +53,7 @@
             <h2 id="pageTitle">Dashboard</h2>
           </div>
           <div class="topbar-actions">
-            <button id="installAppBtn" class="top-install-btn hidden" type="button" aria-label="ติดตั้งเป็นแอป">＋</button>
+            <button id="installAppBtn" class="top-install-btn hidden" type="button" aria-label="ติดตั้งเป็นแอป">⬇️ ติดตั้งแอป</button>
             <button id="openProfileBtn" class="avatar-btn" type="button" aria-label="Open profile">
               <img id="headerAvatar" src="" alt="" class="avatar-img hidden" />
               <span id="headerAvatarText">M</span>
@@ -145,7 +145,7 @@
                 <p class="eyebrow">Money Control</p>
                 <h3>ภาพรวมการเงินเดือนนี้</h3>
               </div>
-              <span id="moneyMonthLabel" class="money-month-pill">เดือนนี้</span>
+              <div class="money-month-nav"><button id="moneyMonthPrev" type="button" aria-label="เดือนก่อน">‹</button><span id="moneyMonthLabel" class="money-month-pill">เดือนนี้</span><button id="moneyMonthNext" type="button" aria-label="เดือนถัดไป">›</button></div>
             </div>
             <div class="money-balance-row">
               <div>
@@ -161,12 +161,11 @@
             </div>
           </div>
 
-          <div class="money-add-card">
-            <div class="money-card-head">
-              <div><p class="eyebrow">Quick Add</p><h3>บันทึกเงินเร็ว</h3></div>
-              <span class="mini-badge">v7</span>
-            </div>
-            <form id="transactionForm" class="money-form-premium">
+          <div class="money-add-card collapsed" id="moneyAddCard">
+            <button id="toggleMoneyQuickAdd" class="money-add-toggle" type="button"><span>＋</span> บันทึกรายรับ / รายจ่าย</button>
+            <div class="money-quick-panel" id="moneyQuickPanel">
+              <div class="money-card-head"><div><p class="eyebrow">Quick Add</p><h3>บันทึกเงินเร็ว</h3></div></div>
+              <form id="transactionForm" class="money-form-premium">
               <input id="txTitle" class="money-title-input" placeholder="จ่ายอะไร / ได้เงินจากไหน เช่น ข้าวกลางวัน" required />
               <div class="money-amount-wrap">
                 <span>฿</span>
@@ -207,7 +206,8 @@
                 <button type="button" data-money-category="อื่น ๆ">✨ อื่น ๆ</button>
               </div>
               <button class="primary-btn money-save-btn" type="submit">บันทึกรายการ</button>
-            </form>
+              </form>
+            </div>
           </div>
 
           <div class="money-insight-card">
@@ -236,7 +236,6 @@
                 <p class="eyebrow">Focus Today</p>
                 <h3>วันนี้ต้องทำอะไร?</h3>
               </div>
-              <span class="mini-badge">v5.8</span>
             </div>
             <form id="taskForm" class="task-ux-form">
               <input id="taskTitle" class="task-ux-input" placeholder="พิมพ์งาน เช่น โทรหาลูกค้า / จ่ายบิล" required />
