@@ -1029,3 +1029,72 @@ html, body { overflow-x: hidden; }
   .money-category-chips{grid-template-columns:repeat(2,minmax(0,1fr))!important;}
   .money-category-chips button{font-size:13px!important;}
 }
+
+/* ===== MyHub v7.5 Money summary sizing fix =====
+   Make รายรับ / รายจ่าย / วันนี้ใช้ไป easier to read on real phones. */
+.money-mini-grid{
+  gap:12px!important;
+  margin-top:18px!important;
+}
+.money-mini-card{
+  min-height:92px!important;
+  padding:15px 13px!important;
+  border-radius:23px!important;
+  display:flex!important;
+  flex-direction:column!important;
+  justify-content:center!important;
+}
+.money-mini-card span{
+  font-size:14px!important;
+  line-height:1.15!important;
+  font-weight:950!important;
+  opacity:.92!important;
+  white-space:nowrap!important;
+}
+.money-mini-card strong{
+  margin-top:10px!important;
+  font-size:22px!important;
+  line-height:1.08!important;
+  font-weight:1000!important;
+  letter-spacing:-.035em!important;
+  white-space:nowrap!important;
+  overflow:visible!important;
+}
+
+@media (max-width:430px){
+  .money-mini-grid{
+    grid-template-columns:repeat(3,minmax(0,1fr))!important;
+    gap:10px!important;
+    margin-top:18px!important;
+  }
+  .money-mini-card{
+    min-height:86px!important;
+    padding:13px 10px!important;
+    border-radius:21px!important;
+  }
+  .money-mini-card span{
+    font-size:13px!important;
+  }
+  .money-mini-card strong{
+    font-size:19px!important;
+    margin-top:9px!important;
+    letter-spacing:-.04em!important;
+  }
+}
+
+@media (max-width:370px){
+  .money-mini-grid{
+    gap:8px!important;
+  }
+  .money-mini-card{
+    min-height:82px!important;
+    padding:12px 8px!important;
+    border-radius:19px!important;
+  }
+  .money-mini-card span{
+    font-size:12px!important;
+  }
+  .money-mini-card strong{
+    font-size:17px!important;
+  }
+}
