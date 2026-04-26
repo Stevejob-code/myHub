@@ -1194,3 +1194,87 @@ html, body { overflow-x: hidden; }
   .task-calendar-card{border-radius:28px;padding:16px}
   .task-day-pill{min-width:60px;border-radius:20px}.task-day-pill strong{font-size:18px}
 }
+
+/* ===== MyHub Tasks v6.1: Mobile compact fix =====
+   Make Calendar + Reminder fit real phone screens without horizontal overflow. */
+html, body { overflow-x: hidden !important; }
+.app-shell, .main-app, .page { max-width: 100vw !important; box-sizing: border-box !important; }
+.tasks-ux-page, .task-quick-card, .task-calendar-card, .task-section-block { width: 100% !important; max-width: 100% !important; box-sizing: border-box !important; }
+.task-date-reminder-panel, .task-week-calendar, .task-toolbar-ux, .task-view-tabs { max-width: 100% !important; box-sizing: border-box !important; }
+
+@media (max-width: 640px) {
+  .tasks-ux-page { gap: 12px !important; padding-bottom: 104px !important; }
+  .task-quick-card { padding: 16px !important; border-radius: 26px !important; }
+  .task-quick-head { margin-bottom: 10px !important; }
+  .task-quick-head h3 { font-size: 22px !important; line-height: 1.12 !important; }
+  .task-quick-head .eyebrow { font-size: 11px !important; }
+  .task-ux-form { gap: 10px !important; }
+  .task-ux-input { height: 52px !important; border-radius: 18px !important; font-size: 14px !important; }
+
+  .subtask-composer { padding: 11px !important; border-radius: 20px !important; }
+  .subtask-input-row { grid-template-columns: 1fr 42px !important; gap: 8px !important; }
+  .subtask-draft-input { height: 46px !important; border-radius: 16px !important; font-size: 13px !important; }
+  .subtask-add-btn { width: 42px !important; height: 42px !important; border-radius: 16px !important; }
+
+  .task-quick-options { gap: 7px !important; padding-bottom: 1px !important; }
+  .task-option-chip { padding: 9px 12px !important; font-size: 13px !important; }
+
+  .task-date-reminder-panel {
+    display: grid !important;
+    grid-template-columns: 1fr 1fr !important;
+    gap: 8px !important;
+    padding: 10px !important;
+    border-radius: 20px !important;
+    overflow: hidden !important;
+  }
+  .task-date-reminder-panel .task-mini-field:nth-child(3) { grid-column: 1 / -1 !important; }
+  .task-mini-field { min-width: 0 !important; font-size: 11px !important; }
+  .task-mini-field input, .task-mini-field select {
+    min-width: 0 !important;
+    height: 44px !important;
+    border-radius: 15px !important;
+    padding: 0 10px !important;
+    font-size: 13px !important;
+  }
+  .task-reminder-permission { padding: 11px 12px !important; border-radius: 16px !important; font-size: 13px !important; }
+  .task-add-main { height: 52px !important; border-radius: 18px !important; }
+
+  .task-calendar-card {
+    margin: 10px 0 14px !important;
+    padding: 14px !important;
+    border-radius: 24px !important;
+    overflow: hidden !important;
+  }
+  .task-week-calendar {
+    gap: 7px !important;
+    padding: 2px 1px 10px !important;
+    overflow-x: auto !important;
+    -webkit-overflow-scrolling: touch !important;
+  }
+  .task-day-pill {
+    min-width: 52px !important;
+    border-radius: 18px !important;
+    padding: 8px 8px 10px !important;
+  }
+  .task-day-pill span { font-size: 10px !important; }
+  .task-day-pill strong { font-size: 17px !important; }
+  .task-day-pill em { min-width: 18px !important; height: 18px !important; font-size: 10px !important; }
+  .task-selected-date-list { gap: 9px !important; }
+
+  .task-section-title h3 { font-size: 18px !important; }
+  .count-pill { min-width: 30px !important; height: 30px !important; }
+  .task-search-input { height: 48px !important; border-radius: 18px !important; }
+  .task-card-premium { border-radius: 22px !important; padding: 12px !important; }
+  .task-card-title { font-size: 16px !important; }
+  .task-chip { font-size: 10.5px !important; padding: 5px 7px !important; }
+  .task-check-btn { min-width: 78px !important; height: 38px !important; font-size: 13px !important; padding: 0 12px !important; }
+}
+
+@media (max-width: 380px) {
+  .main-app { padding-left: 12px !important; padding-right: 12px !important; }
+  .task-quick-card { padding: 14px !important; }
+  .task-date-reminder-panel { grid-template-columns: 1fr !important; }
+  .task-date-reminder-panel .task-mini-field:nth-child(3) { grid-column: auto !important; }
+  .task-day-pill { min-width: 48px !important; padding: 7px 7px 9px !important; }
+  .task-day-pill strong { font-size: 16px !important; }
+}
