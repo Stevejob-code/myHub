@@ -406,10 +406,10 @@ $('watchForm').addEventListener('submit', async (event) => {
   $('watchStatus').value = 'อยากดู';
   $('watchType').value = 'หนัง';
   $('watchPlatform').value = 'Netflix';
-  renderAppDropdown('watchPlatformDropdown', 'Netflix', 'platform');
-  renderAppDropdown('watchTypeDropdown', 'หนัง', 'type');
+  
+  
   setupStatusTabs('#watchStatusTabs .status-tab', 'watchStatus', 'อยากดู');
-  initAppDropdowns();
+  
   toast('เพิ่มเข้ารายการแล้ว');
 });
 
@@ -525,7 +525,7 @@ function initAppDropdowns() {
       if (input) input.value = value;
       renderAppDropdown(root.id, value, kind);
       root.classList.remove('open');
-      initAppDropdowns();
+      
     }));
   });
 }
@@ -753,7 +753,7 @@ function openEditModal(col, id) {
     $('editWatchType').value = item.type || 'หนัง';
     renderAppDropdown('editWatchPlatformDropdown', item.platform || 'Netflix', 'platform');
     renderAppDropdown('editWatchTypeDropdown', item.type || 'หนัง', 'type');
-    initAppDropdowns();
+    
     setupStatusTabs('.edit-status-tabs .status-tab', 'editWatchStatus', item.status || 'อยากดู', 'data-edit-status');
   } else {
     f.innerHTML = `<input id="editNoteTitle" value="${escapeAttr(item.title)}" required /><input id="editNoteUrl" type="url" value="${escapeAttr(item.url || '')}" placeholder="ลิงก์" /><textarea id="editNoteBody" rows="3" placeholder="รายละเอียด">${escapeHtml(item.body || '')}</textarea><button class="primary-btn" type="submit">บันทึกการแก้ไข</button>`;
@@ -838,9 +838,9 @@ document.addEventListener('click', (event) => {
 });
 
 // Init watchlist platform and status controls
-renderAppDropdown('watchPlatformDropdown', 'Netflix', 'platform');
-renderAppDropdown('watchTypeDropdown', 'หนัง', 'type');
-initAppDropdowns();
+
+
+
 setupStatusTabs('#watchStatusTabs .status-tab', 'watchStatus', 'อยากดู');
 document.querySelectorAll('[data-watch-status]').forEach(btn => btn.addEventListener('click', () => {
   document.querySelectorAll('[data-watch-status]').forEach(b => b.classList.remove('active'));
@@ -1924,126 +1924,21 @@ openEditModal = function(col, id){
 
 
 
-
-// ===== MyHub v6.6 Watch Platform Dropdown 100% Click Fix =====
-// Rebuilds the Watch Type / Platform dropdowns with explicit buttons and direct handlers.
-(function initWatchDropdownClick100(){
-  const TYPE_OPTIONS = [
-    { key: 'หนัง', label: 'หนัง', icon: '🎬' },
-    { key: 'ซีรีส์', label: 'ซีรีส์', icon: '📺' },
-    { key: 'อนิเมะ', label: 'อนิเมะ', icon: '✨' },
-    { key: 'สารคดี', label: 'สารคดี', icon: '🌎' }
-  ];
-
-  const PLATFORM_OPTIONS = [
-    { key: 'Netflix', label: 'Netflix', iconText: 'N' },
-    { key: 'YouTube', label: 'YouTube', iconText: '▶' },
-    { key: 'Disney+', label: 'Disney+', iconText: 'D+' },
-    { key: 'Prime Video', label: 'Prime Video', iconText: 'P' },
-    { key: 'HBO Max', label: 'HBO Max', iconText: 'H' },
-    { key: 'Apple TV+', label: 'Apple TV+', iconText: '' },
-    { key: 'Viu', label: 'Viu', iconText: 'V' },
-    { key: 'iQIYI', label: 'iQIYI', iconText: 'iQ' },
-    { key: 'Crunchyroll', label: 'Crunchyroll', iconText: 'C' },
-    { key: 'Bilibili', label: 'Bilibili', iconText: 'B' },
-    { key: 'อื่น ๆ', label: 'อื่น ๆ', iconText: '•' }
-  ];
-
-  function optionList(kind){
-    return kind === 'platform' ? PLATFORM_OPTIONS : TYPE_OPTIONS;
-  }
-
-  function getLabel(options, value){
-    return options.find((x)=>x.key === value)?.label || options[0].label;
-  }
-
-  function getIcon(options, value){
-    const item = options.find((x)=>x.key === value) || options[0];
-    return item.icon || item.iconText || item.label.slice(0,1);
-  }
-
-  function closeAllDropdowns(except){
-    document.querySelectorAll('.myhub-force-dropdown.open').forEach((el)=>{
-      if (el !== except) el.classList.remove('open');
+// ===== MyHub v6.6 Watch Native Select Final =====
+// Native <select> fix: no overlay, no custom dropdown, click works 100%.
+(function initWatchNativeSelectFinal(){
+  function unlock(){
+    ['watchType','watchPlatform'].forEach((id)=>{
+      const el = document.getElementById(id);
+      if (!el) return;
+      el.disabled = false;
+      el.removeAttribute('disabled');
+      el.style.pointerEvents = 'auto';
+      el.style.opacity = '1';
+      el.style.visibility = 'visible';
     });
   }
-
-  function buildDropdown(id, inputId, kind){
-    const host = document.getElementById(id);
-    const input = document.getElementById(inputId);
-    if (!host || !input) return;
-
-    const options = optionList(kind);
-    if (!input.value) input.value = options[0].key;
-
-    host.classList.add('myhub-force-dropdown');
-    host.dataset.forceDropdown = kind;
-    host.style.pointerEvents = 'auto';
-    host.style.position = 'relative';
-    host.style.zIndex = kind === 'platform' ? '12000' : '11990';
-
-    function render(){
-      const value = input.value || options[0].key;
-      host.innerHTML = `
-        <button type="button" class="force-dd-trigger" aria-expanded="${host.classList.contains('open') ? 'true' : 'false'}">
-          <span class="force-dd-icon">${getIcon(options, value)}</span>
-          <strong>${getLabel(options, value)}</strong>
-          <span class="force-dd-caret">⌄</span>
-        </button>
-        <div class="force-dd-menu" role="listbox">
-          ${options.map((opt)=>`
-            <button type="button" class="force-dd-option ${opt.key === value ? 'active' : ''}" data-force-value="${opt.key}">
-              <span class="force-dd-icon small">${opt.icon || opt.iconText || opt.label.slice(0,1)}</span>
-              <span>${opt.label}</span>
-            </button>
-          `).join('')}
-        </div>
-      `;
-    }
-
-    render();
-
-    host.onclick = function(event){
-      event.preventDefault();
-      event.stopPropagation();
-
-      const opt = event.target.closest('[data-force-value]');
-      if (opt) {
-        input.value = opt.dataset.forceValue;
-        input.dispatchEvent(new Event('change', { bubbles: true }));
-        host.classList.remove('open');
-        render();
-        return;
-      }
-
-      closeAllDropdowns(host);
-      host.classList.toggle('open');
-      render();
-    };
-  }
-
-  function init(){
-    buildDropdown('watchTypeDropdown', 'watchType', 'type');
-    buildDropdown('watchPlatformDropdown', 'watchPlatform', 'platform');
-  }
-
-  document.addEventListener('click', (event)=>{
-    if (!event.target.closest('.myhub-force-dropdown')) closeAllDropdowns();
-  }, true);
-
-  document.addEventListener('DOMContentLoaded', init);
-  setTimeout(init, 0);
-  setTimeout(init, 300);
-  setTimeout(init, 1000);
-
-  // Rebuild after other scripts rerender old dropdowns.
-  const watchPage = document.getElementById('watchPage');
-  if (watchPage && 'MutationObserver' in window) {
-    const mo = new MutationObserver(()=> {
-      clearTimeout(window.__myhubWatchDropdownFixTimer);
-      window.__myhubWatchDropdownFixTimer = setTimeout(init, 50);
-    });
-    mo.observe(watchPage, { childList: true, subtree: true });
-  }
+  document.addEventListener('DOMContentLoaded', unlock);
+  setTimeout(unlock, 0);
+  setTimeout(unlock, 500);
 })();
-

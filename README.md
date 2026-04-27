@@ -35,6 +35,7 @@
 - Keeps existing fallback poster if no public match is found.
 
 
-## v6.6 Watch Dropdown 100% Click Fix
-- Rebuilt Watch type/platform dropdowns with direct button handlers.
-- Fixed platform dropdown click on mobile and desktop by bypassing old overlay/event issues.
+## v6.6 Watch Native Select Final
+- Replaced Watch custom dropdowns with real native select controls.
+- Fixes platform/type selection on mobile and desktop.
+- Keeps no-API poster resolver.
