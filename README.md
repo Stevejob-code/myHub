@@ -16,3 +16,7 @@
 ## v6.2 Tasks Calendar Date Sync Fix
 - แก้ปัญหาวันที่ในปฏิทินงานกับวันที่ในงานไม่ตรงกันบนมือถือ/โซนเวลาไทย
 - เปลี่ยนการคำนวณวันที่จาก UTC เป็น local date (`YYYY-MM-DD`) เพื่อให้ Today, Calendar และ Due Date ตรงกัน
+
+
+## v6.10.2
+- Improved mobile readability for empty states in Dashboard cards.
