@@ -2540,3 +2540,248 @@ html, body { overflow-x: hidden !important; }
   font-weight: 850 !important;
 }
 
+
+
+
+/* =========================================================
+   MyHub v6.6 Notes & Links Pro UI
+   ปรับหน้า Notes ให้ดูพรีเมียม ล้ำขึ้น โดยไม่แตะ logic เดิม
+   ========================================================= */
+
+#notesPage {
+  padding-bottom: 130px !important;
+}
+
+/* Add note card */
+#notesPage .panel-card {
+  position: relative;
+  overflow: hidden;
+  border-radius: 30px !important;
+  background:
+    radial-gradient(circle at 90% 0%, rgba(124, 58, 237, .16), transparent 34%),
+    radial-gradient(circle at 10% 100%, rgba(14, 165, 233, .14), transparent 32%),
+    linear-gradient(180deg, #ffffff 0%, #f8fafc 100%) !important;
+  border: 1px solid rgba(148, 163, 184, .22) !important;
+  box-shadow: 0 24px 60px rgba(2, 6, 23, .22) !important;
+}
+
+#notesPage .panel-card::before {
+  content: "✎";
+  position: absolute;
+  right: 22px;
+  top: 18px;
+  width: 52px;
+  height: 52px;
+  border-radius: 20px;
+  display: grid;
+  place-items: center;
+  background: linear-gradient(135deg, #4f46e5, #7c3aed);
+  color: #fff;
+  font-size: 24px;
+  font-weight: 950;
+  box-shadow: 0 14px 30px rgba(79, 70, 229, .28);
+}
+
+#notesPage .panel-card h3 {
+  color: #0f172a !important;
+  font-size: 24px !important;
+  font-weight: 950 !important;
+  letter-spacing: -.04em;
+  margin-bottom: 18px !important;
+  padding-right: 70px;
+}
+
+/* Form fields */
+#notesPage #noteForm {
+  gap: 13px !important;
+}
+
+#notesPage #noteTitle,
+#notesPage #noteUrl,
+#notesPage #noteBody {
+  border-radius: 20px !important;
+  border: 1px solid rgba(148, 163, 184, .28) !important;
+  background: rgba(255, 255, 255, .92) !important;
+  color: #0f172a !important;
+  font-weight: 750 !important;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.8), 0 10px 24px rgba(15,23,42,.05);
+  transition: border-color .2s ease, box-shadow .2s ease, transform .2s ease;
+}
+
+#notesPage #noteTitle:focus,
+#notesPage #noteUrl:focus,
+#notesPage #noteBody:focus {
+  border-color: rgba(79, 70, 229, .55) !important;
+  box-shadow: 0 0 0 4px rgba(79, 70, 229, .12), 0 12px 26px rgba(15,23,42,.08) !important;
+  transform: translateY(-1px);
+}
+
+#notesPage #noteBody {
+  min-height: 110px;
+  resize: vertical;
+}
+
+/* Save button */
+#notesPage #noteForm .primary-btn {
+  min-height: 56px;
+  border-radius: 20px !important;
+  background: linear-gradient(135deg, #2563eb 0%, #7c3aed 100%) !important;
+  color: #fff !important;
+  font-size: 17px;
+  font-weight: 950;
+  box-shadow: 0 18px 38px rgba(79, 70, 229, .28) !important;
+}
+
+#notesPage #noteForm .primary-btn:active {
+  transform: scale(.985);
+}
+
+/* Search input */
+#notesPage .search-field {
+  margin: 16px 0 18px !important;
+}
+
+#notesPage #noteSearch {
+  min-height: 54px;
+  border-radius: 22px !important;
+  background: rgba(255,255,255,.95) !important;
+  border: 1px solid rgba(148, 163, 184, .22) !important;
+  color: #0f172a !important;
+  font-weight: 800;
+  box-shadow: 0 14px 30px rgba(2,6,23,.16);
+}
+
+/* Note list container */
+#notesPage #noteList {
+  display: grid;
+  gap: 12px;
+}
+
+/* Note items */
+#notesPage #noteList .item-card {
+  position: relative;
+  overflow: hidden;
+  border-radius: 24px !important;
+  padding: 17px 16px 17px 18px !important;
+  background:
+    radial-gradient(circle at 100% 0%, rgba(14, 165, 233, .10), transparent 34%),
+    linear-gradient(180deg, #ffffff 0%, #f8fafc 100%) !important;
+  border: 1px solid rgba(226, 232, 240, .95) !important;
+  box-shadow: 0 16px 38px rgba(15, 23, 42, .12) !important;
+}
+
+#notesPage #noteList .item-card::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 18px;
+  bottom: 18px;
+  width: 5px;
+  border-radius: 0 999px 999px 0;
+  background: linear-gradient(180deg, #2563eb, #7c3aed);
+}
+
+#notesPage #noteList .item-row {
+  gap: 12px;
+}
+
+#notesPage #noteList .item-title {
+  color: #0f172a !important;
+  font-size: 18px !important;
+  font-weight: 950 !important;
+  letter-spacing: -.025em;
+  margin-bottom: 4px;
+}
+
+#notesPage #noteList .item-meta {
+  color: #64748b !important;
+  font-size: 14px !important;
+  font-weight: 750 !important;
+  line-height: 1.45;
+}
+
+#notesPage #noteList a.item-meta {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 8px;
+  padding: 7px 11px;
+  border-radius: 999px;
+  color: #2563eb !important;
+  background: rgba(37, 99, 235, .10);
+  border: 1px solid rgba(37, 99, 235, .16);
+  text-decoration: none;
+  font-weight: 900 !important;
+}
+
+#notesPage #noteList a.item-meta::before {
+  content: "↗";
+}
+
+/* Buttons in notes */
+#notesPage #noteList .icon-btn,
+#notesPage #noteList .mini-btn,
+#notesPage #noteList button {
+  border-radius: 999px !important;
+  font-weight: 950 !important;
+  box-shadow: none !important;
+}
+
+#notesPage #noteList .icon-btn:not(.delete) {
+  color: #0369a1 !important;
+  background: rgba(14, 165, 233, .12) !important;
+}
+
+#notesPage #noteList .delete,
+#notesPage #noteList .icon-btn.delete {
+  color: #dc2626 !important;
+  background: rgba(239, 68, 68, .12) !important;
+}
+
+/* Pagination bar in notes */
+#notesPage .myhub-pagination-bar {
+  background: rgba(255,255,255,.86) !important;
+  border-color: rgba(148, 163, 184, .20) !important;
+}
+
+/* Empty note state */
+#notesPage #noteList.empty-box,
+#notesPage #noteList .myhub-empty-state,
+#notesPage #noteList .dash-empty {
+  min-height: 86px;
+  border-radius: 24px !important;
+  color: #475569 !important;
+  background:
+    radial-gradient(circle at 50% 0%, rgba(124, 58, 237, .10), transparent 40%),
+    rgba(255, 255, 255, .08) !important;
+  border: 1px dashed rgba(148, 163, 184, .28) !important;
+  font-weight: 850 !important;
+}
+
+@media (max-width: 520px) {
+  #notesPage .panel-card {
+    border-radius: 28px !important;
+    padding: 20px !important;
+  }
+
+  #notesPage .panel-card::before {
+    width: 46px;
+    height: 46px;
+    border-radius: 18px;
+    right: 18px;
+    top: 18px;
+  }
+
+  #notesPage .panel-card h3 {
+    font-size: 22px !important;
+  }
+
+  #notesPage #noteList .item-card {
+    border-radius: 22px !important;
+  }
+
+  #notesPage #noteList .item-title {
+    font-size: 17px !important;
+  }
+}
+

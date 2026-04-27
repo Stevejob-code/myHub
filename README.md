@@ -54,3 +54,7 @@
 ## v6.6 Platform Brand Badge Final Fix
 - Replaced external SVG platform logos with controlled brand-color badges.
 - Fixed Netflix black/red badge and inconsistent platform icons in Watchlist cards.
+
+
+## v6.6 Notes & Links Pro
+- Redesigned Notes & Links page with premium card UI, stronger search, better note cards, link pill, and mobile readability.
