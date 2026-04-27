@@ -20,3 +20,7 @@
 
 ## v6.10.2
 - Improved mobile readability for empty states in Dashboard cards.
+
+
+## v6.10.3
+- Fixed Dashboard action buttons readability: Open Library / Open Notes are no longer white/faded.
