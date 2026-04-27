@@ -1559,3 +1559,82 @@ body:not(.light-mode) .dash-section-head button {
   }
 }
 
+
+
+/* v6.10.5 Dashboard mobile readability hard fix */
+#dashboardPage .dash-section-card,
+#dashboardPage .dash-section-card * {
+  text-shadow: none !important;
+}
+
+#dashboardPage .dash-section-card h3,
+#dashboardPage .dash-section-head h3 {
+  color: #0f172a !important;
+  opacity: 1 !important;
+}
+
+#dashboardPage .dash-section-card .eyebrow,
+#dashboardPage .dash-section-head .eyebrow {
+  color: #5b5ff0 !important;
+  opacity: 1 !important;
+}
+
+#dashboardPage .dash-pill,
+#dashboardPage .count-pill,
+#dashboardPage .mini-btn,
+#dashboardPage .dash-section-card button,
+#dashboardPage .dash-section-head button,
+#dashboardPage button[onclick],
+#dashboardPage button[data-nav],
+#dashboardPage a.mini-btn {
+  color: #4f46e5 !important;
+  background: rgba(99,102,241,.14) !important;
+  border: 1px solid rgba(99,102,241,.28) !important;
+  opacity: 1 !important;
+  font-weight: 900 !important;
+  box-shadow: 0 8px 20px rgba(79,70,229,.12) !important;
+}
+
+#dashboardPage .dash-empty,
+#dashboardPage .empty-box,
+#dashboardPage .dashboard-empty-readable,
+#chartEmptyMsg {
+  color: #475569 !important;
+  background: rgba(99,102,241,.09) !important;
+  border: 1px dashed rgba(99,102,241,.30) !important;
+  opacity: 1 !important;
+  font-weight: 800 !important;
+  text-align: center !important;
+}
+
+#chartEmptyMsg {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 48px;
+  margin: 16px 0 8px !important;
+  border-radius: 18px;
+  font-size: 15px !important;
+}
+
+@media (max-width: 480px) {
+  #dashboardPage .dash-section-card {
+    background: #f8fafc !important;
+  }
+  #dashboardPage .mini-btn,
+  #dashboardPage .dash-section-card button,
+  #dashboardPage .dash-section-head button {
+    min-height: 40px !important;
+    padding: 9px 14px !important;
+    border-radius: 999px !important;
+    color: #4338ca !important;
+    background: rgba(99,102,241,.16) !important;
+  }
+  #dashboardPage .dash-empty,
+  #dashboardPage .empty-box,
+  #chartEmptyMsg {
+    font-size: 14.5px !important;
+    color: #334155 !important;
+  }
+}
+

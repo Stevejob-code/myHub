@@ -1731,7 +1731,7 @@ $('taskForm')?.addEventListener('submit', async (event)=>{
   event.stopImmediatePropagation();
   const title = ($('taskTitle')?.value || '').trim();
   if (!title) return;
-  if (!currentUser) return toast('กรุณาเข้าสู่ระบบก่อน');
+  if (!state.user) return toast('กรุณาเข้าสู่ระบบก่อน');
   const dueDate = $('taskDueDatePicker')?.value || $('taskDue')?.value || '';
   const dueTime = $('taskDueTime')?.value || '';
   const reminderMinutes = $('taskReminder')?.value || 'none';
@@ -1741,20 +1741,25 @@ $('taskForm')?.addEventListener('submit', async (event)=>{
   if (reminderMinutes !== 'none' && 'Notification' in window && Notification.permission === 'default') {
     await Notification.requestPermission();
   }
-  await addDoc(userCol('tasks'), {
-    title,
-    dueDate,
-    dueTime,
-    reminderMinutes,
-    reminderAt: getReminderAt(dueDate, dueTime, reminderMinutes),
-    reminderNotified: false,
-    priority: $('taskPriority')?.value || 'normal',
-    subtasks: normalizeSubtasks(taskDraftSubtasks),
-    done: false,
-    order: Date.now(),
-    createdAt: serverTimestamp(),
-    updatedAt: serverTimestamp()
-  });
+  try {
+    await addDoc(userCol('tasks'), {
+      title,
+      dueDate,
+      dueTime,
+      reminderMinutes,
+      reminderAt: getReminderAt(dueDate, dueTime, reminderMinutes),
+      reminderNotified: false,
+      priority: $('taskPriority')?.value || 'normal',
+      subtasks: normalizeSubtasks(taskDraftSubtasks),
+      done: false,
+      order: Date.now(),
+      createdAt: serverTimestamp(),
+      updatedAt: serverTimestamp()
+    });
+  } catch (error) {
+    console.error('Add task failed:', error);
+    return toast(error?.message ? `เพิ่มงานไม่สำเร็จ: ${error.message}` : 'เพิ่มงานไม่สำเร็จ');
+  }
   $('taskForm')?.reset();
   taskDraftSubtasks = [];
   renderTaskDraftSubtasks();
@@ -1883,3 +1888,31 @@ document.addEventListener("DOMContentLoaded", ()=>{
     });
   }
 });
+
+
+// MyHub v6.10.5 reliable task controls
+(function(){
+  function setDueValue(value){
+    const hidden = document.getElementById('taskDue');
+    const picker = document.getElementById('taskDueDatePicker');
+    if (hidden) hidden.value = value || '';
+    if (picker) picker.value = value || '';
+  }
+  document.addEventListener('click', function(event){
+    const dueBtn = event.target.closest('[data-task-due]');
+    if (dueBtn) {
+      const mode = dueBtn.dataset.taskDue;
+      const value = mode === 'today' ? todayISO() : mode === 'tomorrow' ? addDaysISO(1) : '';
+      setDueValue(value);
+    }
+  }, true);
+
+  const form = document.getElementById('taskForm');
+  if (form) {
+    form.addEventListener('submit', function(){
+      const picker = document.getElementById('taskDueDatePicker');
+      const hidden = document.getElementById('taskDue');
+      if (picker && hidden && picker.value) hidden.value = picker.value;
+    }, true);
+  }
+})();
