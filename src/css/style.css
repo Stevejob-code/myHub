@@ -1677,3 +1677,18 @@ body:not(.light-mode) .bottom-nav{
 
 
 .dash-stat-v6-grid{margin-top:10px!important;}
+
+/* v6.13 Hover Glow Animation */
+.dash-stat-v6, .dash-section-card{
+  transition: all .25s ease;
+}
+.dash-stat-v6:hover, .dash-section-card:hover{
+  transform: translateY(-6px) scale(1.02);
+  box-shadow: 0 25px 60px rgba(124,58,237,.45);
+}
+
+/* Smooth iOS chart */
+canvas{
+  filter: drop-shadow(0 10px 20px rgba(124,58,237,.3));
+  transition: all .3s ease;
+}

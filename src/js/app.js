@@ -1928,3 +1928,28 @@ openEditModal = function(col, id){
     });
   };
 })();
+
+
+// v6.13 AI Dashboard Summary
+function renderAISummary(){
+  const el = document.getElementById("aiSummary");
+  if(!el) return;
+
+  let income=0, expense=0;
+
+  (state.transactions||[]).forEach(t=>{
+    if(t.type==="income") income+=Number(t.amount||0);
+    if(t.type==="expense") expense+=Number(t.amount||0);
+  });
+
+  let text="📊 วันนี้คุณยังไม่มีข้อมูลมากพอ";
+  if(expense>income){
+    text="⚠️ รายจ่ายมากกว่ารายรับ ควรระวังการใช้เงิน";
+  }else if(income>0){
+    text="🔥 การเงินคุณยังสมดุลอยู่ ดีมาก!";
+  }
+
+  el.innerText=text;
+}
+
+setTimeout(renderAISummary,500);
