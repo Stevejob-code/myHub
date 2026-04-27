@@ -21,3 +21,9 @@
 ## Clean start from v6.6
 - Removed Google Login UI and Firebase Google provider code.
 - Email/password login and register remain.
+
+
+## v6.6 Dashboard Pro
+- Improved Dashboard readability on mobile.
+- Stronger contrast for cards, labels, buttons, empty states, and list items.
+- Scoped changes to Dashboard only; login and data logic untouched.

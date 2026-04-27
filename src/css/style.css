@@ -1453,3 +1453,250 @@ html, body { overflow-x: hidden !important; }
   display: none !important;
 }
 
+
+
+
+/* =========================================================
+   MyHub v6.6 Dashboard Pro - Readable Premium Mobile UI
+   Scope: Dashboard only. Does not touch login/forms logic.
+   ========================================================= */
+
+#dashboardPage {
+  --pro-text: #0f172a;
+  --pro-text-soft: #334155;
+  --pro-muted: #64748b;
+  --pro-primary: #5b5ff0;
+  --pro-primary-dark: #4338ca;
+  --pro-card: #f8fafc;
+  --pro-card-strong: #ffffff;
+  --pro-border: rgba(99, 102, 241, 0.16);
+  --pro-shadow: 0 18px 45px rgba(15, 23, 42, 0.12);
+  --pro-shadow-soft: 0 10px 26px rgba(15, 23, 42, 0.08);
+}
+
+/* Dashboard card shell */
+#dashboardPage .dash-section-card,
+#dashboardPage .dashboard-card,
+#dashboardPage .panel-card {
+  background:
+    radial-gradient(circle at 100% 0%, rgba(99, 102, 241, 0.10), transparent 34%),
+    linear-gradient(180deg, #ffffff 0%, #f8fafc 100%) !important;
+  color: var(--pro-text) !important;
+  border: 1px solid rgba(148, 163, 184, 0.20) !important;
+  box-shadow: var(--pro-shadow) !important;
+  opacity: 1 !important;
+}
+
+/* Headings */
+#dashboardPage .dash-section-card h3,
+#dashboardPage .dash-section-head h3,
+#dashboardPage .panel-card h3 {
+  color: var(--pro-text) !important;
+  font-weight: 950 !important;
+  letter-spacing: -0.035em;
+  opacity: 1 !important;
+  text-shadow: none !important;
+}
+
+/* Section labels */
+#dashboardPage .eyebrow,
+#dashboardPage .dash-section-card .eyebrow,
+#dashboardPage .dash-section-head .eyebrow {
+  color: var(--pro-primary) !important;
+  opacity: 1 !important;
+  font-weight: 950 !important;
+  letter-spacing: 0.11em !important;
+  text-shadow: none !important;
+}
+
+/* Secondary text */
+#dashboardPage p,
+#dashboardPage small,
+#dashboardPage .muted,
+#dashboardPage .item-meta,
+#dashboardPage .task-meta-row,
+#dashboardPage .task-chip,
+#dashboardPage .movie-meta,
+#dashboardPage .dash-list,
+#dashboardPage .dash-empty,
+#dashboardPage .empty-box {
+  color: var(--pro-muted) !important;
+  opacity: 1 !important;
+  text-shadow: none !important;
+}
+
+/* Pills / counts */
+#dashboardPage .dash-pill,
+#dashboardPage .count-pill {
+  color: var(--pro-primary-dark) !important;
+  background: rgba(99, 102, 241, 0.13) !important;
+  border: 1px solid rgba(99, 102, 241, 0.18) !important;
+  font-weight: 950 !important;
+  opacity: 1 !important;
+  box-shadow: 0 8px 20px rgba(79, 70, 229, 0.10) !important;
+}
+
+/* Open buttons */
+#dashboardPage .mini-btn,
+#dashboardPage .dash-section-head button,
+#dashboardPage button[data-nav] {
+  color: var(--pro-primary-dark) !important;
+  background: rgba(99, 102, 241, 0.15) !important;
+  border: 1px solid rgba(99, 102, 241, 0.22) !important;
+  font-weight: 950 !important;
+  opacity: 1 !important;
+  text-shadow: none !important;
+  box-shadow: 0 10px 22px rgba(79, 70, 229, 0.12) !important;
+}
+
+/* List cards inside dashboard */
+#dashboardPage .item-card,
+#dashboardPage .task-card-premium,
+#dashboardPage .movie-card,
+#dashboardPage .watch-card,
+#dashboardPage .note-card,
+#dashboardPage .dash-mini-item,
+#dashboardPage .dash-list > * {
+  background: #ffffff !important;
+  color: var(--pro-text) !important;
+  border: 1px solid rgba(226, 232, 240, 0.95) !important;
+  box-shadow: var(--pro-shadow-soft) !important;
+  opacity: 1 !important;
+}
+
+/* List text */
+#dashboardPage .item-title,
+#dashboardPage .task-card-title,
+#dashboardPage .movie-title,
+#dashboardPage .note-title,
+#dashboardPage .dash-mini-item strong {
+  color: var(--pro-text) !important;
+  opacity: 1 !important;
+  font-weight: 950 !important;
+}
+
+#dashboardPage .item-meta,
+#dashboardPage .task-card-premium small,
+#dashboardPage .movie-card small,
+#dashboardPage .note-card small,
+#dashboardPage .dash-mini-item small {
+  color: var(--pro-muted) !important;
+  opacity: 1 !important;
+  font-weight: 800 !important;
+}
+
+/* Empty states */
+#dashboardPage .dash-empty,
+#dashboardPage .empty-box,
+#dashboardPage .task-empty-hint {
+  color: #475569 !important;
+  background: rgba(99, 102, 241, 0.075) !important;
+  border: 1px dashed rgba(99, 102, 241, 0.28) !important;
+  border-radius: 18px !important;
+  opacity: 1 !important;
+  font-weight: 850 !important;
+  text-align: center !important;
+  text-shadow: none !important;
+}
+
+/* Money pulse chart readability */
+#dashboardPage .money-pulse-card canvas,
+#dashboardPage #expenseChart {
+  opacity: 1 !important;
+  filter: drop-shadow(0 10px 18px rgba(99, 102, 241, 0.12));
+}
+
+/* Hero remains vibrant but readable */
+#dashboardPage .dash-hero-v6 {
+  box-shadow: 0 22px 55px rgba(15, 23, 42, 0.18) !important;
+}
+
+#dashboardPage .dash-hero-v6 h1,
+#dashboardPage .dash-hero-v6 .eyebrow,
+#dashboardPage .dash-hero-sub,
+#dashboardPage .dash-focus-card,
+#dashboardPage .dash-focus-card * {
+  opacity: 1 !important;
+  text-shadow: 0 8px 22px rgba(15, 23, 42, 0.18) !important;
+}
+
+#dashboardPage .dash-focus-card {
+  background: rgba(255, 255, 255, 0.22) !important;
+  border: 1px solid rgba(255, 255, 255, 0.26) !important;
+}
+
+/* Bottom nav contrast */
+.bottom-nav .nav-btn {
+  color: #64748b !important;
+  opacity: 1 !important;
+}
+
+.bottom-nav .nav-btn.active {
+  color: #ffffff !important;
+  background: #0f172a !important;
+}
+
+/* Subtle pro animation */
+@media (hover: hover) {
+  #dashboardPage .dash-section-card,
+  #dashboardPage .dash-stat-v6,
+  #dashboardPage .item-card,
+  #dashboardPage .task-card-premium,
+  #dashboardPage .movie-card,
+  #dashboardPage .note-card {
+    transition: transform .22s ease, box-shadow .22s ease, border-color .22s ease;
+  }
+
+  #dashboardPage .dash-section-card:hover,
+  #dashboardPage .dash-stat-v6:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 24px 58px rgba(15, 23, 42, 0.15) !important;
+  }
+}
+
+/* Mobile-specific readability */
+@media (max-width: 520px) {
+  #dashboardPage .dash-section-card,
+  #dashboardPage .dashboard-card,
+  #dashboardPage .panel-card {
+    background:
+      radial-gradient(circle at 100% 0%, rgba(99, 102, 241, 0.09), transparent 35%),
+      linear-gradient(180deg, #ffffff 0%, #f1f5f9 100%) !important;
+  }
+
+  #dashboardPage .dash-section-card h3,
+  #dashboardPage .dash-section-head h3 {
+    font-size: 22px !important;
+    line-height: 1.15 !important;
+  }
+
+  #dashboardPage .eyebrow {
+    font-size: 13px !important;
+  }
+
+  #dashboardPage .mini-btn,
+  #dashboardPage .dash-section-head button,
+  #dashboardPage button[data-nav] {
+    min-height: 40px !important;
+    padding: 9px 14px !important;
+    border-radius: 999px !important;
+    font-size: 14px !important;
+  }
+
+  #dashboardPage .dash-empty,
+  #dashboardPage .empty-box,
+  #dashboardPage .task-empty-hint {
+    font-size: 14.5px !important;
+    line-height: 1.45 !important;
+    padding: 13px 14px !important;
+  }
+
+  #dashboardPage .dash-list > *,
+  #dashboardPage .item-card,
+  #dashboardPage .task-card-premium,
+  #dashboardPage .movie-card,
+  #dashboardPage .note-card {
+    border-radius: 18px !important;
+  }
+}
+
