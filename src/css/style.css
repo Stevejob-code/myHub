@@ -1700,3 +1700,99 @@ html, body { overflow-x: hidden !important; }
   }
 }
 
+
+
+
+/* =========================================================
+   v6.6 Dashboard Pro Mobile HARD FIX
+   แก้ปุ่มเปิดงาน/เปิดคลังที่ยังขาวจางบนมือถือ
+   ========================================================= */
+
+@media (max-width: 768px) {
+  #dashboardPage .dash-section-head {
+    align-items: center !important;
+    gap: 12px !important;
+  }
+
+  #dashboardPage .dash-section-head h3 {
+    color: #0f172a !important;
+    opacity: 1 !important;
+    text-shadow: none !important;
+    font-weight: 950 !important;
+  }
+
+  #dashboardPage .dash-section-head .eyebrow {
+    color: #5b5ff0 !important;
+    opacity: 1 !important;
+    text-shadow: none !important;
+    font-weight: 950 !important;
+  }
+
+  /* บังคับปุ่มด้านขวาของการ์ด Dashboard ให้เห็นชัด */
+  #dashboardPage .dash-section-head .mini-btn,
+  #dashboardPage .dash-section-head button,
+  #dashboardPage .mini-btn,
+  #dashboardPage button.mini-btn {
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    min-width: 86px !important;
+    min-height: 42px !important;
+    padding: 9px 16px !important;
+    border-radius: 999px !important;
+    color: #ffffff !important;
+    background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%) !important;
+    border: 1px solid rgba(255,255,255,.35) !important;
+    box-shadow: 0 12px 28px rgba(79,70,229,.34) !important;
+    opacity: 1 !important;
+    visibility: visible !important;
+    text-shadow: none !important;
+    font-size: 14px !important;
+    font-weight: 950 !important;
+    line-height: 1 !important;
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
+  }
+
+  #dashboardPage .dash-section-head .mini-btn *,
+  #dashboardPage .dash-section-head button * {
+    color: #ffffff !important;
+    opacity: 1 !important;
+  }
+
+  /* การ์ดขาวให้อ่านง่ายขึ้น ไม่ฟุ้งจนตัวอักษรจาง */
+  #dashboardPage .dash-section-card {
+    background: #f8fafc !important;
+    border: 1px solid rgba(148,163,184,.22) !important;
+    box-shadow: 0 18px 42px rgba(15,23,42,.14) !important;
+  }
+
+  #dashboardPage .dash-list > *,
+  #dashboardPage .task-card-premium,
+  #dashboardPage .movie-card,
+  #dashboardPage .item-card {
+    background: #ffffff !important;
+    color: #0f172a !important;
+    border: 1px solid rgba(226,232,240,.95) !important;
+    box-shadow: 0 10px 26px rgba(15,23,42,.10) !important;
+  }
+
+  #dashboardPage .task-card-title,
+  #dashboardPage .movie-title,
+  #dashboardPage .item-title,
+  #dashboardPage .dash-list strong {
+    color: #0f172a !important;
+    opacity: 1 !important;
+    font-weight: 950 !important;
+  }
+
+  #dashboardPage .task-chip,
+  #dashboardPage .movie-card small,
+  #dashboardPage .item-meta,
+  #dashboardPage .dash-list small {
+    color: #64748b !important;
+    opacity: 1 !important;
+    font-weight: 850 !important;
+  }
+}
+
