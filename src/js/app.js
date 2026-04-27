@@ -406,6 +406,7 @@ $('watchForm').addEventListener('submit', async (event) => {
   $('watchStatus').value = 'อยากดู';
   $('watchType').value = 'หนัง';
   $('watchPlatform').value = 'Netflix';
+  setTimeout(()=>{ document.dispatchEvent(new Event('DOMContentLoaded')); }, 0);
   
   
   setupStatusTabs('#watchStatusTabs .status-tab', 'watchStatus', 'อยากดู');
@@ -1924,21 +1925,153 @@ openEditModal = function(col, id){
 
 
 
-// ===== MyHub v6.6 Watch Native Select Final =====
-// Native <select> fix: no overlay, no custom dropdown, click works 100%.
-(function initWatchNativeSelectFinal(){
-  function unlock(){
-    ['watchType','watchPlatform'].forEach((id)=>{
-      const el = document.getElementById(id);
-      if (!el) return;
-      el.disabled = false;
-      el.removeAttribute('disabled');
-      el.style.pointerEvents = 'auto';
-      el.style.opacity = '1';
-      el.style.visibility = 'visible';
+
+
+
+// ===== MyHub v6.6 Pretty Watch Dropdown + Platform Logo Fix =====
+(function initPrettyWatchDropdowns(){
+  const platformLogos = {
+    'Netflix': 'https://cdn.jsdelivr.net/npm/simple-icons@v11/icons/netflix.svg',
+    'YouTube': 'https://cdn.jsdelivr.net/npm/simple-icons@v11/icons/youtube.svg',
+    'Disney+': 'https://cdn.jsdelivr.net/npm/simple-icons@v11/icons/disneyplus.svg',
+    'Prime Video': 'https://cdn.jsdelivr.net/npm/simple-icons@v11/icons/primevideo.svg',
+    'HBO Max': 'https://cdn.jsdelivr.net/npm/simple-icons@v11/icons/hbo.svg',
+    'Apple TV+': 'https://cdn.jsdelivr.net/npm/simple-icons@v11/icons/appletv.svg',
+    'iQIYI': 'https://cdn.jsdelivr.net/npm/simple-icons@v11/icons/iqiyi.svg',
+    'Crunchyroll': 'https://cdn.jsdelivr.net/npm/simple-icons@v11/icons/crunchyroll.svg',
+    'Bilibili': 'https://cdn.jsdelivr.net/npm/simple-icons@v11/icons/bilibili.svg'
+  };
+
+  const platforms = [
+    'Netflix','YouTube','Disney+','Prime Video','HBO Max','Apple TV+',
+    'Viu','iQIYI','WeTV','TrueID','MonoMax','Crunchyroll','Bilibili','อื่น ๆ'
+  ];
+
+  const types = [
+    { key: 'หนัง', label: 'หนัง', icon: '🎬' },
+    { key: 'ซีรีส์', label: 'ซีรีส์', icon: '📺' },
+    { key: 'อนิเมะ', label: 'อนิเมะ', icon: '✨' },
+    { key: 'สารคดี', label: 'สารคดี', icon: '🌎' }
+  ];
+
+  function logoHTML(value, small=false){
+    const cls = small ? 'pwd-logo small' : 'pwd-logo';
+    const src = platformLogos[value];
+    if (src) return `<span class="${cls} logo-img"><img src="${src}" alt="" loading="lazy" /></span>`;
+    const initials = value === 'อื่น ๆ' ? '⋯' : value.split(/\s|\+/).map(x=>x[0]).join('').slice(0,2).toUpperCase();
+    return `<span class="${cls} logo-text">${initials}</span>`;
+  }
+
+  function typeHTML(item, small=false){
+    return `<span class="${small ? 'pwd-logo small type' : 'pwd-logo type'}">${item.icon}</span>`;
+  }
+
+  function closeDropdowns(except){
+    document.querySelectorAll('.pretty-watch-dropdown.open').forEach(el=>{
+      if (el !== except) el.classList.remove('open');
     });
   }
-  document.addEventListener('DOMContentLoaded', unlock);
-  setTimeout(unlock, 0);
-  setTimeout(unlock, 500);
+
+  function optionsFor(kind){
+    return kind === 'type' ? types : platforms.map(p=>({ key:p, label:p }));
+  }
+
+  function iconFor(kind, item, small=false){
+    return kind === 'type' ? typeHTML(item, small) : logoHTML(item.key, small);
+  }
+
+  function renderPrettyDropdown(host){
+    const input = document.getElementById(host.dataset.input);
+    const kind = host.dataset.kind || 'platform';
+    const options = optionsFor(kind);
+    if (!input.value) input.value = options[0].key;
+    const selected = options.find(o => o.key === input.value) || options[0];
+    input.value = selected.key;
+
+    host.innerHTML = `
+      <button type="button" class="pwd-trigger" aria-expanded="${host.classList.contains('open') ? 'true' : 'false'}">
+        ${iconFor(kind, selected)}
+        <strong>${selected.label}</strong>
+        <span class="pwd-chevron">⌄</span>
+      </button>
+      <div class="pwd-menu" role="listbox">
+        ${options.map(opt => `
+          <button type="button" class="pwd-option ${opt.key === selected.key ? 'active' : ''}" data-value="${opt.key}">
+            ${iconFor(kind, opt, true)}
+            <span>${opt.label}</span>
+            <b>✓</b>
+          </button>
+        `).join('')}
+      </div>
+    `;
+  }
+
+  function initOne(id){
+    const host = document.getElementById(id);
+    if (!host) return;
+    host.style.pointerEvents = 'auto';
+    host.style.position = 'relative';
+    host.dataset.prettyReady = '1';
+    renderPrettyDropdown(host);
+  }
+
+  function initAll(){
+    initOne('watchTypePretty');
+    initOne('watchPlatformPretty');
+  }
+
+  document.addEventListener('click', (event)=>{
+    const host = event.target.closest('.pretty-watch-dropdown');
+    if (!host) {
+      closeDropdowns();
+      return;
+    }
+
+    event.preventDefault();
+    event.stopPropagation();
+
+    const option = event.target.closest('.pwd-option');
+    if (option) {
+      const input = document.getElementById(host.dataset.input);
+      if (input) {
+        input.value = option.dataset.value;
+        input.dispatchEvent(new Event('change', { bubbles: true }));
+      }
+      host.classList.remove('open');
+      renderPrettyDropdown(host);
+      return;
+    }
+
+    if (event.target.closest('.pwd-trigger')) {
+      closeDropdowns(host);
+      host.classList.toggle('open');
+      renderPrettyDropdown(host);
+    }
+  }, true);
+
+  document.addEventListener('DOMContentLoaded', initAll);
+  setTimeout(initAll, 0);
+  setTimeout(initAll, 400);
+
+  // Make old code calls harmless if any remain.
+  window.renderAppDropdown = window.renderAppDropdown || function(){};
+  window.initAppDropdowns = window.initAppDropdowns || function(){ initAll(); };
+
+  // Fix platform logo render for cards that lost brand icon.
+  const oldRenderWatchItem = typeof renderWatchItem === 'function' ? renderWatchItem : null;
+  if (oldRenderWatchItem) {
+    renderWatchItem = function(item){
+      let html = oldRenderWatchItem(item);
+      const platform = item.platform || 'Netflix';
+      const icon = logoHTML(platform, false);
+      // Replace empty checkbox-like brand blocks if CSS/HTML has broken icon.
+      html = html.replace(/<span class="brand-icon(?: [^"]*)?">\s*<\/span>/g, icon);
+      html = html.replace(/<span class="brand-icon(?: [^"]*)?"><img[^>]*><\/span>/g, logoHTML(platform));
+      return html;
+    };
+  }
+
+  // Expose helper for future cards
+  window.myhubPlatformLogoHTML = logoHTML;
 })();
+

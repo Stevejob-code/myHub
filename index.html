@@ -324,28 +324,10 @@
             <form id="watchForm" class="compact-form movie-form-simple">
               <input id="watchTitle" placeholder="ชื่อเรื่อง เช่น Avatar" required />
               <div class="watch-simple-grid">
-                <select id="watchType" class="watch-native-select">
-                  <option value="หนัง">🎬 หนัง</option>
-                  <option value="ซีรีส์">📺 ซีรีส์</option>
-                  <option value="อนิเมะ">✨ อนิเมะ</option>
-                  <option value="สารคดี">🌎 สารคดี</option>
-                </select>
-                <select id="watchPlatform" class="watch-native-select">
-                  <option value="Netflix">Netflix</option>
-                  <option value="YouTube">YouTube</option>
-                  <option value="Disney+">Disney+</option>
-                  <option value="Prime Video">Prime Video</option>
-                  <option value="HBO Max">HBO Max</option>
-                  <option value="Apple TV+">Apple TV+</option>
-                  <option value="Viu">Viu</option>
-                  <option value="iQIYI">iQIYI</option>
-                  <option value="WeTV">WeTV</option>
-                  <option value="TrueID">TrueID</option>
-                  <option value="MonoMax">MonoMax</option>
-                  <option value="Crunchyroll">Crunchyroll</option>
-                  <option value="Bilibili">Bilibili</option>
-                  <option value="อื่น ๆ">อื่น ๆ</option>
-                </select>
+                <input id="watchType" type="hidden" value="หนัง" />
+                <div id="watchTypePretty" class="pretty-watch-dropdown" data-input="watchType" data-kind="type"></div>
+                <input id="watchPlatform" type="hidden" value="Netflix" />
+                <div id="watchPlatformPretty" class="pretty-watch-dropdown" data-input="watchPlatform" data-kind="platform"></div>
               </div>
               <div class="status-tabs" id="watchStatusTabs">
                 <button type="button" class="status-tab active" data-status="อยากดู">อยากดู</button>
