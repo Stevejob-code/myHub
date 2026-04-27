@@ -2268,19 +2268,3 @@ openEditModal = function(col, id){
   setInterval(forcePrettyBadges, 1500);
 })();
 
-
-
-
-// ===== MyHub v7 Core small UI polish =====
-(function initV7CorePolish(){
-  document.documentElement.dataset.myhubVersion = 'v7-core';
-  function markPage(){
-    document.querySelectorAll('.page').forEach(page => page.classList.toggle('v7-active-page', page.classList.contains('active-page')));
-  }
-  document.addEventListener('click', (e)=>{
-    if (e.target.closest('[data-nav], .nav-btn')) setTimeout(markPage, 30);
-  });
-  document.addEventListener('DOMContentLoaded', markPage);
-  setTimeout(markPage, 300);
-})();
-
