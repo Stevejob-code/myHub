@@ -2194,3 +2194,77 @@ openEditModal = function(col, id){
   }, true);
 })();
 
+
+
+
+// ===== MyHub v6.6 Platform Brand Badge Final Fix =====
+// Force platform logos to brand-color text badges in both dropdown and list cards.
+(function initPlatformBrandBadgeFinal(){
+  const platformBadge = {
+    'Netflix': 'N',
+    'YouTube': '▶',
+    'Disney+': 'D+',
+    'Prime Video': 'PV',
+    'HBO Max': 'HBO',
+    'Apple TV+': '',
+    'Viu': 'V',
+    'iQIYI': 'iQ',
+    'WeTV': 'W',
+    'TrueID': 'T',
+    'MonoMax': 'M',
+    'Crunchyroll': 'C',
+    'Bilibili': 'B',
+    'อื่น ๆ': '⋯'
+  };
+
+  function badgeHTML(platform, cls='brand-icon'){
+    const p = platform || 'อื่น ๆ';
+    const label = platformBadge[p] || String(p).slice(0, 2).toUpperCase();
+    return `<span class="${cls} platform-badge" data-platform="${escapeAttr(p)}">${escapeHtml(label)}</span>`;
+  }
+
+  // Override dropdown renderer if pretty dropdown exists
+  const oldRenderWatchItem = typeof renderWatchItem === 'function' ? renderWatchItem : null;
+  if (oldRenderWatchItem && !window.__myhubBrandBadgeWatchPatched) {
+    window.__myhubBrandBadgeWatchPatched = true;
+    renderWatchItem = function(item){
+      let html = oldRenderWatchItem(item);
+      const platform = item.platform || 'Netflix';
+      const badge = badgeHTML(platform, 'brand-icon');
+
+      // Replace any old platform icon block with a brand badge.
+      html = html.replace(/<span class="brand-icon[^"]*"[^>]*>[\s\S]*?<\/span>/, badge);
+
+      // If no brand icon exists, inject before platform text.
+      if (!/data-platform=/.test(html)) {
+        html = html.replace(
+          new RegExp(`(${platform.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')})`),
+          `${badge} $1`
+        );
+      }
+      return html;
+    };
+  }
+
+  // Rebuild pretty dropdown badge icons without external SVGs.
+  function forcePrettyBadges(){
+    document.querySelectorAll('.pretty-watch-dropdown .pwd-option, .pretty-watch-dropdown .pwd-trigger').forEach((row)=>{
+      const text = (row.innerText || '').trim();
+      const platform = Object.keys(platformBadge).find(p => text.includes(p));
+      if (!platform) return;
+
+      const icon = row.querySelector('.pwd-logo');
+      if (icon) {
+        icon.dataset.platform = platform;
+        icon.classList.add('platform-badge');
+        icon.innerHTML = platformBadge[platform];
+      }
+    });
+  }
+
+  document.addEventListener('DOMContentLoaded', forcePrettyBadges);
+  document.addEventListener('click', () => setTimeout(forcePrettyBadges, 0), true);
+  setTimeout(forcePrettyBadges, 0);
+  setInterval(forcePrettyBadges, 1500);
+})();
+

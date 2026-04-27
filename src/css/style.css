@@ -2364,3 +2364,179 @@ html, body { overflow-x: hidden !important; }
   }
 }
 
+
+
+
+/* ===== MyHub v6.6 Platform Brand Badge Final Fix ===== */
+/* ใช้ badge สีแบรนด์แทน SVG เพื่อแก้ Netflix/บางโลโก้สีเพี้ยน */
+.platform-badge,
+.brand-icon.platform-badge,
+.pwd-logo.platform-badge,
+.movie-card .brand-icon.platform-badge,
+.watch-card .brand-icon.platform-badge,
+.item-card .brand-icon.platform-badge {
+  width: 28px !important;
+  height: 28px !important;
+  min-width: 28px !important;
+  border-radius: 9px !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  color: #ffffff !important;
+  font-size: 11px !important;
+  font-weight: 950 !important;
+  line-height: 1 !important;
+  letter-spacing: -0.03em !important;
+  box-shadow: 0 6px 14px rgba(15,23,42,.18) !important;
+  overflow: hidden !important;
+  text-transform: none !important;
+}
+
+.pwd-logo.platform-badge {
+  width: 34px !important;
+  height: 34px !important;
+  min-width: 34px !important;
+  border-radius: 13px !important;
+  font-size: 12px !important;
+}
+
+.pwd-logo.platform-badge.small {
+  width: 30px !important;
+  height: 30px !important;
+  min-width: 30px !important;
+  border-radius: 11px !important;
+  font-size: 10px !important;
+}
+
+/* Hide old SVG image to avoid wrong colors */
+.platform-badge img,
+.brand-icon[data-platform] img,
+.pwd-logo[data-platform] img {
+  display: none !important;
+}
+
+/* Netflix: black bg + red N */
+.platform-badge[data-platform="Netflix"],
+.brand-icon[data-platform="Netflix"],
+.pwd-logo[data-platform="Netflix"] {
+  background: #000000 !important;
+  color: #e50914 !important;
+  font-family: Arial Black, Impact, system-ui, sans-serif !important;
+}
+
+/* YouTube */
+.platform-badge[data-platform="YouTube"],
+.brand-icon[data-platform="YouTube"],
+.pwd-logo[data-platform="YouTube"] {
+  background: #ff0000 !important;
+  color: #ffffff !important;
+}
+
+/* Disney+ */
+.platform-badge[data-platform="Disney+"],
+.brand-icon[data-platform="Disney+"],
+.pwd-logo[data-platform="Disney+"] {
+  background: linear-gradient(135deg, #113ccf 0%, #00a3ff 100%) !important;
+  color: #ffffff !important;
+}
+
+/* Prime Video */
+.platform-badge[data-platform="Prime Video"],
+.brand-icon[data-platform="Prime Video"],
+.pwd-logo[data-platform="Prime Video"] {
+  background: #00a8e1 !important;
+  color: #ffffff !important;
+  font-size: 9px !important;
+}
+
+/* HBO Max */
+.platform-badge[data-platform="HBO Max"],
+.brand-icon[data-platform="HBO Max"],
+.pwd-logo[data-platform="HBO Max"] {
+  background: #111827 !important;
+  color: #ffffff !important;
+  font-size: 8px !important;
+}
+
+/* Apple TV+ */
+.platform-badge[data-platform="Apple TV+"],
+.brand-icon[data-platform="Apple TV+"],
+.pwd-logo[data-platform="Apple TV+"] {
+  background: #000000 !important;
+  color: #ffffff !important;
+  font-size: 14px !important;
+}
+
+/* Viu */
+.platform-badge[data-platform="Viu"],
+.brand-icon[data-platform="Viu"],
+.pwd-logo[data-platform="Viu"] {
+  background: #ffcc00 !important;
+  color: #111827 !important;
+}
+
+/* iQIYI */
+.platform-badge[data-platform="iQIYI"],
+.brand-icon[data-platform="iQIYI"],
+.pwd-logo[data-platform="iQIYI"] {
+  background: #00cc36 !important;
+  color: #ffffff !important;
+  font-size: 9px !important;
+}
+
+/* WeTV */
+.platform-badge[data-platform="WeTV"],
+.brand-icon[data-platform="WeTV"],
+.pwd-logo[data-platform="WeTV"] {
+  background: linear-gradient(135deg, #00d2ff 0%, #00a86b 100%) !important;
+  color: #ffffff !important;
+}
+
+/* TrueID */
+.platform-badge[data-platform="TrueID"],
+.brand-icon[data-platform="TrueID"],
+.pwd-logo[data-platform="TrueID"] {
+  background: linear-gradient(135deg, #ff2d55 0%, #ff7a00 100%) !important;
+  color: #ffffff !important;
+}
+
+/* MonoMax */
+.platform-badge[data-platform="MonoMax"],
+.brand-icon[data-platform="MonoMax"],
+.pwd-logo[data-platform="MonoMax"] {
+  background: #ec1c24 !important;
+  color: #ffffff !important;
+}
+
+/* Crunchyroll */
+.platform-badge[data-platform="Crunchyroll"],
+.brand-icon[data-platform="Crunchyroll"],
+.pwd-logo[data-platform="Crunchyroll"] {
+  background: #f47521 !important;
+  color: #ffffff !important;
+}
+
+/* Bilibili */
+.platform-badge[data-platform="Bilibili"],
+.brand-icon[data-platform="Bilibili"],
+.pwd-logo[data-platform="Bilibili"] {
+  background: #00a1d6 !important;
+  color: #ffffff !important;
+}
+
+/* Other */
+.platform-badge[data-platform="อื่น ๆ"],
+.brand-icon[data-platform="อื่น ๆ"],
+.pwd-logo[data-platform="อื่น ๆ"] {
+  background: #64748b !important;
+  color: #ffffff !important;
+}
+
+/* ให้ text platform ข้าง badge อ่านชัด */
+.movie-card .brand-icon + span,
+.watch-card .brand-icon + span,
+.item-card .brand-icon + span {
+  color: #334155 !important;
+  font-weight: 850 !important;
+}
+

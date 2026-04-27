@@ -49,3 +49,8 @@
 ## v6.6 Pagination All Pages
 - Added load-more pagination for Money, Tasks, selected-day Tasks, Watchlist, and Notes.
 - Prevents long lists from stretching pages too far on mobile.
+
+
+## v6.6 Platform Brand Badge Final Fix
+- Replaced external SVG platform logos with controlled brand-color badges.
+- Fixed Netflix black/red badge and inconsistent platform icons in Watchlist cards.
