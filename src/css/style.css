@@ -1425,3 +1425,17 @@ html, body { overflow-x: hidden !important; }
 .google-btn:disabled{opacity:.65;cursor:not-allowed;filter:saturate(.75)}
 .google-btn.loading::after{content:"";width:18px;height:18px;margin-left:10px;border:2px solid rgba(255,255,255,.35);border-top-color:#fff;border-radius:999px;display:inline-block;vertical-align:middle;animation:spin .8s linear infinite}
 @keyframes spin{to{transform:rotate(360deg)}}
+
+.google-btn[data-error]:not([data-error=""])::after {
+  content: attr(data-error);
+  display: block;
+  margin-top: 8px;
+  font-size: 12px;
+  line-height: 1.35;
+  color: #fecaca;
+  white-space: normal;
+}
+.google-btn.loading {
+  opacity: .78;
+  cursor: wait;
+}

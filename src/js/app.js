@@ -8,8 +8,7 @@ import {
   sendPasswordResetEmail,
   updateProfile,
   GoogleAuthProvider,
-  signInWithPopup,
-  signInWithRedirect
+  signInWithPopup
 } from 'https://www.gstatic.com/firebasejs/10.12.4/firebase-auth.js';
 import {
   getFirestore,
@@ -29,8 +28,14 @@ import { firebaseConfig } from './firebase.js';
 
 const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
+auth.useDeviceLanguage();
 const db = getFirestore(app);
 const googleProvider = new GoogleAuthProvider();
+googleProvider.setCustomParameters({
+  prompt: 'select_account'
+});
+googleProvider.addScope('email');
+googleProvider.addScope('profile');
 
 const $ = (id) => document.getElementById(id);
 const baht = new Intl.NumberFormat('th-TH', { style: 'currency', currency: 'THB', maximumFractionDigits: 0 });
@@ -356,33 +361,51 @@ $('authForm').addEventListener('submit', async (event) => {
 
 function getFirebaseAuthDomainHelp() {
   const host = window.location.hostname || 'localhost';
-  return `Google Login ยังไม่ได้อนุญาตโดเมนนี้ (${host}) ใน Firebase Console`;
+  return `โดเมน ${host} ยังไม่ได้รับอนุญาตใน Firebase Auth > Settings > Authorized domains`;
+}
+
+function showGoogleAuthError(message) {
+  toast(message);
+  const btn = $('googleLoginBtn');
+  if (btn) btn.dataset.error = message;
 }
 
 function handleGoogleLoginError(error) {
   console.warn('Google login failed:', error);
   const code = error?.code || '';
-  if (code === 'auth/unauthorized-domain') {
-    toast(getFirebaseAuthDomainHelp());
+  const message = error?.message || '';
+
+  if (code === 'auth/unauthorized-domain' || message.includes('unauthorized-domain')) {
+    showGoogleAuthError(getFirebaseAuthDomainHelp());
     return;
   }
-  if (code === 'auth/popup-blocked' || code === 'auth/cancelled-popup-request') {
-    toast('กำลังเปลี่ยนเป็นโหมด Redirect...');
-    signInWithRedirect(auth, googleProvider).catch((redirectError) => toast(redirectError.message));
+  if (code === 'auth/operation-not-allowed') {
+    showGoogleAuthError('ต้องเปิด Google Provider ใน Firebase Authentication > Sign-in method ก่อน');
     return;
   }
-  if (code === 'auth/popup-closed-by-user') {
-    toast('ยกเลิกการเข้าสู่ระบบ Google');
+  if (code === 'auth/popup-blocked') {
+    showGoogleAuthError('เบราว์เซอร์บล็อก Popup: กดอนุญาต Popup แล้วลองใหม่');
     return;
   }
-  toast(error?.message || 'เข้าสู่ระบบด้วย Google ไม่สำเร็จ');
+  if (code === 'auth/popup-closed-by-user' || code === 'auth/cancelled-popup-request') {
+    showGoogleAuthError('ยกเลิกการเข้าสู่ระบบ Google');
+    return;
+  }
+  if (code === 'auth/network-request-failed') {
+    showGoogleAuthError('เชื่อมต่อ Firebase ไม่สำเร็จ กรุณาเช็กอินเทอร์เน็ตแล้วลองใหม่');
+    return;
+  }
+  showGoogleAuthError(message || 'เข้าสู่ระบบด้วย Google ไม่สำเร็จ');
 }
 
 $('googleLoginBtn')?.addEventListener('click', async () => {
   const btn = $('googleLoginBtn');
+  if (!btn) return;
   try {
     btn.disabled = true;
     btn.classList.add('loading');
+    btn.dataset.error = '';
+    btn.innerHTML = '<span class="google-g">G</span>กำลังเปิด Google...';
     const cred = await signInWithPopup(auth, googleProvider);
     await ensureUserProfile(cred.user, cred.user.displayName || 'MyHub User');
     toast('เข้าสู่ระบบด้วย Google แล้ว');
@@ -391,6 +414,7 @@ $('googleLoginBtn')?.addEventListener('click', async () => {
   } finally {
     btn.disabled = false;
     btn.classList.remove('loading');
+    btn.innerHTML = '<span class="google-g">G</span>เข้าสู่ระบบด้วย Google';
   }
 });
 
