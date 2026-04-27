@@ -1796,3 +1796,33 @@ html, body { overflow-x: hidden !important; }
   }
 }
 
+
+
+
+/* ===== MyHub v6.6 Watchlist No API Fix ===== */
+/* Platform dropdown must always be clickable for Movie / Series / Anime / Documentary */
+#watchPlatformDropdown,
+#watchPlatformDropdown *,
+#watchTypeDropdown,
+#watchTypeDropdown * {
+  pointer-events: auto !important;
+}
+
+#watchPlatformDropdown {
+  opacity: 1 !important;
+  filter: none !important;
+}
+
+#watchPlatformDropdown.disabled,
+#watchPlatformDropdown[aria-disabled="true"] {
+  opacity: 1 !important;
+  filter: none !important;
+}
+
+/* Fallback poster remains clean when no public image is found */
+.movie-card img,
+.watch-card img {
+  object-fit: cover;
+  background: linear-gradient(135deg, #4f46e5, #7c3aed);
+}
+

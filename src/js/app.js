@@ -392,7 +392,7 @@ $('watchForm').addEventListener('submit', async (event) => {
   event.preventDefault();
   await addDoc(userCol('watchlist'), {
     title: $('watchTitle').value.trim(),
-    poster: await resolvePosterUrl($('watchTitle').value.trim(), '', ''),
+    poster: await window.resolvePosterUrl($('watchTitle').value.trim(), '', ''),
     type: $('watchType')?.value || 'หนัง',
     status: $('watchStatus').value,
     genre: '',
@@ -717,7 +717,7 @@ async function hydrateMissingWatchPosters(items = []) {
   for (const item of missing) {
     posterHydrationQueue.add(item.id);
     try {
-      const poster = await resolvePosterUrl(item.title, '', '');
+      const poster = await window.resolvePosterUrl(item.title, '', '');
       if (poster && poster !== item.poster) await updateDoc(userDoc('watchlist', item.id), { poster, updatedAt: serverTimestamp() });
     } catch (err) {
       console.warn('Auto poster update failed', err);
@@ -784,7 +784,7 @@ $('editForm').addEventListener('submit', async (event) => {
   let data = { updatedAt: serverTimestamp() };
   if (editing.col === 'transactions') data = { ...data, title: $('editTxTitle').value.trim(), amount: Number($('editTxAmount').value), type: $('editTxType').value, category: $('editTxCategory').value.trim() || 'อื่น ๆ' };
   if (editing.col === 'tasks') data = { ...data, title: $('editTaskTitle').value.trim(), dueDate: $('editTaskDue').value, priority: $('editTaskPriority').value };
-  if (editing.col === 'watchlist') data = { ...data, title: $('editWatchTitle').value.trim(), poster: await resolvePosterUrl($('editWatchTitle').value.trim(), '', ''), type: $('editWatchType')?.value || 'หนัง', status: $('editWatchStatus').value, genre: '', platform: $('editWatchPlatform')?.value || 'Netflix', year: '', rating: '', note: '' };
+  if (editing.col === 'watchlist') data = { ...data, title: $('editWatchTitle').value.trim(), poster: await window.resolvePosterUrl($('editWatchTitle').value.trim(), '', ''), type: $('editWatchType')?.value || 'หนัง', status: $('editWatchStatus').value, genre: '', platform: $('editWatchPlatform')?.value || 'Netflix', year: '', rating: '', note: '' };
   if (editing.col === 'notes') data = { ...data, title: $('editNoteTitle').value.trim(), url: $('editNoteUrl').value.trim(), body: $('editNoteBody').value.trim() };
   await updateDoc(userDoc(editing.col, editing.id), data);
   closeEditModal();
@@ -1793,3 +1793,132 @@ openEditModal = function(col, id){
   renderEditSubtasks();
   $('editModal').classList.remove('hidden');
 };
+
+
+
+// ===== MyHub v6.6 Watchlist No API Fix =====
+// 1) Platform dropdown works with every type.
+// 2) Poster auto-fetch without API key via Wikipedia public API + smart fallback.
+(function initWatchlistNoApiFix(){
+  const WATCH_POSTER_CACHE_KEY = 'myhub_watch_poster_cache_v1';
+
+  function readPosterCache(){
+    try { return JSON.parse(localStorage.getItem(WATCH_POSTER_CACHE_KEY) || '{}'); }
+    catch { return {}; }
+  }
+
+  function writePosterCache(cache){
+    try { localStorage.setItem(WATCH_POSTER_CACHE_KEY, JSON.stringify(cache)); }
+    catch {}
+  }
+
+  function normalizePosterQuery(title, type){
+    const raw = String(title || '').trim();
+    const clean = raw
+      .replace(/\s+/g, ' ')
+      .replace(/\b(season|ซีซั่น|ss)\s*\d+\b/ig, '')
+      .replace(/\b(movie|film|หนัง|series|ซีรีส์|anime|อนิเมะ|documentary|สารคดี)\b/ig, '')
+      .trim();
+
+    if (type === 'อนิเมะ') return `${clean || raw} anime`;
+    if (type === 'สารคดี') return `${clean || raw} documentary`;
+    return clean || raw;
+  }
+
+  async function fetchWikiPoster(query){
+    if (!query) return '';
+
+    const searchUrl = `https://en.wikipedia.org/w/api.php?action=query&origin=*&format=json&generator=search&gsrsearch=${encodeURIComponent(query)}&gsrlimit=5&prop=pageimages|pageterms&piprop=thumbnail&pithumbsize=500&pilimit=5&wbptterms=description`;
+
+    const res = await fetch(searchUrl);
+    if (!res.ok) return '';
+
+    const data = await res.json();
+    const pages = Object.values(data?.query?.pages || {});
+    if (!pages.length) return '';
+
+    const scored = pages
+      .filter((p)=>p?.thumbnail?.source)
+      .map((p)=>{
+        const title = String(p.title || '').toLowerCase();
+        const desc = String(p.terms?.description?.[0] || '').toLowerCase();
+        let score = 0;
+        if (title.includes(query.toLowerCase().replace(/\s+(anime|documentary)$/i, ''))) score += 5;
+        if (/film|movie|television|series|anime|manga|documentary/.test(desc)) score += 4;
+        if (/album|song|single|company|person|place/.test(desc)) score -= 3;
+        return { ...p, score };
+      })
+      .sort((a,b)=>b.score-a.score);
+
+    return scored[0]?.thumbnail?.source || '';
+  }
+
+  function fallbackPosterData(title){
+    const t = String(title || '?').trim();
+    const initial = (t.match(/[A-Za-z0-9ก-๙]/)?.[0] || '?').toUpperCase();
+    return { fallback: initial };
+  }
+
+  window.resolvePosterUrl = async function(title, type = '', platform = ''){
+    const query = normalizePosterQuery(title, type);
+    const cacheKey = `${query}__${type || ''}`.toLowerCase();
+    const cache = readPosterCache();
+
+    if (cache[cacheKey] !== undefined) return cache[cacheKey];
+
+    let poster = '';
+    try {
+      poster = await fetchWikiPoster(query);
+      if (!poster && type === 'อนิเมะ') poster = await fetchWikiPoster(String(title || '') + ' manga anime');
+      if (!poster && type === 'สารคดี') poster = await fetchWikiPoster(String(title || '') + ' documentary film');
+      if (!poster) poster = await fetchWikiPoster(String(title || '') + ' film');
+    } catch (error) {
+      console.warn('No-API poster fetch failed:', error);
+    }
+
+    cache[cacheKey] = poster || '';
+    writePosterCache(cache);
+    return poster || '';
+  };
+
+  // Force platform dropdown/input to stay usable no matter what type is chosen.
+  function unlockWatchPlatform(){
+    const input = document.getElementById('watchPlatform');
+    const dropdown = document.getElementById('watchPlatformDropdown');
+
+    if (input) {
+      input.disabled = false;
+      input.removeAttribute('disabled');
+    }
+
+    if (dropdown) {
+      dropdown.classList.remove('disabled', 'hidden');
+      dropdown.removeAttribute('aria-disabled');
+      dropdown.style.pointerEvents = 'auto';
+      dropdown.style.opacity = '1';
+      dropdown.style.filter = 'none';
+    }
+
+    document.querySelectorAll('#watchPlatformDropdown button, #watchPlatformDropdown [role="button"], #watchPlatformDropdown .app-dropdown-option').forEach((el)=>{
+      el.disabled = false;
+      el.removeAttribute('disabled');
+      el.style.pointerEvents = 'auto';
+      el.style.opacity = '1';
+    });
+  }
+
+  document.addEventListener('click', (event)=>{
+    if (event.target.closest('#watchTypeDropdown, #watchPlatformDropdown, [data-kind="type"], [data-kind="platform"]')) {
+      setTimeout(unlockWatchPlatform, 0);
+      setTimeout(unlockWatchPlatform, 120);
+    }
+  }, true);
+
+  document.getElementById('watchType')?.addEventListener('change', unlockWatchPlatform);
+  document.addEventListener('DOMContentLoaded', unlockWatchPlatform);
+  setTimeout(unlockWatchPlatform, 300);
+
+  // Improve existing fallback poster render if a card has no image: no functional dependency.
+  window.myhubWatchFallbackPosterData = fallbackPosterData;
+})();
+

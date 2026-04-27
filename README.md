@@ -27,3 +27,9 @@
 - Improved Dashboard readability on mobile.
 - Stronger contrast for cards, labels, buttons, empty states, and list items.
 - Scoped changes to Dashboard only; login and data logic untouched.
+
+
+## v6.6 Watchlist No API Fix
+- Fixed platform dropdown for Anime / Documentary.
+- Added no-API poster resolver using public Wikipedia thumbnails with local cache.
+- Keeps existing fallback poster if no public match is found.
