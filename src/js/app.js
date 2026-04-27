@@ -6,7 +6,9 @@ import {
   signInWithEmailAndPassword,
   signOut,
   sendPasswordResetEmail,
-  updateProfile
+  updateProfile,
+  GoogleAuthProvider,
+  signInWithPopup
 } from 'https://www.gstatic.com/firebasejs/10.12.4/firebase-auth.js';
 import {
   getFirestore,
@@ -26,7 +28,14 @@ import { firebaseConfig } from './firebase.js';
 
 const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
+auth.useDeviceLanguage();
 const db = getFirestore(app);
+const googleProvider = new GoogleAuthProvider();
+googleProvider.setCustomParameters({
+  prompt: 'select_account'
+});
+googleProvider.addScope('email');
+googleProvider.addScope('profile');
 
 const $ = (id) => document.getElementById(id);
 const baht = new Intl.NumberFormat('th-TH', { style: 'currency', currency: 'THB', maximumFractionDigits: 0 });
@@ -299,6 +308,13 @@ function escapeAttr(value = '') { return escapeHtml(value); }
 
 $('loginTab').addEventListener('click', () => setMode('login'));
 $('registerTab').addEventListener('click', () => setMode('register'));
+
+$('passwordToggle')?.addEventListener('click', () => {
+  const input = $('password');
+  const isPassword = input.type === 'password';
+  input.type = isPassword ? 'text' : 'password';
+  $('passwordToggle').textContent = isPassword ? '🙈' : '👁';
+});
 $('openProfileBtn').addEventListener('click', () => navTo('profile'));
 
 document.querySelectorAll('[data-nav]').forEach((btn) => btn.addEventListener('click', () => navTo(btn.dataset.nav)));
@@ -338,6 +354,67 @@ $('authForm').addEventListener('submit', async (event) => {
     }
   } catch (error) {
     toast(error.message);
+  }
+});
+
+
+
+function getFirebaseAuthDomainHelp() {
+  const host = window.location.hostname || 'localhost';
+  return `โดเมน ${host} ยังไม่ได้รับอนุญาตใน Firebase Auth > Settings > Authorized domains`;
+}
+
+function showGoogleAuthError(message) {
+  toast(message);
+  const btn = $('googleLoginBtn');
+  if (btn) btn.dataset.error = message;
+}
+
+function handleGoogleLoginError(error) {
+  console.warn('Google login failed:', error);
+  const code = error?.code || '';
+  const message = error?.message || '';
+
+  if (code === 'auth/unauthorized-domain' || message.includes('unauthorized-domain')) {
+    showGoogleAuthError(getFirebaseAuthDomainHelp());
+    return;
+  }
+  if (code === 'auth/operation-not-allowed') {
+    showGoogleAuthError('ต้องเปิด Google Provider ใน Firebase Authentication > Sign-in method ก่อน');
+    return;
+  }
+  if (code === 'auth/popup-blocked') {
+    showGoogleAuthError('เบราว์เซอร์บล็อก Popup: กดอนุญาต Popup แล้วลองใหม่');
+    return;
+  }
+  if (code === 'auth/popup-closed-by-user' || code === 'auth/cancelled-popup-request') {
+    showGoogleAuthError('ยกเลิกการเข้าสู่ระบบ Google');
+    return;
+  }
+  if (code === 'auth/network-request-failed') {
+    showGoogleAuthError('เชื่อมต่อ Firebase ไม่สำเร็จ กรุณาเช็กอินเทอร์เน็ตแล้วลองใหม่');
+    return;
+  }
+  showGoogleAuthError(message || 'เข้าสู่ระบบด้วย Google ไม่สำเร็จ');
+}
+
+$('googleLoginBtn')?.addEventListener('click', async () => {
+  const btn = $('googleLoginBtn');
+  if (!btn) return;
+  try {
+    btn.disabled = true;
+    btn.classList.add('loading');
+    btn.dataset.error = '';
+    btn.innerHTML = '<span class="google-g">G</span>กำลังเปิด Google...';
+    const cred = await signInWithPopup(auth, googleProvider);
+    await ensureUserProfile(cred.user, cred.user.displayName || 'MyHub User');
+    toast('เข้าสู่ระบบด้วย Google แล้ว');
+  } catch (error) {
+    handleGoogleLoginError(error);
+  } finally {
+    btn.disabled = false;
+    btn.classList.remove('loading');
+    btn.innerHTML = '<span class="google-g">G</span>เข้าสู่ระบบด้วย Google';
   }
 });
 
@@ -441,19 +518,12 @@ $('profileForm').addEventListener('submit', async (event) => {
 
 $('logoutBtn').addEventListener('click', () => signOut(auth));
 
-onAuthStateChanged(auth, async (user) => {
-  state.user = user;
+onAuthStateChanged(auth, (user) => {
   if (user) {
-    await ensureUserProfile(user);
-    $('authScreen').classList.add('hidden');
-    $('mainApp').classList.remove('hidden');
+    state.user = user;
     subscribeUserData(user.uid);
-    navTo('dashboard');
   } else {
-    clearSubscriptions();
-    state.profile = null;
-    $('authScreen').classList.remove('hidden');
-    $('mainApp').classList.add('hidden');
+    state.user = null;
   }
 });
 
@@ -1302,10 +1372,23 @@ document.body.addEventListener('click', (event)=>{
   taskDraftSubtasks.splice(Number(remove.dataset.removeDraftSubtask), 1);
   renderTaskDraftSubtasks();
 });
-$('taskForm')?.addEventListener('submit', ()=>{ syncTaskDraftHidden(); }, true);
-$('taskForm')?.addEventListener('submit', ()=>{
-  setTimeout(()=>{ taskDraftSubtasks = []; renderTaskDraftSubtasks(); }, 80);
-});
+$('taskForm').addEventListener('submit', async (event) => {
+  event.preventDefault();
+  const subtasks = (($('taskSubtasks')?.value || '')
+    .split(',')
+    .map((x) => x.trim())
+    .filter(Boolean)
+    .map((title) => ({ title, done: false })));
+  await addDoc(userCol('tasks'), {
+    title: $('taskTitle').value.trim(),
+    dueDate: $('taskDue').value,
+    priority: $('taskPriority').value,
+    subtasks,
+    order: Date.now(),
+    done: false,
+    createdAt: serverTimestamp(),
+    updatedAt: serverTimestamp()
+  });
 renderTaskDraftSubtasks();
 
 function renderEditSubtasks(){
@@ -1649,32 +1732,20 @@ function getReminderAt(dueDate, dueTime, reminderMinutes) {
 }
 
 // Override add task submit so time/reminder is saved and duplicate legacy submit is blocked.
-$('taskForm')?.addEventListener('submit', async (event)=>{
+$('taskForm').addEventListener('submit', async (event) => {
   event.preventDefault();
-  event.stopImmediatePropagation();
-  const title = ($('taskTitle')?.value || '').trim();
-  if (!title) return;
-  if (!currentUser) return toast('กรุณาเข้าสู่ระบบก่อน');
-  const dueDate = $('taskDueDatePicker')?.value || $('taskDue')?.value || '';
-  const dueTime = $('taskDueTime')?.value || '';
-  const reminderMinutes = $('taskReminder')?.value || 'none';
-  if (reminderMinutes !== 'none' && (!dueDate || !dueTime)) {
-    return toast('ตั้งแจ้งเตือนต้องเลือกวันและเวลา');
-  }
-  if (reminderMinutes !== 'none' && 'Notification' in window && Notification.permission === 'default') {
-    await Notification.requestPermission();
-  }
+  const subtasks = (($('taskSubtasks')?.value || '')
+    .split(',')
+    .map((x) => x.trim())
+    .filter(Boolean)
+    .map((title) => ({ title, done: false })));
   await addDoc(userCol('tasks'), {
-    title,
-    dueDate,
-    dueTime,
-    reminderMinutes,
-    reminderAt: getReminderAt(dueDate, dueTime, reminderMinutes),
-    reminderNotified: false,
-    priority: $('taskPriority')?.value || 'normal',
-    subtasks: normalizeSubtasks(taskDraftSubtasks),
-    done: false,
+    title: $('taskTitle').value.trim(),
+    dueDate: $('taskDue').value,
+    priority: $('taskPriority').value,
+    subtasks,
     order: Date.now(),
+    done: false,
     createdAt: serverTimestamp(),
     updatedAt: serverTimestamp()
   });
