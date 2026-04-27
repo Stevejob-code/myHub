@@ -56,7 +56,10 @@ const state = {
   tasks: [],
   watchlist: [],
   notes: [],
-  unsubscribers: []
+  unsubscribers: [],
+  authReady: false,
+  dataReady: false,
+  lastPage: 'dashboard'
 };
 
 const pages = {
@@ -95,7 +98,8 @@ function setMode(mode) {
 }
 
 function navTo(name) {
-  Object.entries(pages).forEach(([key, el]) => el.classList.toggle('active-page', key === name));
+  state.lastPage = name || state.lastPage || 'dashboard';
+  Object.entries(pages).forEach(([key, el]) => el && el.classList.toggle('active-page', key === name));
   document.querySelectorAll('.nav-btn').forEach((btn) => btn.classList.toggle('active', btn.dataset.nav === name));
   $('pageTitle').textContent = pageTitles[name] || 'MyHub';
 }
@@ -292,13 +296,17 @@ function renderAll() {
 }
 
 function userCol(name) {
-  if (!state.user) throw new Error('ยังไม่ได้เข้าสู่ระบบ');
-  return collection(db, 'users', state.user.uid, name);
+  const user = auth.currentUser || state.user;
+  if (!user) throw new Error('ยังไม่ได้เข้าสู่ระบบ');
+  state.user = user;
+  return collection(db, 'users', user.uid, name);
 }
 
 function userDoc(colName, id) {
-  if (!state.user) throw new Error('ยังไม่ได้เข้าสู่ระบบ');
-  return doc(db, 'users', state.user.uid, colName, id);
+  const user = auth.currentUser || state.user;
+  if (!user) throw new Error('ยังไม่ได้เข้าสู่ระบบ');
+  state.user = user;
+  return doc(db, 'users', user.uid, colName, id);
 }
 
 function escapeHtml(value = '') {
@@ -443,6 +451,28 @@ $('transactionForm').addEventListener('submit', async (event) => {
   toast('บันทึกรายการแล้ว');
 });
 
+$('taskForm').addEventListener('submit', async (event) => {
+  event.preventDefault();
+  const subtasks = (($('taskSubtasks')?.value || '')
+    .split(',')
+    .map((x) => x.trim())
+    .filter(Boolean)
+    .map((title) => ({ title, done: false })));
+  await addDoc(userCol('tasks'), {
+    title: $('taskTitle').value.trim(),
+    dueDate: $('taskDue').value,
+    priority: $('taskPriority').value,
+    subtasks,
+    order: Date.now(),
+    done: false,
+    createdAt: serverTimestamp(),
+    updatedAt: serverTimestamp()
+  });
+  event.target.reset();
+  $('taskPriority').value = 'normal';
+  toast('เพิ่มงานแล้ว');
+});
+
 $('watchForm').addEventListener('submit', async (event) => {
   event.preventDefault();
   await addDoc(userCol('watchlist'), {
@@ -497,18 +527,38 @@ $('profileForm').addEventListener('submit', async (event) => {
 $('logoutBtn').addEventListener('click', () => signOut(auth));
 
 onAuthStateChanged(auth, async (user) => {
-  state.user = user;
+  state.authReady = true;
+  state.user = user || null;
+
   if (user) {
-    await ensureUserProfile(user);
-    $('authScreen').classList.add('hidden');
-    $('mainApp').classList.remove('hidden');
-    subscribeUserData(user.uid);
-    navTo('dashboard');
+    try {
+      await ensureUserProfile(user);
+    } catch (error) {
+      console.warn('ensureUserProfile failed:', error);
+    }
+
+    $('authScreen')?.classList.add('hidden');
+    $('mainApp')?.classList.remove('hidden');
+
+    try {
+      subscribeUserData(user.uid);
+      state.dataReady = true;
+    } catch (error) {
+      console.error('subscribeUserData failed:', error);
+      toast('โหลดข้อมูลไม่สำเร็จ แต่ยังใช้งานต่อได้');
+    }
+
+    navTo(state.lastPage || 'dashboard');
   } else {
     clearSubscriptions();
     state.profile = null;
-    $('authScreen').classList.remove('hidden');
-    $('mainApp').classList.add('hidden');
+    state.transactions = [];
+    state.tasks = [];
+    state.watchlist = [];
+    state.notes = [];
+    state.dataReady = false;
+    $('authScreen')?.classList.remove('hidden');
+    $('mainApp')?.classList.add('hidden');
   }
 });
 
@@ -1357,6 +1407,10 @@ document.body.addEventListener('click', (event)=>{
   taskDraftSubtasks.splice(Number(remove.dataset.removeDraftSubtask), 1);
   renderTaskDraftSubtasks();
 });
+$('taskForm')?.addEventListener('submit', ()=>{ syncTaskDraftHidden(); }, true);
+$('taskForm')?.addEventListener('submit', ()=>{
+  setTimeout(()=>{ taskDraftSubtasks = []; renderTaskDraftSubtasks(); }, 80);
+});
 renderTaskDraftSubtasks();
 
 function renderEditSubtasks(){
@@ -1700,6 +1754,45 @@ function getReminderAt(dueDate, dueTime, reminderMinutes) {
 }
 
 // Override add task submit so time/reminder is saved and duplicate legacy submit is blocked.
+$('taskForm')?.addEventListener('submit', async (event)=>{
+  event.preventDefault();
+  event.stopImmediatePropagation();
+  const title = ($('taskTitle')?.value || '').trim();
+  if (!title) return;
+  if (!currentUser) return toast('กรุณาเข้าสู่ระบบก่อน');
+  const dueDate = $('taskDueDatePicker')?.value || $('taskDue')?.value || '';
+  const dueTime = $('taskDueTime')?.value || '';
+  const reminderMinutes = $('taskReminder')?.value || 'none';
+  if (reminderMinutes !== 'none' && (!dueDate || !dueTime)) {
+    return toast('ตั้งแจ้งเตือนต้องเลือกวันและเวลา');
+  }
+  if (reminderMinutes !== 'none' && 'Notification' in window && Notification.permission === 'default') {
+    await Notification.requestPermission();
+  }
+  await addDoc(userCol('tasks'), {
+    title,
+    dueDate,
+    dueTime,
+    reminderMinutes,
+    reminderAt: getReminderAt(dueDate, dueTime, reminderMinutes),
+    reminderNotified: false,
+    priority: $('taskPriority')?.value || 'normal',
+    subtasks: normalizeSubtasks(taskDraftSubtasks),
+    done: false,
+    order: Date.now(),
+    createdAt: serverTimestamp(),
+    updatedAt: serverTimestamp()
+  });
+  $('taskForm')?.reset();
+  taskDraftSubtasks = [];
+  renderTaskDraftSubtasks();
+  syncTaskDateUI('');
+  if ($('taskPriority')) $('taskPriority').value = 'normal';
+  if ($('taskReminder')) $('taskReminder').value = 'none';
+  document.querySelectorAll('[data-task-priority]').forEach(b=>b.classList.remove('active'));
+  toast('เพิ่มงานแล้ว');
+}, true);
+
 // Override task cards with time + reminder chips.
 renderTaskItem = function(task){
   const done = Boolean(task.done);
@@ -1754,7 +1847,7 @@ renderAll = function(){
 
 // Reminder checker: works while the web app/PWA is open.
 async function checkTaskReminders(){
-  if (!state.user || !('Notification' in window) || Notification.permission !== 'granted') return;
+  if (!currentUser || !('Notification' in window) || Notification.permission !== 'granted') return;
   const now = Date.now();
   const due = state.tasks.filter(t => !t.done && t.reminderAt && !t.reminderNotified && new Date(t.reminderAt).getTime() <= now);
   for (const task of due) {
@@ -1807,118 +1900,167 @@ openEditModal = function(col, id){
 };
 
 
-// ===== MyHub v6.10.7 Clean Tasks System =====
-// Single submit handler only. No duplicated taskForm listeners.
-(function initCleanTasksSystem(){
-  const form = document.getElementById('taskForm');
-  if (!form || form.dataset.cleanTasksReady === '1') return;
-  form.dataset.cleanTasksReady = '1';
-
-  function getCleanTaskDueDate(){
-    const picker = document.getElementById('taskDueDatePicker');
-    const hidden = document.getElementById('taskDue');
-    return (picker?.value || hidden?.value || '').trim();
+// ===== MyHub v6.10.8 Auth Flow Final =====
+// Stable writes: always use auth.currentUser fallback and stop legacy duplicate submit handlers.
+(function initStableAuthWrites(){
+  function readyUser(){
+    const user = auth.currentUser || state.user;
+    if (user) state.user = user;
+    return user;
   }
 
-  function setCleanTaskDueDate(value){
-    const picker = document.getElementById('taskDueDatePicker');
-    const hidden = document.getElementById('taskDue');
-    if (picker) picker.value = value || '';
-    if (hidden) hidden.value = value || '';
-
-    document.querySelectorAll('[data-task-due]').forEach((btn)=>{
-      const mode = btn.dataset.taskDue;
-      const expected = mode === 'today'
-        ? todayISO()
-        : mode === 'tomorrow'
-          ? addDaysISO(1)
-          : '';
-      btn.classList.toggle('active', expected === (value || ''));
-    });
+  function resetTaskUI(){
+    if (typeof taskDraftSubtasks !== 'undefined') taskDraftSubtasks = [];
+    if (typeof renderTaskDraftSubtasks === 'function') renderTaskDraftSubtasks();
+    if (typeof syncTaskDateUI === 'function') syncTaskDateUI('');
+    const priority = document.getElementById('taskPriority');
+    const reminder = document.getElementById('taskReminder');
+    if (priority) priority.value = 'normal';
+    if (reminder) reminder.value = 'none';
+    document.querySelectorAll('[data-task-priority]').forEach((btn)=>btn.classList.remove('active'));
   }
 
-  document.addEventListener('click', (event)=>{
+  async function addStable(colName, payload){
+    if (!state.authReady && !auth.currentUser) {
+      toast('ระบบกำลังโหลด กรุณารอสักครู่');
+      throw new Error('auth-not-ready');
+    }
+    const user = readyUser();
+    if (!user) {
+      toast('กรุณาเข้าสู่ระบบก่อน');
+      throw new Error('not-authenticated');
+    }
+    return addDoc(collection(db, 'users', user.uid, colName), payload);
+  }
+
+  document.addEventListener('submit', async function(event){
+    const form = event.target;
+    if (!form || !['taskForm','txForm','watchForm','noteForm'].includes(form.id)) return;
+
+    event.preventDefault();
+    event.stopImmediatePropagation();
+
+    try {
+      if (form.id === 'taskForm') {
+        const title = (document.getElementById('taskTitle')?.value || '').trim();
+        if (!title) return toast('กรุณาพิมพ์ชื่องาน');
+
+        const dueDate = (document.getElementById('taskDueDatePicker')?.value || document.getElementById('taskDue')?.value || '').trim();
+        const dueTime = (document.getElementById('taskDueTime')?.value || '').trim();
+        const reminderMinutes = document.getElementById('taskReminder')?.value || 'none';
+
+        if (reminderMinutes !== 'none' && (!dueDate || !dueTime)) {
+          return toast('ตั้งแจ้งเตือนต้องเลือกวันและเวลา');
+        }
+
+        const rawSubtasks = typeof taskDraftSubtasks !== 'undefined' ? taskDraftSubtasks : [];
+        const subtasks = (Array.isArray(rawSubtasks) ? rawSubtasks : [])
+          .map((sub)=> typeof sub === 'string' ? { title: sub, done: false } : { title: sub.title, done: Boolean(sub.done) })
+          .filter((sub)=> (sub.title || '').trim());
+
+        await addStable('tasks', {
+          title,
+          dueDate,
+          dueTime,
+          reminderMinutes,
+          reminderAt: typeof getReminderAt === 'function' ? getReminderAt(dueDate, dueTime, reminderMinutes) : '',
+          reminderNotified: false,
+          priority: document.getElementById('taskPriority')?.value || 'normal',
+          subtasks,
+          done: false,
+          order: Date.now(),
+          createdAt: serverTimestamp(),
+          updatedAt: serverTimestamp()
+        });
+
+        form.reset();
+        resetTaskUI();
+        toast('เพิ่มงานแล้ว');
+        return;
+      }
+
+      if (form.id === 'txForm') {
+        const title = (document.getElementById('txTitle')?.value || '').trim();
+        const amount = Number(document.getElementById('txAmount')?.value || 0);
+        if (!title) return toast('กรุณาระบุชื่อรายการ');
+        if (!amount || amount <= 0) return toast('กรุณาระบุจำนวนเงิน');
+
+        await addStable('transactions', {
+          title,
+          amount,
+          type: document.getElementById('txType')?.value || 'expense',
+          category: document.getElementById('txCategory')?.value || 'อื่น ๆ',
+          date: new Date(),
+          createdAt: serverTimestamp()
+        });
+
+        form.reset();
+        document.getElementById('moneyAddCard')?.classList.add('collapsed');
+        toast('บันทึกรายการแล้ว');
+        return;
+      }
+
+      if (form.id === 'watchForm') {
+        const title = (document.getElementById('watchTitle')?.value || '').trim();
+        if (!title) return toast('กรุณาระบุชื่อเรื่อง');
+
+        await addStable('watchlist', {
+          title,
+          poster: typeof resolvePosterUrl === 'function' ? await resolvePosterUrl(title, '', '') : '',
+          type: document.getElementById('watchType')?.value || 'หนัง',
+          status: document.getElementById('watchStatus')?.value || 'อยากดู',
+          genre: '',
+          platform: document.getElementById('watchPlatform')?.value || 'Netflix',
+          year: '',
+          rating: '',
+          note: '',
+          createdAt: serverTimestamp()
+        });
+
+        form.reset();
+        if (document.getElementById('watchStatus')) document.getElementById('watchStatus').value = 'อยากดู';
+        if (document.getElementById('watchType')) document.getElementById('watchType').value = 'หนัง';
+        if (document.getElementById('watchPlatform')) document.getElementById('watchPlatform').value = 'Netflix';
+        if (typeof renderAppDropdown === 'function') {
+          renderAppDropdown('watchPlatformDropdown', 'Netflix', 'platform');
+          renderAppDropdown('watchTypeDropdown', 'หนัง', 'type');
+        }
+        if (typeof setupStatusTabs === 'function') setupStatusTabs('#watchStatusTabs .status-tab', 'watchStatus', 'อยากดู');
+        if (typeof initAppDropdowns === 'function') initAppDropdowns();
+        toast('เพิ่มเข้ารายการแล้ว');
+        return;
+      }
+
+      if (form.id === 'noteForm') {
+        const title = (document.getElementById('noteTitle')?.value || '').trim();
+        const url = (document.getElementById('noteUrl')?.value || '').trim();
+        const body = (document.getElementById('noteBody')?.value || '').trim();
+
+        if (!title && !url && !body) return toast('กรุณากรอกโน้ตอย่างน้อย 1 ช่อง');
+
+        await addStable('notes', {
+          title,
+          url,
+          body,
+          createdAt: serverTimestamp()
+        });
+
+        form.reset();
+        toast('บันทึกโน้ตแล้ว');
+        return;
+      }
+    } catch (error) {
+      if (error?.message === 'auth-not-ready' || error?.message === 'not-authenticated') return;
+      console.error('Stable form submit failed:', error);
+      toast(error?.message ? `บันทึกไม่สำเร็จ: ${error.message}` : 'บันทึกไม่สำเร็จ');
+    }
+  }, true);
+
+  document.addEventListener('click', function(event){
     const dueBtn = event.target.closest('[data-task-due]');
     if (!dueBtn) return;
     const mode = dueBtn.dataset.taskDue;
     const value = mode === 'today' ? todayISO() : mode === 'tomorrow' ? addDaysISO(1) : '';
-    setCleanTaskDueDate(value);
+    if (typeof syncTaskDateUI === 'function') syncTaskDateUI(value);
   }, true);
-
-  document.getElementById('taskDueDatePicker')?.addEventListener('change', (event)=>{
-    setCleanTaskDueDate(event.target.value || '');
-  });
-
-  document.addEventListener('click', (event)=>{
-    const priorityBtn = event.target.closest('[data-task-priority]');
-    if (!priorityBtn) return;
-    priorityBtn.classList.toggle('active');
-    const input = document.getElementById('taskPriority');
-    if (input) input.value = priorityBtn.classList.contains('active') ? priorityBtn.dataset.taskPriority : 'normal';
-  }, true);
-
-  form.addEventListener('submit', async (event)=>{
-    event.preventDefault();
-
-    const title = (document.getElementById('taskTitle')?.value || '').trim();
-    if (!title) {
-      toast('กรุณาพิมพ์ชื่องาน');
-      return;
-    }
-
-    if (!state.user) {
-      toast('กรุณาเข้าสู่ระบบก่อน');
-      return;
-    }
-
-    const dueDate = getCleanTaskDueDate();
-    const dueTime = (document.getElementById('taskDueTime')?.value || '').trim();
-    const reminderMinutes = document.getElementById('taskReminder')?.value || 'none';
-
-    if (reminderMinutes !== 'none' && (!dueDate || !dueTime)) {
-      toast('ตั้งแจ้งเตือนต้องเลือกวันและเวลา');
-      return;
-    }
-
-    const rawSubtasks = Array.isArray(window.taskDraftSubtasks)
-      ? window.taskDraftSubtasks
-      : (typeof taskDraftSubtasks !== 'undefined' ? taskDraftSubtasks : []);
-
-    const subtasks = (rawSubtasks || [])
-      .map((sub)=> typeof sub === 'string' ? { title: sub, done: false } : { title: sub.title, done: Boolean(sub.done) })
-      .filter((sub)=> (sub.title || '').trim());
-
-    try {
-      await addDoc(userCol('tasks'), {
-        title,
-        dueDate,
-        dueTime,
-        reminderMinutes,
-        reminderAt: typeof getReminderAt === 'function' ? getReminderAt(dueDate, dueTime, reminderMinutes) : '',
-        reminderNotified: false,
-        priority: document.getElementById('taskPriority')?.value || 'normal',
-        subtasks,
-        done: false,
-        order: Date.now(),
-        createdAt: serverTimestamp(),
-        updatedAt: serverTimestamp()
-      });
-
-      form.reset();
-      if (typeof taskDraftSubtasks !== 'undefined') taskDraftSubtasks = [];
-      if (typeof renderTaskDraftSubtasks === 'function') renderTaskDraftSubtasks();
-
-      setCleanTaskDueDate('');
-      const priority = document.getElementById('taskPriority');
-      const reminder = document.getElementById('taskReminder');
-      if (priority) priority.value = 'normal';
-      if (reminder) reminder.value = 'none';
-      document.querySelectorAll('[data-task-priority]').forEach((btn)=>btn.classList.remove('active'));
-
-      toast('เพิ่มงานแล้ว');
-    } catch (error) {
-      console.error('Clean task add failed:', error);
-      toast(error?.message ? `เพิ่มงานไม่สำเร็จ: ${error.message}` : 'เพิ่มงานไม่สำเร็จ');
-    }
-  });
 })();

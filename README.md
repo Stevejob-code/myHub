@@ -18,15 +18,8 @@
 - เปลี่ยนการคำนวณวันที่จาก UTC เป็น local date (`YYYY-MM-DD`) เพื่อให้ Today, Calendar และ Due Date ตรงกัน
 
 
-## v6.10.2
-- Improved mobile readability for empty states in Dashboard cards.
-
-
-## v6.10.3
-- Fixed Dashboard action buttons readability: Open Library / Open Notes are no longer white/faded.
-
-
-## v6.10.7
-- Rebuilt Tasks submit flow as a clean single-handler system.
-- Removed duplicated taskForm submit listeners that caused add task failures.
-- Kept Firebase Google Login and dashboard readable fixes.
+## v6.10.8
+- Rebuilt auth flow from v6.10 stable base.
+- Added auth.currentUser fallback for all writes.
+- Added capture-phase stable submit handler for Money / Tasks / Watchlist / Notes to prevent login bounce and duplicate handlers.
+- Added readable dashboard empty state and buttons.
