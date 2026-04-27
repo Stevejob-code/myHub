@@ -518,12 +518,19 @@ $('profileForm').addEventListener('submit', async (event) => {
 
 $('logoutBtn').addEventListener('click', () => signOut(auth));
 
-onAuthStateChanged(auth, (user) => {
+onAuthStateChanged(auth, async (user) => {
+  state.user = user;
   if (user) {
-    state.user = user;
+    await ensureUserProfile(user);
+    $('authScreen').classList.add('hidden');
+    $('mainApp').classList.remove('hidden');
     subscribeUserData(user.uid);
+    navTo('dashboard');
   } else {
-    state.user = null;
+    clearSubscriptions();
+    state.profile = null;
+    $('authScreen').classList.remove('hidden');
+    $('mainApp').classList.add('hidden');
   }
 });
 
@@ -1372,23 +1379,10 @@ document.body.addEventListener('click', (event)=>{
   taskDraftSubtasks.splice(Number(remove.dataset.removeDraftSubtask), 1);
   renderTaskDraftSubtasks();
 });
-$('taskForm').addEventListener('submit', async (event) => {
-  event.preventDefault();
-  const subtasks = (($('taskSubtasks')?.value || '')
-    .split(',')
-    .map((x) => x.trim())
-    .filter(Boolean)
-    .map((title) => ({ title, done: false })));
-  await addDoc(userCol('tasks'), {
-    title: $('taskTitle').value.trim(),
-    dueDate: $('taskDue').value,
-    priority: $('taskPriority').value,
-    subtasks,
-    order: Date.now(),
-    done: false,
-    createdAt: serverTimestamp(),
-    updatedAt: serverTimestamp()
-  });
+$('taskForm')?.addEventListener('submit', ()=>{ syncTaskDraftHidden(); }, true);
+$('taskForm')?.addEventListener('submit', ()=>{
+  setTimeout(()=>{ taskDraftSubtasks = []; renderTaskDraftSubtasks(); }, 80);
+});
 renderTaskDraftSubtasks();
 
 function renderEditSubtasks(){
@@ -1732,20 +1726,32 @@ function getReminderAt(dueDate, dueTime, reminderMinutes) {
 }
 
 // Override add task submit so time/reminder is saved and duplicate legacy submit is blocked.
-$('taskForm').addEventListener('submit', async (event) => {
+$('taskForm')?.addEventListener('submit', async (event)=>{
   event.preventDefault();
-  const subtasks = (($('taskSubtasks')?.value || '')
-    .split(',')
-    .map((x) => x.trim())
-    .filter(Boolean)
-    .map((title) => ({ title, done: false })));
+  event.stopImmediatePropagation();
+  const title = ($('taskTitle')?.value || '').trim();
+  if (!title) return;
+  if (!currentUser) return toast('กรุณาเข้าสู่ระบบก่อน');
+  const dueDate = $('taskDueDatePicker')?.value || $('taskDue')?.value || '';
+  const dueTime = $('taskDueTime')?.value || '';
+  const reminderMinutes = $('taskReminder')?.value || 'none';
+  if (reminderMinutes !== 'none' && (!dueDate || !dueTime)) {
+    return toast('ตั้งแจ้งเตือนต้องเลือกวันและเวลา');
+  }
+  if (reminderMinutes !== 'none' && 'Notification' in window && Notification.permission === 'default') {
+    await Notification.requestPermission();
+  }
   await addDoc(userCol('tasks'), {
-    title: $('taskTitle').value.trim(),
-    dueDate: $('taskDue').value,
-    priority: $('taskPriority').value,
-    subtasks,
-    order: Date.now(),
+    title,
+    dueDate,
+    dueTime,
+    reminderMinutes,
+    reminderAt: getReminderAt(dueDate, dueTime, reminderMinutes),
+    reminderNotified: false,
+    priority: $('taskPriority')?.value || 'normal',
+    subtasks: normalizeSubtasks(taskDraftSubtasks),
     done: false,
+    order: Date.now(),
     createdAt: serverTimestamp(),
     updatedAt: serverTimestamp()
   });
