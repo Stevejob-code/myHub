@@ -23,3 +23,9 @@
 - Added auth.currentUser fallback for all writes.
 - Added capture-phase stable submit handler for Money / Tasks / Watchlist / Notes to prevent login bounce and duplicate handlers.
 - Added readable dashboard empty state and buttons.
+
+
+## v6.10.9
+- Fixed Tasks realtime display from Firestore.
+- Replaced ordered query with simple collection listener so documents show even if createdAt is missing.
+- Added defensive renderAll so one broken widget does not block Tasks UI.
