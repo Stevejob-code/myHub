@@ -58,9 +58,3 @@
 
 ## v6.6 Notes & Links Pro
 - Redesigned Notes & Links page with premium card UI, stronger search, better note cards, link pill, and mobile readability.
-
-
-## MyHub v7 Core Web App
-- Full-app visual redesign toward poster-style UI: dark neon shell, premium cards, improved contrast, mobile-first spacing.
-- Keeps existing Firebase/email login and data logic from v6.6 stable base.
-- Includes previous improvements: no Google login, watchlist dropdown/poster no API, platform brand badges, pagination, Notes Pro.
