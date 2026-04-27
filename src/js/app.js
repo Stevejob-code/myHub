@@ -429,10 +429,6 @@ $('forgotPasswordBtn').addEventListener('click', async () => {
 
 $('transactionForm').addEventListener('submit', async (event) => {
   event.preventDefault();
-  if(!state.user){
-    console.error("User not ready");
-    return toast('ระบบยังไม่พร้อม กรุณาลองใหม่');
-  }
   await addDoc(userCol('transactions'), {
     title: $('txTitle').value.trim(),
     amount: Number($('txAmount').value),
@@ -447,38 +443,8 @@ $('transactionForm').addEventListener('submit', async (event) => {
   toast('บันทึกรายการแล้ว');
 });
 
-$('taskForm').addEventListener('submit', async (event) => {
-  event.preventDefault();
-  const subtasks = (($('taskSubtasks')?.value || '')
-    .split(',')
-    .map((x) => x.trim())
-    .filter(Boolean)
-    .map((title) => ({ title, done: false })));
-  if(!state.user){
-    console.error("User not ready");
-    return toast('ระบบยังไม่พร้อม กรุณาลองใหม่');
-  }
-  await addDoc(userCol('tasks'), {
-    title: $('taskTitle').value.trim(),
-    dueDate: $('taskDue').value,
-    priority: $('taskPriority').value,
-    subtasks,
-    order: Date.now(),
-    done: false,
-    createdAt: serverTimestamp(),
-    updatedAt: serverTimestamp()
-  });
-  event.target.reset();
-  $('taskPriority').value = 'normal';
-  toast('เพิ่มงานแล้ว');
-});
-
 $('watchForm').addEventListener('submit', async (event) => {
   event.preventDefault();
-  if(!state.user){
-    console.error("User not ready");
-    return toast('ระบบยังไม่พร้อม กรุณาลองใหม่');
-  }
   await addDoc(userCol('watchlist'), {
     title: $('watchTitle').value.trim(),
     poster: await resolvePosterUrl($('watchTitle').value.trim(), '', ''),
@@ -504,10 +470,6 @@ $('watchForm').addEventListener('submit', async (event) => {
 
 $('noteForm').addEventListener('submit', async (event) => {
   event.preventDefault();
-  if(!state.user){
-    console.error("User not ready");
-    return toast('ระบบยังไม่พร้อม กรุณาลองใหม่');
-  }
   await addDoc(userCol('notes'), {
     title: $('noteTitle').value.trim(),
     url: $('noteUrl').value.trim(),
@@ -1395,10 +1357,6 @@ document.body.addEventListener('click', (event)=>{
   taskDraftSubtasks.splice(Number(remove.dataset.removeDraftSubtask), 1);
   renderTaskDraftSubtasks();
 });
-$('taskForm')?.addEventListener('submit', ()=>{ syncTaskDraftHidden(); }, true);
-$('taskForm')?.addEventListener('submit', ()=>{
-  setTimeout(()=>{ taskDraftSubtasks = []; renderTaskDraftSubtasks(); }, 80);
-});
 renderTaskDraftSubtasks();
 
 function renderEditSubtasks(){
@@ -1742,54 +1700,6 @@ function getReminderAt(dueDate, dueTime, reminderMinutes) {
 }
 
 // Override add task submit so time/reminder is saved and duplicate legacy submit is blocked.
-$('taskForm')?.addEventListener('submit', async (event)=>{
-  event.preventDefault();
-  event.stopImmediatePropagation();
-  const title = ($('taskTitle')?.value || '').trim();
-  if (!title) return;
-  if (!state.user) return toast('กรุณาเข้าสู่ระบบก่อน');
-  const dueDate = $('taskDueDatePicker')?.value || $('taskDue')?.value || '';
-  const dueTime = $('taskDueTime')?.value || '';
-  const reminderMinutes = $('taskReminder')?.value || 'none';
-  if (reminderMinutes !== 'none' && (!dueDate || !dueTime)) {
-    return toast('ตั้งแจ้งเตือนต้องเลือกวันและเวลา');
-  }
-  if (reminderMinutes !== 'none' && 'Notification' in window && Notification.permission === 'default') {
-    await Notification.requestPermission();
-  }
-  try {
-    if(!state.user){
-    console.error("User not ready");
-    return toast('ระบบยังไม่พร้อม กรุณาลองใหม่');
-  }
-  await addDoc(userCol('tasks'), {
-      title,
-      dueDate,
-      dueTime,
-      reminderMinutes,
-      reminderAt: getReminderAt(dueDate, dueTime, reminderMinutes),
-      reminderNotified: false,
-      priority: $('taskPriority')?.value || 'normal',
-      subtasks: normalizeSubtasks(taskDraftSubtasks),
-      done: false,
-      order: Date.now(),
-      createdAt: serverTimestamp(),
-      updatedAt: serverTimestamp()
-    });
-  } catch (error) {
-    console.error('Add task failed:', error);
-    return toast(error?.message ? `เพิ่มงานไม่สำเร็จ: ${error.message}` : 'เพิ่มงานไม่สำเร็จ');
-  }
-  $('taskForm')?.reset();
-  taskDraftSubtasks = [];
-  renderTaskDraftSubtasks();
-  syncTaskDateUI('');
-  if ($('taskPriority')) $('taskPriority').value = 'normal';
-  if ($('taskReminder')) $('taskReminder').value = 'none';
-  document.querySelectorAll('[data-task-priority]').forEach(b=>b.classList.remove('active'));
-  toast('เพิ่มงานแล้ว');
-}, true);
-
 // Override task cards with time + reminder chips.
 renderTaskItem = function(task){
   const done = Boolean(task.done);
@@ -1897,42 +1807,118 @@ openEditModal = function(col, id){
 };
 
 
-document.addEventListener("DOMContentLoaded", ()=>{
-  const btn = document.getElementById("addTaskBtn");
-  if(btn){
-    btn.addEventListener("click", ()=>{
-      const input = document.getElementById("taskInput");
-      if(!input || !input.value.trim()) return;
-      addTask({title: input.value, date: new Date().toISOString()});
-      input.value="";
+// ===== MyHub v6.10.7 Clean Tasks System =====
+// Single submit handler only. No duplicated taskForm listeners.
+(function initCleanTasksSystem(){
+  const form = document.getElementById('taskForm');
+  if (!form || form.dataset.cleanTasksReady === '1') return;
+  form.dataset.cleanTasksReady = '1';
+
+  function getCleanTaskDueDate(){
+    const picker = document.getElementById('taskDueDatePicker');
+    const hidden = document.getElementById('taskDue');
+    return (picker?.value || hidden?.value || '').trim();
+  }
+
+  function setCleanTaskDueDate(value){
+    const picker = document.getElementById('taskDueDatePicker');
+    const hidden = document.getElementById('taskDue');
+    if (picker) picker.value = value || '';
+    if (hidden) hidden.value = value || '';
+
+    document.querySelectorAll('[data-task-due]').forEach((btn)=>{
+      const mode = btn.dataset.taskDue;
+      const expected = mode === 'today'
+        ? todayISO()
+        : mode === 'tomorrow'
+          ? addDaysISO(1)
+          : '';
+      btn.classList.toggle('active', expected === (value || ''));
     });
   }
-});
 
-
-// MyHub v6.10.5 reliable task controls
-(function(){
-  function setDueValue(value){
-    const hidden = document.getElementById('taskDue');
-    const picker = document.getElementById('taskDueDatePicker');
-    if (hidden) hidden.value = value || '';
-    if (picker) picker.value = value || '';
-  }
-  document.addEventListener('click', function(event){
+  document.addEventListener('click', (event)=>{
     const dueBtn = event.target.closest('[data-task-due]');
-    if (dueBtn) {
-      const mode = dueBtn.dataset.taskDue;
-      const value = mode === 'today' ? todayISO() : mode === 'tomorrow' ? addDaysISO(1) : '';
-      setDueValue(value);
-    }
+    if (!dueBtn) return;
+    const mode = dueBtn.dataset.taskDue;
+    const value = mode === 'today' ? todayISO() : mode === 'tomorrow' ? addDaysISO(1) : '';
+    setCleanTaskDueDate(value);
   }, true);
 
-  const form = document.getElementById('taskForm');
-  if (form) {
-    form.addEventListener('submit', function(){
-      const picker = document.getElementById('taskDueDatePicker');
-      const hidden = document.getElementById('taskDue');
-      if (picker && hidden && picker.value) hidden.value = picker.value;
-    }, true);
-  }
+  document.getElementById('taskDueDatePicker')?.addEventListener('change', (event)=>{
+    setCleanTaskDueDate(event.target.value || '');
+  });
+
+  document.addEventListener('click', (event)=>{
+    const priorityBtn = event.target.closest('[data-task-priority]');
+    if (!priorityBtn) return;
+    priorityBtn.classList.toggle('active');
+    const input = document.getElementById('taskPriority');
+    if (input) input.value = priorityBtn.classList.contains('active') ? priorityBtn.dataset.taskPriority : 'normal';
+  }, true);
+
+  form.addEventListener('submit', async (event)=>{
+    event.preventDefault();
+
+    const title = (document.getElementById('taskTitle')?.value || '').trim();
+    if (!title) {
+      toast('กรุณาพิมพ์ชื่องาน');
+      return;
+    }
+
+    if (!state.user) {
+      toast('กรุณาเข้าสู่ระบบก่อน');
+      return;
+    }
+
+    const dueDate = getCleanTaskDueDate();
+    const dueTime = (document.getElementById('taskDueTime')?.value || '').trim();
+    const reminderMinutes = document.getElementById('taskReminder')?.value || 'none';
+
+    if (reminderMinutes !== 'none' && (!dueDate || !dueTime)) {
+      toast('ตั้งแจ้งเตือนต้องเลือกวันและเวลา');
+      return;
+    }
+
+    const rawSubtasks = Array.isArray(window.taskDraftSubtasks)
+      ? window.taskDraftSubtasks
+      : (typeof taskDraftSubtasks !== 'undefined' ? taskDraftSubtasks : []);
+
+    const subtasks = (rawSubtasks || [])
+      .map((sub)=> typeof sub === 'string' ? { title: sub, done: false } : { title: sub.title, done: Boolean(sub.done) })
+      .filter((sub)=> (sub.title || '').trim());
+
+    try {
+      await addDoc(userCol('tasks'), {
+        title,
+        dueDate,
+        dueTime,
+        reminderMinutes,
+        reminderAt: typeof getReminderAt === 'function' ? getReminderAt(dueDate, dueTime, reminderMinutes) : '',
+        reminderNotified: false,
+        priority: document.getElementById('taskPriority')?.value || 'normal',
+        subtasks,
+        done: false,
+        order: Date.now(),
+        createdAt: serverTimestamp(),
+        updatedAt: serverTimestamp()
+      });
+
+      form.reset();
+      if (typeof taskDraftSubtasks !== 'undefined') taskDraftSubtasks = [];
+      if (typeof renderTaskDraftSubtasks === 'function') renderTaskDraftSubtasks();
+
+      setCleanTaskDueDate('');
+      const priority = document.getElementById('taskPriority');
+      const reminder = document.getElementById('taskReminder');
+      if (priority) priority.value = 'normal';
+      if (reminder) reminder.value = 'none';
+      document.querySelectorAll('[data-task-priority]').forEach((btn)=>btn.classList.remove('active'));
+
+      toast('เพิ่มงานแล้ว');
+    } catch (error) {
+      console.error('Clean task add failed:', error);
+      toast(error?.message ? `เพิ่มงานไม่สำเร็จ: ${error.message}` : 'เพิ่มงานไม่สำเร็จ');
+    }
+  });
 })();

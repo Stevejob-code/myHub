@@ -26,7 +26,7 @@
 - Fixed Dashboard action buttons readability: Open Library / Open Notes are no longer white/faded.
 
 
-## v6.10.5
-- Fixed Tasks add failure caused by undefined currentUser in submit override.
-- Added task submit error handling.
-- Hardened Dashboard card/button/empty-state contrast for mobile.
+## v6.10.7
+- Rebuilt Tasks submit flow as a clean single-handler system.
+- Removed duplicated taskForm submit listeners that caused add task failures.
+- Kept Firebase Google Login and dashboard readable fixes.
