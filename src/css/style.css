@@ -2785,3 +2785,389 @@ html, body { overflow-x: hidden !important; }
   }
 }
 
+
+
+
+/* =========================================================
+   MyHub v7 Core Web App Theme
+   Clean dark neon production UI across all pages.
+   Safe: CSS-first redesign, keeps existing Firebase/data logic.
+   ========================================================= */
+
+:root {
+  --v7-bg: #050914;
+  --v7-bg2: #0b1220;
+  --v7-panel: rgba(15, 23, 42, .82);
+  --v7-panel2: rgba(30, 41, 59, .74);
+  --v7-solid: #0f172a;
+  --v7-card-light: #f8fafc;
+  --v7-text: #f8fafc;
+  --v7-text-dark: #0f172a;
+  --v7-muted: #94a3b8;
+  --v7-line: rgba(148, 163, 184, .18);
+  --v7-cyan: #22d3ee;
+  --v7-blue: #3b82f6;
+  --v7-violet: #7c3aed;
+  --v7-green: #10b981;
+  --v7-orange: #f97316;
+  --v7-red: #ef4444;
+  --v7-shadow: 0 22px 60px rgba(2, 6, 23, .42);
+  --v7-radius: 28px;
+}
+
+html {
+  background: var(--v7-bg);
+}
+
+body,
+body:not(.light-mode) {
+  background:
+    radial-gradient(circle at 12% -10%, rgba(34, 211, 238, .18), transparent 34%),
+    radial-gradient(circle at 105% 20%, rgba(124, 58, 237, .20), transparent 34%),
+    linear-gradient(180deg, #101a37 0%, #050914 52%, #090516 100%) !important;
+  color: var(--v7-text) !important;
+}
+
+.app-shell,
+.main-app {
+  background: transparent !important;
+}
+
+/* Topbar */
+.topbar {
+  background: linear-gradient(180deg, rgba(5, 9, 20, .92), rgba(5, 9, 20, .38), transparent) !important;
+  backdrop-filter: blur(18px);
+  -webkit-backdrop-filter: blur(18px);
+  padding: 16px 14px 10px !important;
+  z-index: 50;
+}
+
+#todayText {
+  color: var(--v7-cyan) !important;
+  opacity: .9 !important;
+  font-weight: 900 !important;
+}
+
+#pageTitle {
+  color: #fff !important;
+  font-weight: 950 !important;
+  letter-spacing: -.045em !important;
+}
+
+#installAppBtn,
+#openProfileBtn {
+  background: linear-gradient(135deg, #2563eb, #0891b2) !important;
+  color: #fff !important;
+  border: 1px solid rgba(255,255,255,.16) !important;
+  box-shadow: 0 14px 32px rgba(37, 99, 235, .28) !important;
+}
+
+#openProfileBtn {
+  background: rgba(148, 163, 184, .22) !important;
+}
+
+/* Page spacing */
+.page {
+  padding-bottom: 128px !important;
+}
+
+/* Universal cards */
+.panel-card,
+.dash-section-card,
+.task-quick-card,
+.task-calendar-card,
+.task-section-block,
+.money-hero-card,
+.money-add-card,
+.profile-card,
+.profile-settings-card,
+#notesPage .panel-card {
+  border-radius: var(--v7-radius) !important;
+  background:
+    radial-gradient(circle at 100% 0%, rgba(34, 211, 238, .10), transparent 36%),
+    linear-gradient(180deg, rgba(248, 250, 252, .98), rgba(241, 245, 249, .96)) !important;
+  border: 1px solid rgba(226, 232, 240, .95) !important;
+  box-shadow: var(--v7-shadow) !important;
+  color: var(--v7-text-dark) !important;
+}
+
+.panel-card h3,
+.dash-section-card h3,
+.task-quick-card h3,
+.task-section-title h3,
+.money-hero-card h3,
+#notesPage .panel-card h3 {
+  color: var(--v7-text-dark) !important;
+  font-weight: 950 !important;
+  letter-spacing: -.035em !important;
+}
+
+.eyebrow {
+  color: #2563eb !important;
+  font-weight: 950 !important;
+  letter-spacing: .11em !important;
+  opacity: 1 !important;
+}
+
+/* Buttons */
+.primary-btn,
+button[type="submit"],
+.task-add-main,
+.money-add-toggle {
+  background: linear-gradient(135deg, #2563eb 0%, #0891b2 100%) !important;
+  color: #fff !important;
+  border-radius: 22px !important;
+  border: 1px solid rgba(255,255,255,.20) !important;
+  box-shadow: 0 18px 38px rgba(14, 165, 233, .26) !important;
+  font-weight: 950 !important;
+}
+
+.primary-btn:active,
+button[type="submit"]:active {
+  transform: scale(.985);
+}
+
+/* Inputs */
+input,
+textarea,
+select,
+.input-wrap {
+  border-radius: 20px !important;
+  border-color: rgba(148, 163, 184, .28) !important;
+}
+
+input:focus,
+textarea:focus,
+select:focus {
+  border-color: rgba(14, 165, 233, .55) !important;
+  box-shadow: 0 0 0 4px rgba(14, 165, 233, .14) !important;
+}
+
+/* Dashboard */
+#dashboardPage .dash-hero-v6 {
+  border-radius: 34px !important;
+  background:
+    radial-gradient(circle at 90% 0%, rgba(255,255,255,.22), transparent 28%),
+    radial-gradient(circle at 0% 100%, rgba(34,211,238,.22), transparent 35%),
+    linear-gradient(135deg, #0f172a 0%, #075985 48%, #7c3aed 100%) !important;
+  border: 1px solid rgba(255,255,255,.14) !important;
+  box-shadow: var(--v7-shadow) !important;
+}
+
+#dashboardPage .dash-hero-v6 h1,
+#dashboardPage .dash-hero-v6 .eyebrow,
+#dashboardPage .dash-hero-sub {
+  color: #fff !important;
+  text-shadow: 0 12px 30px rgba(2,6,23,.28) !important;
+}
+
+#dashboardPage .dash-focus-card {
+  background: rgba(255,255,255,.16) !important;
+  border: 1px solid rgba(255,255,255,.22) !important;
+  backdrop-filter: blur(14px);
+}
+
+#dashboardPage .dash-stat-v6 {
+  border-radius: 28px !important;
+  border: 1px solid rgba(255,255,255,.14) !important;
+  box-shadow: var(--v7-shadow) !important;
+}
+
+#dashboardPage .dash-stat-v6.spend {
+  background: linear-gradient(135deg, #fb7185, #f97316) !important;
+}
+
+#dashboardPage .dash-stat-v6.balance {
+  background: linear-gradient(135deg, #14b8a6, #0891b2) !important;
+}
+
+#dashboardPage .dash-section-card h3,
+#dashboardPage .dash-section-head h3 {
+  color: #0f172a !important;
+}
+
+#dashboardPage .dash-section-head .mini-btn,
+#dashboardPage .mini-btn {
+  background: linear-gradient(135deg, #0f172a, #1e293b) !important;
+  color: #fff !important;
+  border: 1px solid rgba(15, 23, 42, .16) !important;
+  box-shadow: 0 12px 26px rgba(15,23,42,.18) !important;
+}
+
+/* Lists/cards */
+.item-card,
+.task-card-premium,
+.movie-card,
+.note-card,
+.dash-list > *,
+.money-list > *,
+.list-stack > * {
+  border-radius: 24px !important;
+  background:
+    radial-gradient(circle at 100% 0%, rgba(14,165,233,.07), transparent 32%),
+    #ffffff !important;
+  color: #0f172a !important;
+  border: 1px solid rgba(226, 232, 240, .95) !important;
+  box-shadow: 0 16px 36px rgba(15,23,42,.10) !important;
+}
+
+.item-title,
+.task-card-title,
+.movie-title,
+.note-title {
+  color: #0f172a !important;
+  font-weight: 950 !important;
+}
+
+.item-meta,
+.task-chip,
+.movie-meta,
+.note-meta,
+.muted {
+  color: #64748b !important;
+  opacity: 1 !important;
+  font-weight: 800 !important;
+}
+
+/* Money */
+.money-mini-card.income {
+  background: linear-gradient(135deg, #10b981, #059669) !important;
+}
+.money-mini-card.expense {
+  background: linear-gradient(135deg, #ef4444, #f97316) !important;
+}
+.money-mini-card.today {
+  background: linear-gradient(135deg, #0ea5e9, #0891b2) !important;
+}
+
+/* Tasks */
+.task-option-chip.active,
+.filter-chip.active,
+.status-tab.active,
+.money-filter-tabs button.active,
+.watch-status-filter button.active {
+  background: #0f172a !important;
+  color: #ffffff !important;
+  border-color: rgba(34, 211, 238, .30) !important;
+  box-shadow: 0 12px 26px rgba(15,23,42,.22) !important;
+}
+
+.task-option-chip.priority {
+  background: rgba(249, 115, 22, .12) !important;
+  color: #9a3412 !important;
+}
+
+.task-check-btn,
+.mini-check {
+  background: rgba(14, 165, 233, .12) !important;
+  color: #0369a1 !important;
+}
+
+/* Watch */
+.watch-simple-grid {
+  overflow: visible !important;
+}
+
+.pretty-watch-dropdown,
+#watchTypePretty,
+#watchPlatformPretty {
+  z-index: 20;
+}
+
+.pretty-watch-dropdown.open {
+  z-index: 9999;
+}
+
+/* Notes pro tuning */
+#notesPage #noteList .item-card::before {
+  background: linear-gradient(180deg, #22d3ee, #2563eb) !important;
+}
+
+/* Profile */
+.profile-avatar-wrap {
+  background: linear-gradient(135deg, #0f172a, #0891b2) !important;
+  color: #fff !important;
+}
+
+/* Empty states */
+.empty-box,
+.dash-empty,
+.task-empty-hint,
+.myhub-empty-state {
+  color: #475569 !important;
+  background: rgba(14, 165, 233, .07) !important;
+  border: 1px dashed rgba(14, 165, 233, .26) !important;
+  opacity: 1 !important;
+  font-weight: 850 !important;
+}
+
+/* Bottom nav */
+.bottom-nav {
+  background: rgba(248, 250, 252, .96) !important;
+  border: 1px solid rgba(226,232,240,.92) !important;
+  box-shadow: 0 -18px 44px rgba(2,6,23,.30) !important;
+}
+
+.bottom-nav .nav-btn {
+  color: #64748b !important;
+  font-weight: 900 !important;
+}
+
+.bottom-nav .nav-btn.active {
+  background: #0f172a !important;
+  color: #fff !important;
+  box-shadow: 0 14px 28px rgba(15,23,42,.22) !important;
+}
+
+/* Motion */
+@media (hover: hover) {
+  .panel-card,
+  .dash-section-card,
+  .item-card,
+  .task-card-premium,
+  .movie-card,
+  .note-card,
+  .money-add-card,
+  .task-section-block {
+    transition: transform .22s ease, box-shadow .22s ease, border-color .22s ease;
+  }
+  .panel-card:hover,
+  .dash-section-card:hover,
+  .item-card:hover,
+  .task-card-premium:hover,
+  .movie-card:hover,
+  .note-card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 24px 58px rgba(2,6,23,.18) !important;
+  }
+}
+
+@media (max-width: 520px) {
+  .topbar {
+    padding-left: 14px !important;
+    padding-right: 14px !important;
+  }
+
+  #pageTitle {
+    font-size: 29px !important;
+  }
+
+  .page {
+    padding-bottom: 132px !important;
+  }
+
+  .panel-card,
+  .dash-section-card,
+  .task-quick-card,
+  .task-calendar-card,
+  .task-section-block,
+  .money-hero-card,
+  .money-add-card {
+    border-radius: 28px !important;
+  }
+
+  #dashboardPage .dash-hero-v6 {
+    border-radius: 32px !important;
+  }
+}
+
