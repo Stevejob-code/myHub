@@ -21,3 +21,8 @@
 ## v6.11
 - Production Dashboard UI: dark glass/neon, quick actions, command strip, dark chart polish.
 - Kept Firebase Google Login from v6.10.
+
+
+## v6.14
+- Scoped Dashboard animation/chart/AI summary styles to dashboard page only.
+- Added page scope hardening so Dashboard UI no longer leaks into other pages.

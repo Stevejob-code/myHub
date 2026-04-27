@@ -1678,17 +1678,55 @@ body:not(.light-mode) .bottom-nav{
 
 .dash-stat-v6-grid{margin-top:10px!important;}
 
-/* v6.13 Hover Glow Animation */
-.dash-stat-v6, .dash-section-card{
-  transition: all .25s ease;
-}
-.dash-stat-v6:hover, .dash-section-card:hover{
-  transform: translateY(-6px) scale(1.02);
-  box-shadow: 0 25px 60px rgba(124,58,237,.45);
+/* Smooth iOS chart */
+
+
+/* ===== MyHub v6.14 Scoped Dashboard Only ===== */
+/* ป้องกัน Dashboard UI / animation / chart style ไหลไปหน้าอื่น */
+.dashboard-scope .dash-stat-v6,
+.dashboard-scope .dash-section-card,
+.dashboard-scope .dash-hero-v6,
+.dashboard-scope .dash-focus-card,
+.dashboard-scope .dash-mini-item {
+  transition: transform .25s ease, box-shadow .25s ease, border-color .25s ease, background .25s ease;
+  will-change: transform;
 }
 
-/* Smooth iOS chart */
-canvas{
-  filter: drop-shadow(0 10px 20px rgba(124,58,237,.3));
-  transition: all .3s ease;
+.dashboard-scope .dash-stat-v6:hover,
+.dashboard-scope .dash-section-card:hover,
+.dashboard-scope .dash-hero-v6:hover {
+  transform: translateY(-6px) scale(1.015);
+  box-shadow: 0 25px 60px rgba(124, 58, 237, .42), 0 10px 30px rgba(2, 6, 23, .35);
 }
+
+.dashboard-scope .dash-mini-item:hover,
+.dashboard-scope .dash-focus-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 20px 46px rgba(37, 99, 235, .24);
+}
+
+.dashboard-scope canvas {
+  filter: drop-shadow(0 10px 20px rgba(124, 58, 237, .28));
+  transition: filter .3s ease, transform .3s ease;
+}
+
+.dashboard-scope canvas:hover {
+  transform: translateY(-2px);
+  filter: drop-shadow(0 14px 28px rgba(124, 58, 237, .36));
+}
+
+/* กัน element ของ Dashboard ไม่แสดงในหน้าอื่นถ้า JS สลับ class ผิดพลาด */
+.page:not(.dashboard-scope) .dash-hero-v6,
+.page:not(.dashboard-scope) .dash-stat-v6-grid,
+.page:not(.dashboard-scope) .dash-section-card {
+  display: none !important;
+}
+
+/* Scope AI summary ให้ดูเป็นการ์ดเฉพาะ Dashboard */
+.dashboard-scope #aiSummary {
+  padding: 12px 2px 2px;
+  font-weight: 800;
+  color: inherit;
+  line-height: 1.55;
+}
+

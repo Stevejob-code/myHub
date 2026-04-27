@@ -1932,7 +1932,7 @@ openEditModal = function(col, id){
 
 // v6.13 AI Dashboard Summary
 function renderAISummary(){
-  const el = document.getElementById("aiSummary");
+  const el = document.querySelector("#dashboardPage #aiSummary, .dashboard-scope #aiSummary");
   if(!el) return;
 
   let income=0, expense=0;
@@ -1953,3 +1953,36 @@ function renderAISummary(){
 }
 
 setTimeout(renderAISummary,500);
+
+
+// MyHub v6.14 page scope hardening
+(function(){
+  function normalizePageScopes(){
+    document.querySelectorAll('.page, [id$="Page"]').forEach((page)=>{
+      const isDashboard = page.id === 'dashboardPage';
+      if (isDashboard) {
+        page.classList.add('dashboard-scope');
+      } else {
+        page.classList.remove('dashboard-scope');
+      }
+    });
+  }
+
+  document.addEventListener('DOMContentLoaded', normalizePageScopes);
+  document.addEventListener('click', function(e){
+    if (e.target.closest('[data-nav], .nav-item, .bottom-nav button')) {
+      setTimeout(normalizePageScopes, 0);
+      setTimeout(normalizePageScopes, 120);
+    }
+  });
+
+  const oldShowPage = window.showPage || (typeof showPage !== 'undefined' ? showPage : null);
+  if (oldShowPage) {
+    window.showPage = showPage = function(){
+      const result = oldShowPage.apply(this, arguments);
+      normalizePageScopes();
+      requestAnimationFrame(normalizePageScopes);
+      return result;
+    };
+  }
+})();
