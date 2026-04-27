@@ -1439,3 +1439,5 @@ html, body { overflow-x: hidden !important; }
   opacity: .78;
   cursor: wait;
 }
+
+#chartEmptyMsg{font-size:13px;color:#94a3b8;}
