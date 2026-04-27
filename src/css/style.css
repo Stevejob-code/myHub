@@ -1442,3 +1442,14 @@ html, body { overflow-x: hidden !important; }
   .float-card { width: 104px; }
   .auth-form-panel { margin: 8px; }
 }
+
+
+/* Clean build: Google Login removed */
+#googleLoginBtn,
+.google-login-btn,
+.social-login,
+.social-auth,
+.auth-divider {
+  display: none !important;
+}
+
