@@ -16,16 +16,3 @@
 ## v6.2 Tasks Calendar Date Sync Fix
 - แก้ปัญหาวันที่ในปฏิทินงานกับวันที่ในงานไม่ตรงกันบนมือถือ/โซนเวลาไทย
 - เปลี่ยนการคำนวณวันที่จาก UTC เป็น local date (`YYYY-MM-DD`) เพื่อให้ Today, Calendar และ Due Date ตรงกัน
-
-
-## v6.10.8
-- Rebuilt auth flow from v6.10 stable base.
-- Added auth.currentUser fallback for all writes.
-- Added capture-phase stable submit handler for Money / Tasks / Watchlist / Notes to prevent login bounce and duplicate handlers.
-- Added readable dashboard empty state and buttons.
-
-
-## v6.10.10
-- Restored login from v6.10.8 stable base.
-- Fixed Firestore task display by using simple realtime collection listeners.
-- Avoided global JS replacements that broke login in v6.10.9.

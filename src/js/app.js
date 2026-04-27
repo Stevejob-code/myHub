@@ -6,9 +6,7 @@ import {
   signInWithEmailAndPassword,
   signOut,
   sendPasswordResetEmail,
-  updateProfile,
-  GoogleAuthProvider,
-  signInWithPopup
+  updateProfile
 } from 'https://www.gstatic.com/firebasejs/10.12.4/firebase-auth.js';
 import {
   getFirestore,
@@ -28,14 +26,7 @@ import { firebaseConfig } from './firebase.js';
 
 const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
-auth.useDeviceLanguage();
 const db = getFirestore(app);
-const googleProvider = new GoogleAuthProvider();
-googleProvider.setCustomParameters({
-  prompt: 'select_account'
-});
-googleProvider.addScope('email');
-googleProvider.addScope('profile');
 
 const $ = (id) => document.getElementById(id);
 const baht = new Intl.NumberFormat('th-TH', { style: 'currency', currency: 'THB', maximumFractionDigits: 0 });
@@ -56,10 +47,7 @@ const state = {
   tasks: [],
   watchlist: [],
   notes: [],
-  unsubscribers: [],
-  authReady: false,
-  dataReady: false,
-  lastPage: 'dashboard'
+  unsubscribers: []
 };
 
 const pages = {
@@ -98,8 +86,7 @@ function setMode(mode) {
 }
 
 function navTo(name) {
-  state.lastPage = name || state.lastPage || 'dashboard';
-  Object.entries(pages).forEach(([key, el]) => el && el.classList.toggle('active-page', key === name));
+  Object.entries(pages).forEach(([key, el]) => el.classList.toggle('active-page', key === name));
   document.querySelectorAll('.nav-btn').forEach((btn) => btn.classList.toggle('active', btn.dataset.nav === name));
   $('pageTitle').textContent = pageTitles[name] || 'MyHub';
 }
@@ -147,18 +134,13 @@ function subscribeUserData(uid) {
     state.profile = snap.data() || {};
     renderProfile();
     renderDashboard();
-  }, (error) => {
-    console.warn('Profile listener failed:', error);
   }));
 
-  const bind = (key, path) => {
-    const ref = collection(db, 'users', uid, path);
-    const unsub = onSnapshot(ref, (snapshot) => {
+  const bind = (key, path, sorter = 'createdAt') => {
+    const q = query(collection(db, 'users', uid, path), orderBy(sorter, 'desc'));
+    const unsub = onSnapshot(q, (snapshot) => {
       state[key] = snapshot.docs.map((d) => ({ id: d.id, ...d.data() }));
       renderAll();
-    }, (error) => {
-      console.error(`Listener failed: ${path}`, error);
-      toast(`โหลดข้อมูล ${path} ไม่สำเร็จ`);
     });
     state.unsubscribers.push(unsub);
   };
@@ -301,17 +283,13 @@ function renderAll() {
 }
 
 function userCol(name) {
-  const user = auth.currentUser || state.user;
-  if (!user) throw new Error('ยังไม่ได้เข้าสู่ระบบ');
-  state.user = user;
-  return collection(db, 'users', user.uid, name);
+  if (!state.user) throw new Error('ยังไม่ได้เข้าสู่ระบบ');
+  return collection(db, 'users', state.user.uid, name);
 }
 
 function userDoc(colName, id) {
-  const user = auth.currentUser || state.user;
-  if (!user) throw new Error('ยังไม่ได้เข้าสู่ระบบ');
-  state.user = user;
-  return doc(db, 'users', user.uid, colName, id);
+  if (!state.user) throw new Error('ยังไม่ได้เข้าสู่ระบบ');
+  return doc(db, 'users', state.user.uid, colName, id);
 }
 
 function escapeHtml(value = '') {
@@ -321,13 +299,6 @@ function escapeAttr(value = '') { return escapeHtml(value); }
 
 $('loginTab').addEventListener('click', () => setMode('login'));
 $('registerTab').addEventListener('click', () => setMode('register'));
-
-$('passwordToggle')?.addEventListener('click', () => {
-  const input = $('password');
-  const isPassword = input.type === 'password';
-  input.type = isPassword ? 'text' : 'password';
-  $('passwordToggle').textContent = isPassword ? '🙈' : '👁';
-});
 $('openProfileBtn').addEventListener('click', () => navTo('profile'));
 
 document.querySelectorAll('[data-nav]').forEach((btn) => btn.addEventListener('click', () => navTo(btn.dataset.nav)));
@@ -367,67 +338,6 @@ $('authForm').addEventListener('submit', async (event) => {
     }
   } catch (error) {
     toast(error.message);
-  }
-});
-
-
-
-function getFirebaseAuthDomainHelp() {
-  const host = window.location.hostname || 'localhost';
-  return `โดเมน ${host} ยังไม่ได้รับอนุญาตใน Firebase Auth > Settings > Authorized domains`;
-}
-
-function showGoogleAuthError(message) {
-  toast(message);
-  const btn = $('googleLoginBtn');
-  if (btn) btn.dataset.error = message;
-}
-
-function handleGoogleLoginError(error) {
-  console.warn('Google login failed:', error);
-  const code = error?.code || '';
-  const message = error?.message || '';
-
-  if (code === 'auth/unauthorized-domain' || message.includes('unauthorized-domain')) {
-    showGoogleAuthError(getFirebaseAuthDomainHelp());
-    return;
-  }
-  if (code === 'auth/operation-not-allowed') {
-    showGoogleAuthError('ต้องเปิด Google Provider ใน Firebase Authentication > Sign-in method ก่อน');
-    return;
-  }
-  if (code === 'auth/popup-blocked') {
-    showGoogleAuthError('เบราว์เซอร์บล็อก Popup: กดอนุญาต Popup แล้วลองใหม่');
-    return;
-  }
-  if (code === 'auth/popup-closed-by-user' || code === 'auth/cancelled-popup-request') {
-    showGoogleAuthError('ยกเลิกการเข้าสู่ระบบ Google');
-    return;
-  }
-  if (code === 'auth/network-request-failed') {
-    showGoogleAuthError('เชื่อมต่อ Firebase ไม่สำเร็จ กรุณาเช็กอินเทอร์เน็ตแล้วลองใหม่');
-    return;
-  }
-  showGoogleAuthError(message || 'เข้าสู่ระบบด้วย Google ไม่สำเร็จ');
-}
-
-$('googleLoginBtn')?.addEventListener('click', async () => {
-  const btn = $('googleLoginBtn');
-  if (!btn) return;
-  try {
-    btn.disabled = true;
-    btn.classList.add('loading');
-    btn.dataset.error = '';
-    btn.innerHTML = '<span class="google-g">G</span>กำลังเปิด Google...';
-    const cred = await signInWithPopup(auth, googleProvider);
-    await ensureUserProfile(cred.user, cred.user.displayName || 'MyHub User');
-    toast('เข้าสู่ระบบด้วย Google แล้ว');
-  } catch (error) {
-    handleGoogleLoginError(error);
-  } finally {
-    btn.disabled = false;
-    btn.classList.remove('loading');
-    btn.innerHTML = '<span class="google-g">G</span>เข้าสู่ระบบด้วย Google';
   }
 });
 
@@ -532,38 +442,18 @@ $('profileForm').addEventListener('submit', async (event) => {
 $('logoutBtn').addEventListener('click', () => signOut(auth));
 
 onAuthStateChanged(auth, async (user) => {
-  state.authReady = true;
-  state.user = user || null;
-
+  state.user = user;
   if (user) {
-    try {
-      await ensureUserProfile(user);
-    } catch (error) {
-      console.warn('ensureUserProfile failed:', error);
-    }
-
-    $('authScreen')?.classList.add('hidden');
-    $('mainApp')?.classList.remove('hidden');
-
-    try {
-      subscribeUserData(user.uid);
-      state.dataReady = true;
-    } catch (error) {
-      console.error('subscribeUserData failed:', error);
-      toast('โหลดข้อมูลไม่สำเร็จ แต่ยังใช้งานต่อได้');
-    }
-
-    navTo(state.lastPage || 'dashboard');
+    await ensureUserProfile(user);
+    $('authScreen').classList.add('hidden');
+    $('mainApp').classList.remove('hidden');
+    subscribeUserData(user.uid);
+    navTo('dashboard');
   } else {
     clearSubscriptions();
     state.profile = null;
-    state.transactions = [];
-    state.tasks = [];
-    state.watchlist = [];
-    state.notes = [];
-    state.dataReady = false;
-    $('authScreen')?.classList.remove('hidden');
-    $('mainApp')?.classList.add('hidden');
+    $('authScreen').classList.remove('hidden');
+    $('mainApp').classList.add('hidden');
   }
 });
 
@@ -1852,7 +1742,7 @@ renderAll = function(){
 
 // Reminder checker: works while the web app/PWA is open.
 async function checkTaskReminders(){
-  if (!(auth.currentUser || state.user) || !('Notification' in window) || Notification.permission !== 'granted') return;
+  if (!currentUser || !('Notification' in window) || Notification.permission !== 'granted') return;
   const now = Date.now();
   const due = state.tasks.filter(t => !t.done && t.reminderAt && !t.reminderNotified && new Date(t.reminderAt).getTime() <= now);
   for (const task of due) {
@@ -1903,208 +1793,3 @@ openEditModal = function(col, id){
   renderEditSubtasks();
   $('editModal').classList.remove('hidden');
 };
-
-
-// ===== MyHub v6.10.8 Auth Flow Final =====
-// Stable writes: always use auth.currentUser fallback and stop legacy duplicate submit handlers.
-(function initStableAuthWrites(){
-  function readyUser(){
-    const user = auth.currentUser || state.user;
-    if (user) state.user = user;
-    return user;
-  }
-
-  function resetTaskUI(){
-    if (typeof taskDraftSubtasks !== 'undefined') taskDraftSubtasks = [];
-    if (typeof renderTaskDraftSubtasks === 'function') renderTaskDraftSubtasks();
-    if (typeof syncTaskDateUI === 'function') syncTaskDateUI('');
-    const priority = document.getElementById('taskPriority');
-    const reminder = document.getElementById('taskReminder');
-    if (priority) priority.value = 'normal';
-    if (reminder) reminder.value = 'none';
-    document.querySelectorAll('[data-task-priority]').forEach((btn)=>btn.classList.remove('active'));
-  }
-
-  async function addStable(colName, payload){
-    if (!state.authReady && !auth.currentUser) {
-      toast('ระบบกำลังโหลด กรุณารอสักครู่');
-      throw new Error('auth-not-ready');
-    }
-    const user = readyUser();
-    if (!user) {
-      toast('กรุณาเข้าสู่ระบบก่อน');
-      throw new Error('not-authenticated');
-    }
-    return addDoc(collection(db, 'users', user.uid, colName), payload);
-  }
-
-  document.addEventListener('submit', async function(event){
-    const form = event.target;
-    if (!form || !['taskForm','txForm','watchForm','noteForm'].includes(form.id)) return;
-
-    event.preventDefault();
-    event.stopImmediatePropagation();
-
-    try {
-      if (form.id === 'taskForm') {
-        const title = (document.getElementById('taskTitle')?.value || '').trim();
-        if (!title) return toast('กรุณาพิมพ์ชื่องาน');
-
-        const dueDate = (document.getElementById('taskDueDatePicker')?.value || document.getElementById('taskDue')?.value || '').trim();
-        const dueTime = (document.getElementById('taskDueTime')?.value || '').trim();
-        const reminderMinutes = document.getElementById('taskReminder')?.value || 'none';
-
-        if (reminderMinutes !== 'none' && (!dueDate || !dueTime)) {
-          return toast('ตั้งแจ้งเตือนต้องเลือกวันและเวลา');
-        }
-
-        const rawSubtasks = typeof taskDraftSubtasks !== 'undefined' ? taskDraftSubtasks : [];
-        const subtasks = (Array.isArray(rawSubtasks) ? rawSubtasks : [])
-          .map((sub)=> typeof sub === 'string' ? { title: sub, done: false } : { title: sub.title, done: Boolean(sub.done) })
-          .filter((sub)=> (sub.title || '').trim());
-
-        await addStable('tasks', {
-          title,
-          dueDate,
-          dueTime,
-          reminderMinutes,
-          reminderAt: typeof getReminderAt === 'function' ? getReminderAt(dueDate, dueTime, reminderMinutes) : '',
-          reminderNotified: false,
-          priority: document.getElementById('taskPriority')?.value || 'normal',
-          subtasks,
-          done: false,
-          order: Date.now(),
-          createdAt: serverTimestamp(),
-          updatedAt: serverTimestamp()
-        });
-
-        form.reset();
-        resetTaskUI();
-        toast('เพิ่มงานแล้ว');
-        return;
-      }
-
-      if (form.id === 'txForm') {
-        const title = (document.getElementById('txTitle')?.value || '').trim();
-        const amount = Number(document.getElementById('txAmount')?.value || 0);
-        if (!title) return toast('กรุณาระบุชื่อรายการ');
-        if (!amount || amount <= 0) return toast('กรุณาระบุจำนวนเงิน');
-
-        await addStable('transactions', {
-          title,
-          amount,
-          type: document.getElementById('txType')?.value || 'expense',
-          category: document.getElementById('txCategory')?.value || 'อื่น ๆ',
-          date: new Date(),
-          createdAt: serverTimestamp()
-        });
-
-        form.reset();
-        document.getElementById('moneyAddCard')?.classList.add('collapsed');
-        toast('บันทึกรายการแล้ว');
-        return;
-      }
-
-      if (form.id === 'watchForm') {
-        const title = (document.getElementById('watchTitle')?.value || '').trim();
-        if (!title) return toast('กรุณาระบุชื่อเรื่อง');
-
-        await addStable('watchlist', {
-          title,
-          poster: typeof resolvePosterUrl === 'function' ? await resolvePosterUrl(title, '', '') : '',
-          type: document.getElementById('watchType')?.value || 'หนัง',
-          status: document.getElementById('watchStatus')?.value || 'อยากดู',
-          genre: '',
-          platform: document.getElementById('watchPlatform')?.value || 'Netflix',
-          year: '',
-          rating: '',
-          note: '',
-          createdAt: serverTimestamp()
-        });
-
-        form.reset();
-        if (document.getElementById('watchStatus')) document.getElementById('watchStatus').value = 'อยากดู';
-        if (document.getElementById('watchType')) document.getElementById('watchType').value = 'หนัง';
-        if (document.getElementById('watchPlatform')) document.getElementById('watchPlatform').value = 'Netflix';
-        if (typeof renderAppDropdown === 'function') {
-          renderAppDropdown('watchPlatformDropdown', 'Netflix', 'platform');
-          renderAppDropdown('watchTypeDropdown', 'หนัง', 'type');
-        }
-        if (typeof setupStatusTabs === 'function') setupStatusTabs('#watchStatusTabs .status-tab', 'watchStatus', 'อยากดู');
-        if (typeof initAppDropdowns === 'function') initAppDropdowns();
-        toast('เพิ่มเข้ารายการแล้ว');
-        return;
-      }
-
-      if (form.id === 'noteForm') {
-        const title = (document.getElementById('noteTitle')?.value || '').trim();
-        const url = (document.getElementById('noteUrl')?.value || '').trim();
-        const body = (document.getElementById('noteBody')?.value || '').trim();
-
-        if (!title && !url && !body) return toast('กรุณากรอกโน้ตอย่างน้อย 1 ช่อง');
-
-        await addStable('notes', {
-          title,
-          url,
-          body,
-          createdAt: serverTimestamp()
-        });
-
-        form.reset();
-        toast('บันทึกโน้ตแล้ว');
-        return;
-      }
-    } catch (error) {
-      if (error?.message === 'auth-not-ready' || error?.message === 'not-authenticated') return;
-      console.error('Stable form submit failed:', error);
-      toast(error?.message ? `บันทึกไม่สำเร็จ: ${error.message}` : 'บันทึกไม่สำเร็จ');
-    }
-  }, true);
-
-  document.addEventListener('click', function(event){
-    const dueBtn = event.target.closest('[data-task-due]');
-    if (!dueBtn) return;
-    const mode = dueBtn.dataset.taskDue;
-    const value = mode === 'today' ? todayISO() : mode === 'tomorrow' ? addDaysISO(1) : '';
-    if (typeof syncTaskDateUI === 'function') syncTaskDateUI(value);
-  }, true);
-})();
-
-
-// MyHub v6.10.10 safe realtime display patch
-// Login-safe patch: do not touch auth handlers; only make renderAll defensive.
-(function(){
-  const previousRenderAll = typeof renderAll === 'function' ? renderAll : null;
-  if (!previousRenderAll) return;
-
-  renderAll = function(){
-    try {
-      previousRenderAll();
-    } catch (error) {
-      console.warn('renderAll failed, fallback rendering lists:', error);
-
-      try { renderDashboard(); } catch(e) {}
-
-      function safeRender(el, items, renderer, emptyText){
-        if (!el) return;
-        const list = Array.isArray(items) ? items : [];
-        el.classList.toggle('empty-box', list.length === 0);
-        el.innerHTML = list.length
-          ? list.map((item)=>{
-              try { return renderer(item); }
-              catch(e) { return `<article class="item-card"><div class="item-title">${escapeHtml(item.title || 'ไม่มีชื่อ')}</div></article>`; }
-            }).join('')
-          : emptyText;
-      }
-
-      safeRender($('transactionList'), state.transactions, renderTransactionItem, 'ยังไม่มีรายการ');
-      safeRender($('taskList'), state.tasks, renderTaskItem, '<div class="task-empty-hint">ยังไม่มีงาน</div>');
-      if ($('taskTodayList')) {
-        const today = todayISO();
-        safeRender($('taskTodayList'), state.tasks.filter(t => !t.done && t.dueDate === today), renderTaskItem, '<div class="task-empty-hint">ยังไม่มีงานวันนี้</div>');
-      }
-      safeRender($('watchList'), state.watchlist, renderWatchItem, 'ยังไม่มีรายการ');
-      safeRender($('noteList'), state.notes, renderNoteItem, 'ยังไม่มีโน้ต');
-    }
-  };
-})();
