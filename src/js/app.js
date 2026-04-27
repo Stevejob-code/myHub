@@ -238,6 +238,7 @@ function renderDashboardNoteItem(note) {
 }
 
 function renderList(el, items, itemRenderer, emptyText) {
+  if (!el) return;
   el.classList.toggle('empty-box', items.length === 0);
   el.innerHTML = items.length ? items.map(itemRenderer).join('') : emptyText;
 }
@@ -1870,3 +1871,60 @@ openEditModal = function(col, id){
   renderEditSubtasks();
   $('editModal').classList.remove('hidden');
 };
+
+
+// MyHub v6.11: dark dashboard chart polish
+(function(){
+  const oldRenderExpenseChart = window.renderExpenseChart || (typeof renderExpenseChart !== 'undefined' ? renderExpenseChart : null);
+  if (!oldRenderExpenseChart) return;
+  window.renderExpenseChart = renderExpenseChart = function(){
+    const canvas = document.getElementById('expenseChart');
+    if (!canvas) return;
+    const ctx = canvas.getContext('2d');
+    const rect = canvas.getBoundingClientRect();
+    const dpr = window.devicePixelRatio || 1;
+    const width = rect.width || 340;
+    const height = 170;
+    canvas.width = Math.floor(width*dpr);
+    canvas.height = Math.floor(height*dpr);
+    ctx.setTransform(dpr,0,0,dpr,0,0);
+    ctx.clearRect(0,0,width,height);
+    const days = Array.from({length:7},(_,i)=>{
+      const d = new Date();
+      d.setDate(d.getDate()-(6-i));
+      return {iso:localISODate(d),label:d.toLocaleDateString('th-TH',{day:'numeric'}),total:0};
+    });
+    const catTotals = {};
+    state.transactions.filter(x=>x.type==='expense').forEach(tx=>{
+      const d = toDateValue(tx.date)||toDateValue(tx.createdAt)||new Date();
+      const iso = localISODate(d);
+      const day = days.find(v=>v.iso===iso);
+      if(day) day.total += Number(tx.amount||0);
+      const cat = tx.category || 'อื่น ๆ';
+      catTotals[cat] = (catTotals[cat]||0)+Number(tx.amount||0);
+    });
+    const topCat = Object.entries(catTotals).sort((a,b)=>b[1]-a[1])[0];
+    safeSetText('dashTopCategory', topCat ? `หมวดสูงสุด: ${topCat[0]}` : 'ยังไม่มีหมวดสูงสุด');
+    safeSetText('dashWeekSpend', baht.format(days.reduce((s,d)=>s+d.total,0)));
+    const max = Math.max(...days.map(d=>d.total),1);
+    const gap = 10;
+    const barW = (width-gap*8)/7;
+    const baseY = 136;
+    ctx.font = '12px Noto Sans Thai, Inter, sans-serif';
+    days.forEach((d,i)=>{
+      const x = gap+i*(barW+gap);
+      const h = Math.max(8,(d.total/max)*94);
+      ctx.fillStyle = document.body.classList.contains('light-mode') ? 'rgba(79,70,229,.16)' : 'rgba(148,163,184,.12)';
+      roundRect(ctx,x,baseY-94,barW,94,10); ctx.fill();
+      const grad = ctx.createLinearGradient(0,baseY-h,0,baseY);
+      grad.addColorStop(0,'rgba(34,211,238,.95)');
+      grad.addColorStop(.55,'rgba(99,102,241,.96)');
+      grad.addColorStop(1,'rgba(217,70,239,.92)');
+      ctx.fillStyle = d.total ? grad : (document.body.classList.contains('light-mode') ? 'rgba(148,163,184,.30)' : 'rgba(148,163,184,.18)');
+      roundRect(ctx,x,baseY-h,barW,h,10); ctx.fill();
+      ctx.fillStyle = document.body.classList.contains('light-mode') ? 'rgba(100,116,139,.95)' : 'rgba(203,213,225,.86)';
+      ctx.textAlign = 'center';
+      ctx.fillText(d.label,x+barW/2,158);
+    });
+  };
+})();
