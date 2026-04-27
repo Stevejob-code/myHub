@@ -2833,3 +2833,16 @@ html, body { overflow-x: hidden !important; }
     padding: 18px;
   }
 }
+
+
+/* v6.6 Pro v2 Fix Add Task: make submit tappable */
+#tasksPage .task-add-main {
+  pointer-events: auto !important;
+  position: relative;
+  z-index: 5;
+}
+#tasksPage .task-quick-card,
+#tasksPage .task-ux-form {
+  overflow: visible !important;
+}
+
