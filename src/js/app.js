@@ -429,6 +429,10 @@ $('forgotPasswordBtn').addEventListener('click', async () => {
 
 $('transactionForm').addEventListener('submit', async (event) => {
   event.preventDefault();
+  if(!state.user){
+    console.error("User not ready");
+    return toast('ระบบยังไม่พร้อม กรุณาลองใหม่');
+  }
   await addDoc(userCol('transactions'), {
     title: $('txTitle').value.trim(),
     amount: Number($('txAmount').value),
@@ -450,6 +454,10 @@ $('taskForm').addEventListener('submit', async (event) => {
     .map((x) => x.trim())
     .filter(Boolean)
     .map((title) => ({ title, done: false })));
+  if(!state.user){
+    console.error("User not ready");
+    return toast('ระบบยังไม่พร้อม กรุณาลองใหม่');
+  }
   await addDoc(userCol('tasks'), {
     title: $('taskTitle').value.trim(),
     dueDate: $('taskDue').value,
@@ -467,6 +475,10 @@ $('taskForm').addEventListener('submit', async (event) => {
 
 $('watchForm').addEventListener('submit', async (event) => {
   event.preventDefault();
+  if(!state.user){
+    console.error("User not ready");
+    return toast('ระบบยังไม่พร้อม กรุณาลองใหม่');
+  }
   await addDoc(userCol('watchlist'), {
     title: $('watchTitle').value.trim(),
     poster: await resolvePosterUrl($('watchTitle').value.trim(), '', ''),
@@ -492,6 +504,10 @@ $('watchForm').addEventListener('submit', async (event) => {
 
 $('noteForm').addEventListener('submit', async (event) => {
   event.preventDefault();
+  if(!state.user){
+    console.error("User not ready");
+    return toast('ระบบยังไม่พร้อม กรุณาลองใหม่');
+  }
   await addDoc(userCol('notes'), {
     title: $('noteTitle').value.trim(),
     url: $('noteUrl').value.trim(),
@@ -1742,7 +1758,11 @@ $('taskForm')?.addEventListener('submit', async (event)=>{
     await Notification.requestPermission();
   }
   try {
-    await addDoc(userCol('tasks'), {
+    if(!state.user){
+    console.error("User not ready");
+    return toast('ระบบยังไม่พร้อม กรุณาลองใหม่');
+  }
+  await addDoc(userCol('tasks'), {
       title,
       dueDate,
       dueTime,
@@ -1824,7 +1844,7 @@ renderAll = function(){
 
 // Reminder checker: works while the web app/PWA is open.
 async function checkTaskReminders(){
-  if (!currentUser || !('Notification' in window) || Notification.permission !== 'granted') return;
+  if (!state.user || !('Notification' in window) || Notification.permission !== 'granted') return;
   const now = Date.now();
   const due = state.tasks.filter(t => !t.done && t.reminderAt && !t.reminderNotified && new Date(t.reminderAt).getTime() <= now);
   for (const task of due) {
