@@ -25,7 +25,7 @@
 - Added readable dashboard empty state and buttons.
 
 
-## v6.10.9
-- Fixed Tasks realtime display from Firestore.
-- Replaced ordered query with simple collection listener so documents show even if createdAt is missing.
-- Added defensive renderAll so one broken widget does not block Tasks UI.
+## v6.10.10
+- Restored login from v6.10.8 stable base.
+- Fixed Firestore task display by using simple realtime collection listeners.
+- Avoided global JS replacements that broke login in v6.10.9.

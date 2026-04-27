@@ -147,13 +147,18 @@ function subscribeUserData(uid) {
     state.profile = snap.data() || {};
     renderProfile();
     renderDashboard();
+  }, (error) => {
+    console.warn('Profile listener failed:', error);
   }));
 
-  const bind = (key, path, sorter = 'createdAt') => {
-    const q = query(collection(db, 'users', uid, path), orderBy(sorter, 'desc'));
-    const unsub = onSnapshot(q, (snapshot) => {
+  const bind = (key, path) => {
+    const ref = collection(db, 'users', uid, path);
+    const unsub = onSnapshot(ref, (snapshot) => {
       state[key] = snapshot.docs.map((d) => ({ id: d.id, ...d.data() }));
       renderAll();
+    }, (error) => {
+      console.error(`Listener failed: ${path}`, error);
+      toast(`โหลดข้อมูล ${path} ไม่สำเร็จ`);
     });
     state.unsubscribers.push(unsub);
   };
@@ -296,14 +301,14 @@ function renderAll() {
 }
 
 function userCol(name) {
-  const user = auth.(auth.currentUser || state.user) || state.user;
+  const user = auth.currentUser || state.user;
   if (!user) throw new Error('ยังไม่ได้เข้าสู่ระบบ');
   state.user = user;
   return collection(db, 'users', user.uid, name);
 }
 
 function userDoc(colName, id) {
-  const user = auth.(auth.currentUser || state.user) || state.user;
+  const user = auth.currentUser || state.user;
   if (!user) throw new Error('ยังไม่ได้เข้าสู่ระบบ');
   state.user = user;
   return doc(db, 'users', user.uid, colName, id);
@@ -1759,7 +1764,7 @@ $('taskForm')?.addEventListener('submit', async (event)=>{
   event.stopImmediatePropagation();
   const title = ($('taskTitle')?.value || '').trim();
   if (!title) return;
-  if (!(auth.currentUser || state.user)) return toast('กรุณาเข้าสู่ระบบก่อน');
+  if (!currentUser) return toast('กรุณาเข้าสู่ระบบก่อน');
   const dueDate = $('taskDueDatePicker')?.value || $('taskDue')?.value || '';
   const dueTime = $('taskDueTime')?.value || '';
   const reminderMinutes = $('taskReminder')?.value || 'none';
@@ -1901,10 +1906,10 @@ openEditModal = function(col, id){
 
 
 // ===== MyHub v6.10.8 Auth Flow Final =====
-// Stable writes: always use auth.(auth.currentUser || state.user) fallback and stop legacy duplicate submit handlers.
+// Stable writes: always use auth.currentUser fallback and stop legacy duplicate submit handlers.
 (function initStableAuthWrites(){
   function readyUser(){
-    const user = auth.(auth.currentUser || state.user) || state.user;
+    const user = auth.currentUser || state.user;
     if (user) state.user = user;
     return user;
   }
@@ -1921,7 +1926,7 @@ openEditModal = function(col, id){
   }
 
   async function addStable(colName, payload){
-    if (!state.authReady && !auth.(auth.currentUser || state.user)) {
+    if (!state.authReady && !auth.currentUser) {
       toast('ระบบกำลังโหลด กรุณารอสักครู่');
       throw new Error('auth-not-ready');
     }
@@ -2066,137 +2071,40 @@ openEditModal = function(col, id){
 })();
 
 
-// ===== MyHub v6.10.9 Tasks Realtime Display Final =====
-// Final override: writes already work; this guarantees Firestore data is subscribed and rendered.
-(function initTasksRealtimeDisplayFinal(){
-  function sortByCreatedDesc(items){
-    return [...(items || [])].sort((a,b)=>{
-      const av = a.createdAt?.toMillis ? a.createdAt.toMillis() : a.createdAt ? new Date(a.createdAt).getTime() : 0;
-      const bv = b.createdAt?.toMillis ? b.createdAt.toMillis() : b.createdAt ? new Date(b.createdAt).getTime() : 0;
-      return bv - av;
-    });
-  }
+// MyHub v6.10.10 safe realtime display patch
+// Login-safe patch: do not touch auth handlers; only make renderAll defensive.
+(function(){
+  const previousRenderAll = typeof renderAll === 'function' ? renderAll : null;
+  if (!previousRenderAll) return;
 
-  function subscribeCollection(uid, key, colName){
-    const ref = collection(db, 'users', uid, colName);
-    return onSnapshot(ref, (snapshot)=>{
-      state[key] = snapshot.docs.map((d)=>({ id: d.id, ...d.data() }));
-      if (key === 'tasks') {
-        console.log('[MyHub] tasks realtime:', state.tasks.length, state.tasks);
-      }
-      renderAll();
-    }, (error)=>{
-      console.error(`[MyHub] subscribe ${colName} failed:`, error);
-      toast(`${colName} โหลดไม่สำเร็จ: ${error.message}`);
-    });
-  }
-
-  // Override subscription with simple collection listeners; no orderBy, so every document displays even if createdAt is missing.
-  subscribeUserData = function(uid){
-    clearSubscriptions();
-
-    state.unsubscribers.push(onSnapshot(doc(db, 'users', uid), (snap)=>{
-      state.profile = snap.data() || {};
-      if (typeof renderProfile === 'function') renderProfile();
-      if (typeof renderDashboard === 'function') renderDashboard();
-    }, (error)=>{
-      console.warn('[MyHub] profile subscribe failed:', error);
-    }));
-
-    state.unsubscribers.push(subscribeCollection(uid, 'transactions', 'transactions'));
-    state.unsubscribers.push(subscribeCollection(uid, 'tasks', 'tasks'));
-    state.unsubscribers.push(subscribeCollection(uid, 'watchlist', 'watchlist'));
-    state.unsubscribers.push(subscribeCollection(uid, 'notes', 'notes'));
-  };
-
-  function safeRenderList(el, items, renderer, emptyText){
-    if (!el) return;
-    const list = items || [];
-    el.classList.toggle('empty-box', list.length === 0);
-    if (!list.length) {
-      el.innerHTML = `<div class="task-empty-hint dashboard-empty-readable">${emptyText}</div>`;
-      return;
-    }
-    el.innerHTML = list.map(renderer).join('');
-  }
-
-  function simpleTaskRenderer(task){
-    if (typeof renderTaskItem === 'function') {
-      try { return renderTaskItem(task); } catch (e) { console.warn('renderTaskItem failed, using fallback:', e); }
-    }
-    return `<article class="task-card-premium">
-      <div class="task-card-main">
-        <div>
-          <div class="task-card-title">${escapeHtml(task.title || 'ไม่มีชื่อ')}</div>
-          <div class="task-meta-row">
-            <span class="task-chip">📅 ${escapeHtml(task.dueDate || 'ไม่กำหนดวัน')}</span>
-            ${task.priority === 'important' ? '<span class="task-chip priority">🔥 สำคัญ</span>' : ''}
-          </div>
-        </div>
-        <button class="task-check-btn ${task.done ? 'done' : ''}" data-done="tasks" data-id="${task.id}" data-value="${!task.done}">${task.done ? '↺' : '✓'}</button>
-      </div>
-    </article>`;
-  }
-
-  // Final renderAll override, defensive: one broken widget must not stop tasks from showing.
   renderAll = function(){
-    try { if (typeof renderDashboard === 'function') renderDashboard(); } catch(e) { console.warn('renderDashboard failed:', e); }
-
-    const filters = state.filters || {};
-    const txs = (state.transactions || []).filter((x)=> !filters.tx || filters.tx === 'all' || x.type === filters.tx);
-    const term = (filters.taskSearch || '').toLowerCase();
-    const view = filters.taskView || filters.task || 'all';
-
-    const tasksSorted = sortByCreatedDesc(state.tasks || []).sort((a,b)=>{
-      if (!!a.done !== !!b.done) return a.done ? 1 : -1;
-      if ((a.priority === 'important') !== (b.priority === 'important')) return a.priority === 'important' ? -1 : 1;
-      return 0;
-    });
-
-    const tasks = tasksSorted.filter((t)=>{
-      const txt = `${t.title || ''} ${t.priority || ''} ${t.dueDate || ''}`.toLowerCase();
-      if (term && !txt.includes(term)) return false;
-      if (view === 'today') return !t.done && t.dueDate === todayISO();
-      if (view === 'pending') return !t.done;
-      if (view === 'upcoming') return !t.done && t.dueDate && t.dueDate >= todayISO();
-      if (view === 'done') return !!t.done;
-      return true;
-    });
-
-    const todayTasks = tasksSorted.filter((t)=>!t.done && t.dueDate === todayISO());
-
-    try { safeRenderList($('transactionList'), txs, renderTransactionItem, 'ยังไม่มีรายการ'); } catch(e) { console.warn('transactions render failed:', e); }
-    safeRenderList($('taskList'), tasks, simpleTaskRenderer, 'ยังไม่มีงาน');
-    if ($('taskTodayList')) safeRenderList($('taskTodayList'), todayTasks, simpleTaskRenderer, 'ยังไม่มีงานวันนี้');
-
     try {
-      if (typeof renderTaskWeekCalendar === 'function') renderTaskWeekCalendar();
-      const selected = state.filters?.taskCalendarDate || todayISO();
-      const selectedTasks = tasksSorted.filter((t)=>!t.done && t.dueDate === selected);
-      if ($('taskSelectedDateList')) safeRenderList($('taskSelectedDateList'), selectedTasks, simpleTaskRenderer, `ไม่มีงานในวันที่ ${escapeHtml(typeof taskDateTextLong === 'function' ? taskDateTextLong(selected) : selected)}`);
-    } catch(e) { console.warn('task calendar render failed:', e); }
+      previousRenderAll();
+    } catch (error) {
+      console.warn('renderAll failed, fallback rendering lists:', error);
 
-    try {
-      const watchTerm = (state.filters?.watch || '').toLowerCase();
-      const watches = (state.watchlist || []).filter((w)=> !watchTerm || `${w.title || ''} ${w.type || ''} ${w.status || ''}`.toLowerCase().includes(watchTerm));
-      safeRenderList($('watchList'), watches, renderWatchItem, 'ยังไม่มีรายการ');
-    } catch(e) { console.warn('watch render failed:', e); }
+      try { renderDashboard(); } catch(e) {}
 
-    try {
-      const noteTerm = (state.filters?.note || '').toLowerCase();
-      const notes = (state.notes || []).filter((n)=> !noteTerm || `${n.title || ''} ${n.body || ''} ${n.url || ''}`.toLowerCase().includes(noteTerm));
-      safeRenderList($('noteList'), notes, renderNoteItem, 'ยังไม่มีโน้ต');
-    } catch(e) { console.warn('note render failed:', e); }
+      function safeRender(el, items, renderer, emptyText){
+        if (!el) return;
+        const list = Array.isArray(items) ? items : [];
+        el.classList.toggle('empty-box', list.length === 0);
+        el.innerHTML = list.length
+          ? list.map((item)=>{
+              try { return renderer(item); }
+              catch(e) { return `<article class="item-card"><div class="item-title">${escapeHtml(item.title || 'ไม่มีชื่อ')}</div></article>`; }
+            }).join('')
+          : emptyText;
+      }
 
-    try { if (typeof updateTaskStats === 'function') updateTaskStats(); } catch(e) { console.warn('task stats failed:', e); }
-  };
-
-  // If user is already logged in before this override loads, reconnect subscriptions.
-  setTimeout(()=>{
-    const user = auth.currentUser || state.user;
-    if (user?.uid) {
-      console.log('[MyHub] reconnect realtime subscriptions for', user.uid);
-      subscribeUserData(user.uid);
+      safeRender($('transactionList'), state.transactions, renderTransactionItem, 'ยังไม่มีรายการ');
+      safeRender($('taskList'), state.tasks, renderTaskItem, '<div class="task-empty-hint">ยังไม่มีงาน</div>');
+      if ($('taskTodayList')) {
+        const today = todayISO();
+        safeRender($('taskTodayList'), state.tasks.filter(t => !t.done && t.dueDate === today), renderTaskItem, '<div class="task-empty-hint">ยังไม่มีงานวันนี้</div>');
+      }
+      safeRender($('watchList'), state.watchlist, renderWatchItem, 'ยังไม่มีรายการ');
+      safeRender($('noteList'), state.notes, renderNoteItem, 'ยังไม่มีโน้ต');
     }
-  }, 400);
+  };
 })();

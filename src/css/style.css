@@ -1497,20 +1497,12 @@ html, body { overflow-x: hidden !important; }
 
 
 
-/* v6.10.9 Task realtime display readability */
-#tasksPage .task-empty-hint.dashboard-empty-readable,
-#taskList .dashboard-empty-readable,
-#taskTodayList .dashboard-empty-readable,
-#taskSelectedDateList .dashboard-empty-readable {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  min-height: 34px;
+/* v6.10.10 readable fallback */
+#taskList .task-empty-hint,
+#taskTodayList .task-empty-hint,
+#taskSelectedDateList .task-empty-hint {
   color: #c7d2fe !important;
   opacity: 1 !important;
   font-weight: 800 !important;
-}
-#tasksPage .task-card-premium {
-  opacity: 1 !important;
 }
 
