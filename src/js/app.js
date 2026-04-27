@@ -1743,7 +1743,7 @@ renderAll = function(){
 
 // Reminder checker: works while the web app/PWA is open.
 async function checkTaskReminders(){
-  if (!currentUser || !('Notification' in window) || Notification.permission !== 'granted') return;
+  if (!(auth.currentUser || state.user) || !('Notification' in window) || Notification.permission !== 'granted') return;
   const now = Date.now();
   const due = state.tasks.filter(t => !t.done && t.reminderAt && !t.reminderNotified && new Date(t.reminderAt).getTime() <= now);
   for (const task of due) {
@@ -2266,5 +2266,105 @@ openEditModal = function(col, id){
   document.addEventListener('click', () => setTimeout(forcePrettyBadges, 0), true);
   setTimeout(forcePrettyBadges, 0);
   setInterval(forcePrettyBadges, 1500);
+})();
+
+
+
+
+// ===== MyHub v6.6 Pro v2 Fix Add Task =====
+(function initFixAddTaskV66Pro2(){
+  const form = document.getElementById('taskForm');
+  if (!form || form.dataset.fixAddTaskV66 === '1') return;
+  form.dataset.fixAddTaskV66 = '1';
+
+  function getUser(){
+    const user = auth.currentUser || state.user;
+    if (user) state.user = user;
+    return user;
+  }
+
+  function setDueDate(value){
+    const hidden = document.getElementById('taskDue');
+    const picker = document.getElementById('taskDueDatePicker');
+    if (hidden) hidden.value = value || '';
+    if (picker) picker.value = value || '';
+    document.querySelectorAll('[data-task-due]').forEach((btn)=>{
+      const mode = btn.dataset.taskDue;
+      const expected = mode === 'today' ? todayISO() : mode === 'tomorrow' ? addDaysISO(1) : '';
+      btn.classList.toggle('active', expected === (value || ''));
+    });
+  }
+
+  document.addEventListener('click', (event)=>{
+    const dueBtn = event.target.closest('[data-task-due]');
+    if (!dueBtn) return;
+    const mode = dueBtn.dataset.taskDue;
+    const value = mode === 'today' ? todayISO() : mode === 'tomorrow' ? addDaysISO(1) : '';
+    setDueDate(value);
+  }, true);
+
+  document.getElementById('taskDueDatePicker')?.addEventListener('change', (event)=> {
+    setDueDate(event.target.value || '');
+  });
+
+  form.addEventListener('submit', async (event)=>{
+    event.preventDefault();
+    event.stopImmediatePropagation();
+
+    const user = getUser();
+    if (!user) {
+      toast('กรุณาเข้าสู่ระบบก่อน');
+      return;
+    }
+
+    const title = (document.getElementById('taskTitle')?.value || '').trim();
+    if (!title) {
+      toast('กรุณาพิมพ์ชื่องาน');
+      return;
+    }
+
+    const dueDate = (document.getElementById('taskDueDatePicker')?.value || document.getElementById('taskDue')?.value || '').trim();
+    const dueTime = (document.getElementById('taskDueTime')?.value || '').trim();
+    const reminderMinutes = document.getElementById('taskReminder')?.value || 'none';
+
+    if (reminderMinutes !== 'none' && (!dueDate || !dueTime)) {
+      toast('ตั้งแจ้งเตือนต้องเลือกวันและเวลา');
+      return;
+    }
+
+    const rawSubtasks = typeof taskDraftSubtasks !== 'undefined' ? taskDraftSubtasks : [];
+    const subtasks = (Array.isArray(rawSubtasks) ? rawSubtasks : [])
+      .map((sub)=> typeof sub === 'string' ? { title: sub, done: false } : { title: sub.title, done: Boolean(sub.done) })
+      .filter((sub)=> (sub.title || '').trim());
+
+    try {
+      await addDoc(collection(db, 'users', user.uid, 'tasks'), {
+        title,
+        dueDate,
+        dueTime,
+        reminderMinutes,
+        reminderAt: typeof getReminderAt === 'function' ? getReminderAt(dueDate, dueTime, reminderMinutes) : '',
+        reminderNotified: false,
+        priority: document.getElementById('taskPriority')?.value || 'normal',
+        subtasks,
+        done: false,
+        order: Date.now(),
+        createdAt: serverTimestamp(),
+        updatedAt: serverTimestamp()
+      });
+
+      form.reset();
+      if (typeof taskDraftSubtasks !== 'undefined') taskDraftSubtasks = [];
+      if (typeof renderTaskDraftSubtasks === 'function') renderTaskDraftSubtasks();
+      setDueDate('');
+      if (document.getElementById('taskPriority')) document.getElementById('taskPriority').value = 'normal';
+      if (document.getElementById('taskReminder')) document.getElementById('taskReminder').value = 'none';
+      document.querySelectorAll('[data-task-priority]').forEach((btn)=>btn.classList.remove('active'));
+      toast('เพิ่มงานแล้ว');
+    } catch (error) {
+      console.error('Add task failed:', error);
+      toast(error?.message ? `เพิ่มงานไม่สำเร็จ: ${error.message}` : 'เพิ่มงานไม่สำเร็จ');
+    }
+  }, true);
 })();
 
