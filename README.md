@@ -27,3 +27,8 @@
 - Improved Dashboard readability on mobile.
 - Stronger contrast for cards, labels, buttons, empty states, and list items.
 - Scoped changes to Dashboard only; login and data logic untouched.
+
+
+## v6.6 Pro Slate/Cyan Theme
+- Replaced purple-heavy UI with navy/slate/cyan premium theme across all pages.
+- Kept data/login logic untouched.
