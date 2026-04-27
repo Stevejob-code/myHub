@@ -1870,3 +1870,16 @@ openEditModal = function(col, id){
   renderEditSubtasks();
   $('editModal').classList.remove('hidden');
 };
+
+
+document.addEventListener("DOMContentLoaded", ()=>{
+  const btn = document.getElementById("addTaskBtn");
+  if(btn){
+    btn.addEventListener("click", ()=>{
+      const input = document.getElementById("taskInput");
+      if(!input || !input.value.trim()) return;
+      addTask({title: input.value, date: new Date().toISOString()});
+      input.value="";
+    });
+  }
+});
