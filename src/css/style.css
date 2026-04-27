@@ -2269,3 +2269,98 @@ html, body { overflow-x: hidden !important; }
   object-fit: contain !important;
 }
 
+
+
+
+/* ===== MyHub v6.6 Pagination / Load More ===== */
+.paginated-list {
+  padding-bottom: 8px;
+}
+
+.myhub-pagination-bar {
+  margin: 14px 0 4px;
+  padding: 12px;
+  border-radius: 18px;
+  background: rgba(255, 255, 255, 0.72);
+  border: 1px solid rgba(148, 163, 184, 0.18);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  box-shadow: 0 10px 26px rgba(15, 23, 42, 0.06);
+}
+
+.myhub-page-info {
+  color: #64748b;
+  font-size: 13px;
+  font-weight: 850;
+}
+
+.myhub-page-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+}
+
+.myhub-page-btn {
+  border: 0;
+  border-radius: 999px;
+  min-height: 38px;
+  padding: 9px 14px;
+  background: linear-gradient(135deg, #4f46e5, #7c3aed);
+  color: #ffffff;
+  font-weight: 950;
+  font-size: 13px;
+  box-shadow: 0 10px 22px rgba(79, 70, 229, 0.24);
+}
+
+.myhub-page-btn.ghost {
+  background: #eef2ff;
+  color: #4338ca;
+  box-shadow: none;
+}
+
+.myhub-empty-state {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 36px;
+  padding: 10px 12px;
+  border-radius: 16px;
+  color: #c7d2fe;
+  background: rgba(255,255,255,.06);
+  border: 1px dashed rgba(148,163,184,.22);
+  font-weight: 800;
+  text-align: center;
+}
+
+/* ให้พื้นที่ด้านล่างไม่โดน bottom nav บัง */
+.page {
+  padding-bottom: 120px !important;
+}
+
+@media (max-width: 520px) {
+  .myhub-pagination-bar {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 10px;
+    margin-top: 12px;
+  }
+
+  .myhub-page-info {
+    text-align: center;
+  }
+
+  .myhub-page-actions {
+    justify-content: center;
+  }
+
+  .myhub-page-btn {
+    width: 100%;
+    min-height: 42px;
+    font-size: 14px;
+  }
+}
+

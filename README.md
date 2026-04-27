@@ -44,3 +44,8 @@
 ## v6.6 Platform Logo Brand Colors
 - Added brand-color platform badges/logos for Netflix, YouTube, Disney+, Prime Video, HBO Max, Apple TV+, Viu, iQIYI, WeTV, TrueID, MonoMax, Crunchyroll, Bilibili.
 - Fixed Netflix logo color distortion by removing incorrect global invert filter.
+
+
+## v6.6 Pagination All Pages
+- Added load-more pagination for Money, Tasks, selected-day Tasks, Watchlist, and Notes.
+- Prevents long lists from stretching pages too far on mobile.

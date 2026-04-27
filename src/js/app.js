@@ -2075,3 +2075,122 @@ openEditModal = function(col, id){
   window.myhubPlatformLogoHTML = logoHTML;
 })();
 
+
+
+
+// ===== MyHub v6.6 Pagination / Load More for long lists =====
+// กันรายการยาวเกินไปในทุกหน้า: Money / Tasks / Watchlist / Notes
+(function initMyHubListPagination(){
+  const PAGE_SIZE = {
+    transactionList: 8,
+    taskList: 6,
+    taskTodayList: 4,
+    taskSelectedDateList: 4,
+    watchList: 6,
+    noteList: 6
+  };
+
+  const pageState = window.__myhubPageState || (window.__myhubPageState = {});
+
+  function getListKey(el){
+    return el?.id || '';
+  }
+
+  function getPageSize(el){
+    return PAGE_SIZE[getListKey(el)] || 6;
+  }
+
+  function ensureVisibleCount(key, size){
+    if (!pageState[key]) pageState[key] = size;
+    return pageState[key];
+  }
+
+  function resetVisibleCount(key){
+    const size = PAGE_SIZE[key] || 6;
+    pageState[key] = size;
+  }
+
+  function isMainListId(id){
+    return ['transactionList','taskList','taskTodayList','taskSelectedDateList','watchList','noteList'].includes(id);
+  }
+
+  const oldRenderList = typeof renderList === 'function' ? renderList : null;
+
+  if (oldRenderList && !window.__myhubPaginationRenderListPatched) {
+    window.__myhubPaginationRenderListPatched = true;
+
+    renderList = function(el, items, itemRenderer, emptyText){
+      if (!el || !isMainListId(el.id)) {
+        return oldRenderList(el, items, itemRenderer, emptyText);
+      }
+
+      const list = Array.isArray(items) ? items : [];
+      const key = getListKey(el);
+      const size = getPageSize(el);
+      const visible = Math.min(ensureVisibleCount(key, size), list.length);
+      const sliced = list.slice(0, visible);
+
+      el.classList.toggle('empty-box', list.length === 0);
+      el.classList.add('paginated-list');
+
+      if (!list.length) {
+        el.innerHTML = `<div class="myhub-empty-state">${emptyText || 'ยังไม่มีข้อมูล'}</div>`;
+        return;
+      }
+
+      const html = sliced.map(itemRenderer).join('');
+      const remaining = list.length - visible;
+
+      el.innerHTML = html + `
+        <div class="myhub-pagination-bar">
+          <div class="myhub-page-info">แสดง ${visible} จาก ${list.length} รายการ</div>
+          <div class="myhub-page-actions">
+            ${visible > size ? `<button type="button" class="myhub-page-btn ghost" data-page-less="${key}">ย่อรายการ</button>` : ''}
+            ${remaining > 0 ? `<button type="button" class="myhub-page-btn" data-page-more="${key}">ดูเพิ่มเติม ${Math.min(size, remaining)}</button>` : ''}
+          </div>
+        </div>
+      `;
+    };
+  }
+
+  document.addEventListener('click', (event)=>{
+    const more = event.target.closest('[data-page-more]');
+    const less = event.target.closest('[data-page-less]');
+
+    if (more) {
+      const key = more.dataset.pageMore;
+      const size = PAGE_SIZE[key] || 6;
+      pageState[key] = (pageState[key] || size) + size;
+      if (typeof renderAll === 'function') renderAll();
+      setTimeout(()=>more.closest('.paginated-list')?.scrollIntoView({ behavior:'smooth', block:'nearest' }), 0);
+      return;
+    }
+
+    if (less) {
+      const key = less.dataset.pageLess;
+      resetVisibleCount(key);
+      if (typeof renderAll === 'function') renderAll();
+      setTimeout(()=>{
+        const el = document.getElementById(key);
+        el?.scrollIntoView({ behavior:'smooth', block:'start' });
+      }, 0);
+    }
+  });
+
+  // Reset pagination when filters/search change so user sees first page of new result.
+  document.addEventListener('input', (event)=>{
+    const id = event.target?.id || '';
+    if (['txSearch','taskSearch','watchSearch','noteSearch'].includes(id)) {
+      Object.keys(PAGE_SIZE).forEach(resetVisibleCount);
+      setTimeout(()=>{ if (typeof renderAll === 'function') renderAll(); }, 0);
+    }
+  }, true);
+
+  document.addEventListener('click', (event)=>{
+    const filter = event.target.closest('.filter-chip, .status-tab, [data-money-filter], [data-task-view], [data-watch-status]');
+    if (filter) {
+      Object.keys(PAGE_SIZE).forEach(resetVisibleCount);
+    }
+  }, true);
+})();
+
