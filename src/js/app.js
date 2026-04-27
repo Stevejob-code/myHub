@@ -486,8 +486,8 @@ const WATCH_PLATFORMS = [
 ];
 function getPlatform(key) { return WATCH_PLATFORMS.find(p => p.key === key) || WATCH_PLATFORMS[WATCH_PLATFORMS.length - 1]; }
 function platformIconHTML(p) {
-  if (p.icon) return `<span class="brand-icon"><img src="${escapeAttr(p.icon)}" alt="" loading="lazy" /></span>`;
-  return `<span class="brand-icon text-icon">${escapeHtml(p.fallback || p.icon || p.label[0] || '?')}</span>`;
+  if (p.icon) return `<span class="brand-icon" data-platform="${escapeAttr(p.key)}"><img src="${escapeAttr(p.icon)}" alt="" loading="lazy" /></span>`;
+  return `<span class="brand-icon text-icon" data-platform="${escapeAttr(p.key)}">${escapeHtml(p.fallback || p.icon || p.label[0] || '?')}</span>`;
 }
 function typeIconHTML(t) { return `<span class="brand-icon type-icon">${escapeHtml(t.icon)}</span>`; }
 function getDropdownOptions(kind) { return kind === 'type' ? WATCH_TYPES : WATCH_PLATFORMS; }
@@ -1957,9 +1957,9 @@ openEditModal = function(col, id){
   function logoHTML(value, small=false){
     const cls = small ? 'pwd-logo small' : 'pwd-logo';
     const src = platformLogos[value];
-    if (src) return `<span class="${cls} logo-img"><img src="${src}" alt="" loading="lazy" /></span>`;
+    if (src) return `<span class="${cls} logo-img" data-platform="${value}"><img src="${src}" alt="" loading="lazy" /></span>`;
     const initials = value === 'อื่น ๆ' ? '⋯' : value.split(/\s|\+/).map(x=>x[0]).join('').slice(0,2).toUpperCase();
-    return `<span class="${cls} logo-text">${initials}</span>`;
+    return `<span class="${cls} logo-text" data-platform="${value}">${initials}</span>`;
   }
 
   function typeHTML(item, small=false){

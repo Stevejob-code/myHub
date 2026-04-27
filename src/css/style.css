@@ -2108,3 +2108,164 @@ html, body { overflow-x: hidden !important; }
   }
 }
 
+
+
+
+/* ===== MyHub v6.6 Platform Logo Brand Colors ===== */
+/* หยุด filter ที่ทำให้โลโก้เพี้ยนสี */
+.movie-card .brand-icon img,
+.watch-card .brand-icon img,
+.item-card .brand-icon img,
+.pwd-logo.logo-img img,
+.brand-icon img {
+  filter: none !important;
+}
+
+/* Dropdown logo base */
+.pwd-logo.logo-img,
+.pwd-logo.logo-text,
+.brand-icon,
+.brand-icon.text-icon {
+  color: #ffffff !important;
+}
+
+/* Netflix */
+.pwd-logo[data-platform="Netflix"],
+.brand-icon[data-platform="Netflix"] {
+  background: #000000 !important;
+}
+.pwd-logo[data-platform="Netflix"] img,
+.brand-icon[data-platform="Netflix"] img {
+  filter: none !important;
+}
+.pwd-logo.logo-text[data-platform="Netflix"],
+.brand-icon.text-icon[data-platform="Netflix"] {
+  color: #e50914 !important;
+}
+
+/* YouTube */
+.pwd-logo[data-platform="YouTube"],
+.brand-icon[data-platform="YouTube"] {
+  background: #ff0000 !important;
+}
+.pwd-logo[data-platform="YouTube"] img,
+.brand-icon[data-platform="YouTube"] img {
+  filter: brightness(0) invert(1) !important;
+}
+
+/* Disney+ */
+.pwd-logo[data-platform="Disney+"],
+.brand-icon[data-platform="Disney+"] {
+  background: linear-gradient(135deg, #113ccf 0%, #00a3ff 100%) !important;
+}
+.pwd-logo[data-platform="Disney+"] img,
+.brand-icon[data-platform="Disney+"] img {
+  filter: brightness(0) invert(1) !important;
+}
+
+/* Prime Video */
+.pwd-logo[data-platform="Prime Video"],
+.brand-icon[data-platform="Prime Video"] {
+  background: #00a8e1 !important;
+}
+.pwd-logo[data-platform="Prime Video"] img,
+.brand-icon[data-platform="Prime Video"] img {
+  filter: brightness(0) invert(1) !important;
+}
+
+/* HBO Max */
+.pwd-logo[data-platform="HBO Max"],
+.brand-icon[data-platform="HBO Max"] {
+  background: #111827 !important;
+}
+.pwd-logo[data-platform="HBO Max"] img,
+.brand-icon[data-platform="HBO Max"] img {
+  filter: brightness(0) invert(1) !important;
+}
+
+/* Apple TV+ */
+.pwd-logo[data-platform="Apple TV+"],
+.brand-icon[data-platform="Apple TV+"] {
+  background: #000000 !important;
+}
+.pwd-logo[data-platform="Apple TV+"] img,
+.brand-icon[data-platform="Apple TV+"] img {
+  filter: brightness(0) invert(1) !important;
+}
+
+/* Viu */
+.pwd-logo[data-platform="Viu"],
+.brand-icon[data-platform="Viu"] {
+  background: #ffcc00 !important;
+  color: #111827 !important;
+}
+
+/* iQIYI */
+.pwd-logo[data-platform="iQIYI"],
+.brand-icon[data-platform="iQIYI"] {
+  background: #00cc36 !important;
+}
+.pwd-logo[data-platform="iQIYI"] img,
+.brand-icon[data-platform="iQIYI"] img {
+  filter: brightness(0) invert(1) !important;
+}
+
+/* WeTV */
+.pwd-logo[data-platform="WeTV"],
+.brand-icon[data-platform="WeTV"] {
+  background: linear-gradient(135deg, #00d2ff 0%, #00a86b 100%) !important;
+}
+
+/* TrueID */
+.pwd-logo[data-platform="TrueID"],
+.brand-icon[data-platform="TrueID"] {
+  background: linear-gradient(135deg, #ff2d55 0%, #ff7a00 100%) !important;
+}
+
+/* MonoMax */
+.pwd-logo[data-platform="MonoMax"],
+.brand-icon[data-platform="MonoMax"] {
+  background: #ec1c24 !important;
+}
+
+/* Crunchyroll */
+.pwd-logo[data-platform="Crunchyroll"],
+.brand-icon[data-platform="Crunchyroll"] {
+  background: #f47521 !important;
+}
+.pwd-logo[data-platform="Crunchyroll"] img,
+.brand-icon[data-platform="Crunchyroll"] img {
+  filter: brightness(0) invert(1) !important;
+}
+
+/* Bilibili */
+.pwd-logo[data-platform="Bilibili"],
+.brand-icon[data-platform="Bilibili"] {
+  background: #00a1d6 !important;
+}
+.pwd-logo[data-platform="Bilibili"] img,
+.brand-icon[data-platform="Bilibili"] img {
+  filter: brightness(0) invert(1) !important;
+}
+
+/* อื่น ๆ */
+.pwd-logo[data-platform="อื่น ๆ"],
+.brand-icon[data-platform="อื่น ๆ"] {
+  background: #64748b !important;
+}
+
+/* ขนาดในรายการด้านล่างให้ชัด */
+.movie-card .brand-icon,
+.watch-card .brand-icon,
+.item-card .brand-icon {
+  box-shadow: 0 6px 14px rgba(15,23,42,.16) !important;
+}
+
+.movie-card .brand-icon img,
+.watch-card .brand-icon img,
+.item-card .brand-icon img {
+  width: 16px !important;
+  height: 16px !important;
+  object-fit: contain !important;
+}
+

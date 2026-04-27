@@ -39,3 +39,8 @@
 - Replaced Watch custom dropdowns with real native select controls.
 - Fixes platform/type selection on mobile and desktop.
 - Keeps no-API poster resolver.
+
+
+## v6.6 Platform Logo Brand Colors
+- Added brand-color platform badges/logos for Netflix, YouTube, Disney+, Prime Video, HBO Max, Apple TV+, Viu, iQIYI, WeTV, TrueID, MonoMax, Crunchyroll, Bilibili.
+- Fixed Netflix logo color distortion by removing incorrect global invert filter.
